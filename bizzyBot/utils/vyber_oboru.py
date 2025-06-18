@@ -2,7 +2,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-# 🔹 Předměty pro obor Ekonomika podniku - 1. ročník
+# predmety pro obor Ekonomika podniku - 1. rocnik
+
+# "Ekonomika podniku - 1. ročník"
 ekonomika_podniku_1_rocnik = [
     ("HA1PZ", 1383522776664637544),
     ("HA2PL", 1383522880347832432),
@@ -26,10 +28,65 @@ ekonomika_podniku_1_rocnik = [
     ("uceP", 1383522873120919718),
 ]
 
-# 🔹 Seznam oborů
+# "Ekonomika podniku - 2. ročník"
+ekonomika_podniku_2_rocnik = [
+    ("AOP1", 1383522977982972125),
+    ("AOP2", 1383523100834009088),
+    ("KdasP", 1383523036116025456),
+    ("KdetP", 1383522983007748237),
+    ("KepP", 1383523129187631164),
+    ("KikP", 1383522948928770060),
+    ("KjpP", 1383522934236381270),
+    ("KmmP", 1383523017832796183),
+    ("KobP", 1383523070685352097),
+    ("KrnP", 1383522938963365960),
+    ("VYF001", 1383522988665868401),
+    ("VYF002", 1383523134539436205),
+    ("VYI001", 1383522993510023238),
+    ("VYN001", 1383523024082309202),
+    ("VYN002", 1383523140612657273),
+    ("VYS001", 1383523031275802735),
+    ("VYS002", 1383523151807385621),
+    ("emP", 1383523082366615612),
+    ("fapP", 1383523041195331737),
+    ("fpP", 1383522903387017348),
+    ("ftP", 1383522928200515596),
+    ("kvmP", 1383522973046149281),
+    ("marP", 1383523064125329470),
+    ("msmP", 1383523123667927061),
+    ("pojP", 1383523075852599340),
+    ("pprP", 1383523088305623040),
+    ("statP", 1383522943992074422),
+    ("zdP", 1383523093741305916),
+]
+# "Ekonomika podniku - 3. ročník"
+ekonomika_podniku_3_rocnik = [
+    ("KdmP", 1383523204030529617),
+    ("KdsP", 1383523290894569553),
+    ("KimP", 1383523232849858570),
+    ("Kme1P", 1383523297546735667),
+    ("KopxlP", 1383523302575964270),
+    ("KopxzP", 1383523162569834657),
+    ("KosP", 1383523187806965771),
+    ("KpdsP", 1383523198024421466),
+    ("KrlrP", 1383523238738399353),
+    ("VYF003", 1383523243293671515),
+    ("VYI003", 1383523249752641597),
+    ("VYN003", 1383523255461351555),
+    ("VYS003", 1383523261652140254),
+    ("bpsP", 1383523285324664872),
+    ("oprP", 1383523157482279012),
+    ("prP", 1383523193213681846),
+    ("smarP", 1383523209252438036),
+]
+
+
+# seznam oboru
 obory_list = [
     ("Ekonomika podniku - 1. ročník", ekonomika_podniku_1_rocnik),
-    # Přidej další obory zde
+    ("Ekonomika podniku - 2. ročník", ekonomika_podniku_2_rocnik),
+    ("Ekonomika podniku - 3. ročník", ekonomika_podniku_3_rocnik),
+    # tady pridam dalsi obory...
 ]
 
 async def obor_autocomplete(interaction: discord.Interaction, current: str):
