@@ -100,7 +100,7 @@ else:
 async def on_ready():
     print(f"✅ Bot je přihlášen jako {bot.user} (ID: {bot.user.id})")
     
-    for extension in ["cogs.hello", "cogs.verify", "cogs.strip", "cogs.role", "cogs.reviews", "utils.vyber_oboru", "utils.nastav_prava"]: # oddelano "utils.role_script" 
+    for extension in ["cogs.hello", "cogs.verify", "cogs.strip", "cogs.role", "cogs.reviews", "utils.vyber_oboru", "utils.nastav_prava", "utils.bot_pristup"]: # oddelano "utils.role_script" 
         try: 
             await bot.load_extension(extension)
             print(f"✅ Cog '{extension}' načten.")
