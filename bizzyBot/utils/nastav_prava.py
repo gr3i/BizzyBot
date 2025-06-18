@@ -40,4 +40,6 @@ async def prirad_prava_bak_ep1(self, ctx):
         await ctx.send(f"✅ Role BAK-EP1 dostala přístup do kanálů: {', '.join(set(upraveno))}")
     else:
         await ctx.send("ℹ️ Nenalezeny žádné kanály s předmětovými rolemi k přiřazení.")
+async def setup(bot):
+    await bot.add_cog(NastavPrava(bot))
 
