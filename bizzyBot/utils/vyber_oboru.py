@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-# Předměty pro obor Ekonomika podniku - 1. ročník
+# 🔹 Předměty pro obor Ekonomika podniku - 1. ročník
 ekonomika_podniku_1_rocnik = [
     ("HA1PZ", 1383522776664637544),
     ("HA2PL", 1383522880347832432),
@@ -26,10 +26,10 @@ ekonomika_podniku_1_rocnik = [
     ("uceP", 1383522873120919718),
 ]
 
-# 🔹 Zde můžeš přidat další obory
+# 🔹 Seznam oborů
 obory_list = [
     ("Ekonomika podniku - 1. ročník", ekonomika_podniku_1_rocnik),
-    # ("Informatika - 1. ročník", informatika_1_rocnik), apod.
+    # Přidej další obory zde
 ]
 
 async def obor_autocomplete(interaction: discord.Interaction, current: str):
@@ -49,7 +49,6 @@ class Obor(commands.Cog):
             await interaction.response.send_message("❌ Obor nebyl nalezen.", ephemeral=True)
             return
         
-        # Přidání všech rolí k uživateli
         pridane_role = []
         for _, role_id in predmety:
             role = interaction.guild.get_role(role_id)
@@ -68,7 +67,35 @@ class Obor(commands.Cog):
                 ephemeral=True
             )
 
+    @app_commands.command(name="obor_odebrat", description="Vyber si obor a odeberou se ti role předmětů tohoto oboru.")
+    @app_commands.describe(obor="Název oboru a ročníku")
+    @app_commands.autocomplete(obor=obor_autocomplete)
+    async def obor_odebrat(self, interaction: discord.Interaction, obor: str):
+        predmety = next((predmety for name, predmety in obory_list if name == obor), None)
+        if predmety is None:
+            await interaction.response.send_message("❌ Obor nebyl nalezen.", ephemeral=True)
+            return
+        
+        odebrane_role = []
+        for _, role_id in predmety:
+            role = interaction.guild.get_role(role_id)
+            if role and role in interaction.user.roles:
+                await interaction.user.remove_roles(role)
+                odebrane_role.append(role.name)
+
+        if odebrane_role:
+            await interaction.response.send_message(
+                f"✅ Byly ti odebrány role předmětů pro obor **{obor}**: {', '.join(odebrane_role)}",
+                ephemeral=True
+            )
+        else:
+            await interaction.response.send_message(
+                f"ℹ️ Žádné role pro obor **{obor}** jsi neměl.",
+                ephemeral=True
+            )
+
     @obor.error
+    @obor_odebrat.error
     async def obor_error(self, interaction: discord.Interaction, error):
         await interaction.response.send_message(
             f"❌ Došlo k chybě: {str(error)}", ephemeral=True
