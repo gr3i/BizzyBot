@@ -9,24 +9,23 @@ jobs:
   deployment_production:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Oracle Free Tier
+      - name: Execute deployment on SSH
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USERNAME }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          username: ${{ secrets.PRODUCTION_USERNAME }}
           port: 22
           script: |
-            echo '
-              cd /home/opc/bizzyBot
-              git pull
+            echo "================== Pull Changes =================="
+            cd /home/opc/bizzyBot
+            git pull
 
-              echo "Zastavuji běžícího bota (pokud běží)..."
-              pkill -f "python3 bot.py" || echo "Bot už neběžel."
+            echo "================== Stop Bot =================="
+            pkill -f "python3 bot.py" || echo "Bot už neběžel."
 
-              echo "Spouštím nového bota..."
-              nohup python3 bot.py > bot.log 2>&1 &
+            echo "================== Start Bot =================="
+            nohup python3 bot.py > bot.log 2>&1 &
 
-              echo "Deployment dokončen."
-            ' | bash
+            echo "Deployment dokončen."
 
