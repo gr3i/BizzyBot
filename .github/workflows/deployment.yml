@@ -29,8 +29,7 @@ jobs:
           port: 22
           script: |
             echo "================== Restart BizzyBot Service =================="
-            sudo systemctl daemon-reload
-            sudo systemctl restart bizzybot.service
-            sudo systemctl status bizzybot.service --no-pager
-            echo "Deployment dokončen."
+            cd /home/opc/bizzyBot
+            docker compose down
+            docker compose up -d --build
 
