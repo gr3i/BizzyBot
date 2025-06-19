@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bizzybot
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    environment:
+      TZ: Europe/Prague
+
