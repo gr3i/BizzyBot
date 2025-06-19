@@ -20,8 +20,7 @@ jobs:
             cd /home/opc/bizzyBot
             git pull
 
-      - name: Stop bot (if running)
-        continue-on-error: true
+      - name: Restart BizzyBot service
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
@@ -29,19 +28,9 @@ jobs:
           username: ${{ secrets.PRODUCTION_USERNAME }}
           port: 22
           script: |
-            echo "================== Stop Bot =================="
-            pkill -f "python3 bot.py" || echo "Bot už neběžel."
-
-      - name: Start bot
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          username: ${{ secrets.PRODUCTION_USERNAME }}
-          port: 22
-          script: |
-            echo "================== Start Bot =================="
-            cd /home/opc/bizzyBot
-            nohup python3 bot.py > bot.log 2>&1 &
+            echo "================== Restart BizzyBot Service =================="
+            sudo systemctl daemon-reload
+            sudo systemctl restart bizzybot.service
+            sudo systemctl status bizzybot.service --no-pager
             echo "Deployment dokončen."
 
