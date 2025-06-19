@@ -17,17 +17,19 @@ jobs:
           username: ${{ secrets.PRODUCTION_USERNAME }}
           port: 22
           script: |
-            echo "================== Pull Changes =================="
-            cd /home/opc/bizzyBot
-            git pull
+            bash -c '
+              echo "================== Pull Changes =================="
+              cd /home/opc/bizzyBot
+              git pull
 
-            echo "================== Stop Bot =================="
-            if ! pkill -f "python3 bot.py" ; then
-              echo "Bot už neběžel."
-            fi
+              echo "================== Stop Bot =================="
+              if ! pkill -f "python3 bot.py" ; then
+                echo "Bot už neběžel."
+              fi
 
-            echo "================== Start Bot =================="
-            nohup python3 bot.py > bot.log 2>&1 &
+              echo "================== Start Bot =================="
+              nohup python3 bot.py > bot.log 2>&1 &
 
-            echo "Deployment dokončen."
+              echo "Deployment dokončen."
+            '
 
