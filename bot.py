@@ -8,7 +8,6 @@ from utils.db_setup import create_connection
 from utils.subject_management import predmet
 
 
-
 # nacteni tokenu a databaze
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
