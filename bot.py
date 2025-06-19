@@ -16,6 +16,7 @@ setup_database()
 # cesta k souboru pro ukladani ID zprav
 REACTION_IDS_FILE = "reaction_ids.json"
 
+
 # nastaveni discord intents
 intents = discord.Intents.default()
 intents.guilds = True
