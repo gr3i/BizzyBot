@@ -9,7 +9,7 @@ class RoleInfo(commands.Cog):
     async def role(self, interaction: Interaction):
         # priklad roli a jejich popisku
         example_roles = [
-            ("**Mod**", "Má nejvyšší oprávnění po ownerovi a odpovídá za správu serveru."),
+            ("**Mods**", "Má nejvyšší oprávnění po ownerovi a odpovídá za správu serveru."),
             ("**Shadow Mod**", "Všechny role, které mají před rolí 'Shadow', jsou na stejné úrovni oprávnění jako role bez 'Shadow'. Tato role se týká 'Shadow' verzí rolí, tedy 'Shadow Mod', 'Shadow Submod', 'Shadow Helper' atd., které spravují ostatní VUT servery. Mají skoro stejné pravomoce jako běžní Modi, Submodi nebo Helperi. Pokud jste student, který zastává roli Mod, Submod nebo Helper na jiném oficiálním VUT serveru a máte zájem pomáhat i tady, napište mi (Ent3i) a rád vám tuto roli přidám."),
             ("**Submod**", "Druhá nejvyšší role na serveru, podřízená pouze Modům. Pomáhá při správě serveru a má značná oprávnění."),
             ("**Helper**", "Pomáhá uživatelům serveru s dotazy, problémy nebo informacemi. Je to role pro pomocníky, kteří usnadňují chod komunity."),
