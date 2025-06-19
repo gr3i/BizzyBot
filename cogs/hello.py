@@ -7,7 +7,7 @@ class Hello(commands.Cog):
 
     @app_commands.command(name="Zprava", description="Řeknu ti něco!")
     async def hello(self, interaction: Interaction):
-        await interaction.response.send_message("Toaster tvrdi, ze lzu. :( Ale...", ephemeral=False)
+        await interaction.response.send_message("Toaster tvrdi, ze lzu. :( Ale..", ephemeral=False)
 
 async def setup(bot):
     await bot.add_cog(Hello(bot))
