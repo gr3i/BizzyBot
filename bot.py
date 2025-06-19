@@ -29,7 +29,6 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
-
 # check pro overeni, ze prikaz zadava pouze vlastnik
 def is_owner(ctx):
     # seznam ID uzivatele, kteri maji pristup k prikazu
