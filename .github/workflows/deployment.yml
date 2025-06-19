@@ -21,7 +21,8 @@ jobs:
             git pull
 
             echo "Zastavuji běžícího bota (pokud běží)..."
-            pkill -f "python3 bot.py" || echo "Bot už neběžel."
+            pkill -f "python3 bot.py" || true
+            echo "Pokračuji v deploymentu..."
 
             echo "Spouštím nového bota..."
             nohup python3 bot.py > bot.log 2>&1 &
