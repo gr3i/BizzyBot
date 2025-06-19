@@ -9,7 +9,7 @@ jobs:
   deployment_production:
     runs-on: ubuntu-latest
     steps:
-      - name: Pull changes
+      - name: Execute deployment on SSH
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
@@ -17,31 +17,17 @@ jobs:
           username: ${{ secrets.PRODUCTION_USERNAME }}
           port: 22
           script: |
+            echo "================== Pull Changes =================="
             cd /home/opc/bizzyBot
             git pull
 
-      - name: Stop bot (if running)
-        continue-on-error: true
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          username: ${{ secrets.PRODUCTION_USERNAME }}
-          port: 22
-          script: |
             echo "================== Stop Bot =================="
-            pkill -f "python3 bot.py" || echo "Bot už neběžel."
+            if ! pkill -f "python3 bot.py" ; then
+              echo "Bot už neběžel."
+            fi
 
-      - name: Start bot
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          username: ${{ secrets.PRODUCTION_USERNAME }}
-          port: 22
-          script: |
             echo "================== Start Bot =================="
-            cd /home/opc/bizzyBot
             nohup python3 bot.py > bot.log 2>&1 &
+
             echo "Deployment dokončen."
 
