@@ -1,3 +1,4 @@
 .env
 verify.db
 *.log
+__pycache__
