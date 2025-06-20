@@ -1,1 +1,1 @@
-Zde byva mega dlouha zprava pro bota, kterou sam napisu v bot_write.txt a pomoci !writeasbot_longmessage spustim, aby bot tuhle dlouhou zpravu napsal sam  
+Zde byva mega dlouha zprava pro bota, kterou sam napisu v longmessage_for_bot.txt a pomoci !writeasbot_longmessage spustim, aby bot tuhle dlouhou zpravu napsal sam  
