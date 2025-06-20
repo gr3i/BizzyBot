@@ -2,3 +2,4 @@
 verify.db
 *.log
 __pycache__
+strip.py
