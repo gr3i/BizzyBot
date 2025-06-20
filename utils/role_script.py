@@ -24,7 +24,7 @@ class RoleAndChannelCreator(commands.Cog):
         created_items = []
 
         try:
-            with open("subjects.txt", "r", encoding="utf-8") as f:
+            with open("utils/subjects.txt", "r", encoding="utf-8") as f:
                 subject_names = [line.strip() for line in f if line.strip()]
         except FileNotFoundError:
             await ctx.send("❌ Soubor subjects.txt nebyl nalezen.")
@@ -59,7 +59,7 @@ class RoleAndChannelCreator(commands.Cog):
             
             created_items.append({"name": name, "role_id": role.id})
         
-        with open("created_roles.json", "w", encoding="utf-8") as f:
+        with open("utils/created_roles.json", "w", encoding="utf-8") as f:
             json.dump(created_items, f, ensure_ascii=False, indent=4)
         await ctx.send("💾 Role ID byla uložena do souboru created_roles.json.")
 
