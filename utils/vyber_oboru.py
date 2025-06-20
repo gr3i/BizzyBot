@@ -93,6 +93,15 @@ obory_list = [
     ),
 ]
 
+# omezeni, aby si nemohl pridat uzivatel s roli Host obor s predmety; muze pouze clen s roli VUT 
+def has_vut_role(): 
+    async def predicate(interaction: discord.Interaction):
+        vut_role = interaction.guild.get_role(1358911329737642014)
+        if vut_role in interaction.user.roles:
+            return True
+        raise app_commands.CheckFailure("Tento příkaz může použít jen uživatel s rolí VUT.")
+    return app_commands.check(predicate)
+
 async def obor_autocomplete(interaction: discord.Interaction, current: str):
     matches = [name for name, _, _ in obory_list if current.lower() in name.lower()]
     return [app_commands.Choice(name=name, value=name) for name in matches[:25]]
@@ -101,6 +110,7 @@ class Obor(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    @has_vut_role()
     @app_commands.command(name="obor", description="Vyber si obor a získáš příslušnou roli.")
     @app_commands.describe(obor="Název oboru a ročníku")
     @app_commands.autocomplete(obor=obor_autocomplete)
@@ -129,6 +139,7 @@ class Obor(commands.Cog):
         # Tento seznam předmětů teď máme k dispozici a můžeme s ním pracovat, pokud bys chtěl např. logovat:
         print(f"Uživatel {interaction.user} zvolil obor {obor} s předměty: {[(p[0], p[1]) for p in predmety]}")
 
+    @has_vut_role()
     @app_commands.command(name="obor_odebrat", description="Odeber si roli příslušného oboru.")
     @app_commands.describe(obor="Název oboru a ročníku")
     @app_commands.autocomplete(obor=obor_autocomplete)
