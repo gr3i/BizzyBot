@@ -182,7 +182,7 @@ async def writeasbot_error(ctx, error):
 @bot.command()
 @commands.check(is_owner)  # kontrola zajisti, ze prikaz muze spustit pouze vlastnik
 async def writeasbot_longmessage(ctx):
-    """Prikaz pro bota, aby napsal zpravu z textoveho souboru bot_write.txt."""
+    """Prikaz pro bota, aby napsal zpravu z textoveho souboru longmessage_for_bot.txt."""
     try:
         # otevreni souboru a nacteni jeho obsahu
         with open("longmessage_for_bot.txt", "r", encoding="utf-8") as file:
