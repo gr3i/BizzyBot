@@ -16,7 +16,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 setup_database()
 
 # cesta k souboru pro ukladani ID zprav
-REACTION_IDS_FILE = "reaction_ids.json"
+REACTION_IDS_FILE = "utils/reaction_ids.json"
 
 
 # nastaveni discord intents
