@@ -3,8 +3,8 @@ import json
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from utils.db_setup import setup_database
-from utils.db_setup import create_connection
+from db.db_setup import setup_database
+from db.db_setup import create_connection
 from utils.subject_management import predmet
 
 
