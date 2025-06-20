@@ -1,3 +1,4 @@
 .env
 verify.db
 __pycache__
+pycache
