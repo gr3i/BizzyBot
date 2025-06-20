@@ -185,7 +185,7 @@ async def writeasbot_longmessage(ctx):
     """Prikaz pro bota, aby napsal zpravu z textoveho souboru bot_write.txt."""
     try:
         # otevreni souboru a nacteni jeho obsahu
-        with open("bot_write.txt", "r", encoding="utf-8") as file:
+        with open("longmessage_for_bot.txt", "r", encoding="utf-8") as file:
             content = file.read()
         
         # pokud je obsah prazdni, informujeme uzivatele
