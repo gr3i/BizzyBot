@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.database import create_connection
+from db.database import create_connection
 from utils.mailer import send_verification_mail
 from utils.codes import generate_verification_code
 
