@@ -43,8 +43,8 @@ project/
 │   ├── mailer.py             # Email-sending logic
 │   ├── reaction_ids.json     # Stores tracked message IDs for reactions
 │   └── subject_management.py # Slash command definitions for subjects
-├── main.py                   # Bot entry point
-└── longmessage_for_bot.txt   # Optional long-form message for announcements
+├── bot.py                   # Bot entry point
+└── longmessage_for_bot.txt   # Optional file used for long-form bot messages
 ```
 
 ---
