@@ -86,6 +86,7 @@ python bot.py
 | --------------------- | ------------------------- |
 | `/verify <email>`     | Starts email verification |
 | `/verify_code <code>` | Verifies the entered code |
+
 There are more commands on the Discord server.
 
 ### Text Commands (Owner-only)
