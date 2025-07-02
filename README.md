@@ -114,14 +114,6 @@ For inquiries, suggestions, or bug reports, please contact the [gr3i on GitHub](
 
 ---
 
-## 🧪 TODO / Ideas
-
-* Add logging system (audit trail)
-* Web interface for managing verified users
-* Rate limiting to avoid abuse of verification
-
----
-
 ## 🏫 Developed for
 
 **BUT FP – Brno University of Technology, Faculty of Business and Management**
