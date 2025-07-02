@@ -43,7 +43,7 @@ project/
 │   ├── mailer.py             # Email-sending logic
 │   ├── reaction_ids.json     # Stores tracked message IDs for reactions
 │   └── subject_management.py # Slash command definitions for subjects
-├── bot.py                   # Bot entry point
+├── bot.py                    # Bot entry point
 └── longmessage_for_bot.txt   # Optional file used for long-form bot messages
 ```
 
@@ -51,8 +51,8 @@ project/
 
 ## 📦 Requirements
 
-* Python **3.10+**
-* SQLite (built-in)
+* Python
+* SQLite 
 * `.env` file in the root directory with your bot token:
 
   ```env
@@ -73,7 +73,7 @@ pip install -r requirements.txt
 ## 🚀 Running the Bot
 
 ```bash
-python main.py
+python bot.py
 ```
 
 ---
@@ -86,6 +86,7 @@ python main.py
 | --------------------- | ------------------------- |
 | `/verify <email>`     | Starts email verification |
 | `/verify_code <code>` | Verifies the entered code |
+There are more commands on the Discord server.
 
 ### Text Commands (Owner-only)
 
@@ -94,8 +95,8 @@ python main.py
 | `!writeasbot <text>`       | Bot sends a message as itself                   |
 | `!writeasbot_longmessage`  | Sends the contents of `longmessage_for_bot.txt` |
 | `!whois <user_id>`         | Displays verification info about a user         |
-| `!strip <user_id>`         | Removes user's email and roles                  |
-| `!create_subject_messages` | Sends subject selection messages                |
+| `!strip <user_id>`         | Removes user's email and roles from database    |
+| `!create_subject_messages` | Create subject selection messages               |
 | `!vut_roles`               | Sends VUT faculty role selection message        |
 
 ---
@@ -109,7 +110,7 @@ python main.py
 
 ## 📩 Contact
 
-For inquiries, suggestions, or bug reports, please contact the developer or open an issue on GitHub.
+For inquiries, suggestions, or bug reports, please contact the [gr3i on GitHub](https://github.com/gr3i) or open an issue on GitHub.
 
 ---
 
