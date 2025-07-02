@@ -5,7 +5,7 @@ class BotInfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="botinfo", description="Odkaz na repozitář bota.")
+    @app_commands.command(name="botInfo", description="Odkaz na repozitář bota.")
     async def botinfo(self, interaction: Interaction):
         await interaction.response.send_message("https://github.com/gr3i/BizzyBot", ephemeral=False)
 
