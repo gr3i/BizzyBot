@@ -9,7 +9,7 @@ class NastavPrava(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def prirad_prava_bak_ep1(self, ctx):
         guild = ctx.guild
-        hlavni_role = guild.get_role(   1390049614534803626   )  # BAK-EP1
+        hlavni_role = guild.get_role(   1390049614534803626  )  # BAK-EP1
         predmetove_role_ids = [
 
 
@@ -23,6 +23,7 @@ class NastavPrava(commands.Cog):
 1383523088305623040, 1383523075852599340, 1383523093741305916,
 1383523100834009088, 1383523134539436205, 1390037910996123818,
 1383523140612657273, 1383523151807385621
+
 
 
         
