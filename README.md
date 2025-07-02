@@ -113,9 +113,3 @@ This list is not exhaustive — more commands are available on the Discord serve
 
 For inquiries, suggestions, or bug reports, please contact the [gr3i](https://github.com/gr3i) on GitHub or open an issue on GitHub.
 
----
-
-## 🏫 Developed for
-
-**BUT FP – Brno University of Technology, Faculty of Business and Management**
-Discord server community automation and verification system.
