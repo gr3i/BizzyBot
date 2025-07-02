@@ -115,4 +115,4 @@ For inquiries, suggestions, or bug reports, please contact the [gr3i](https://gi
 
 ---
 
-## 📚 IB: [Rubbergod Bot for the BUT FIT Discord server](https://github.com/vutfitdiscord/rubbergod/tree/main)
+## 📚 IB: ###[Rubbergod Bot for the BUT FIT Discord server](https://github.com/vutfitdiscord/rubbergod/tree/main)
