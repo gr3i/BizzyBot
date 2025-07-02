@@ -5,7 +5,7 @@ class NastavPrava(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="prirad_prava_oboru BAK-EP2")
+    @commands.command(name="prirad_prava_oboru_ep2")
     @commands.has_permissions(administrator=True)
     async def prirad_prava_bak_ep1(self, ctx):
         guild = ctx.guild
