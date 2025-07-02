@@ -90,7 +90,7 @@ async def on_ready():
             print(f"❌ Chyba při načítání '{extension}': {e}")
     
     bot.tree.add_command(predmet)
-    await bot.tree.sync()
+    await bot.tree.sync(guild=discord.Object(id=1357455204391321712))
     print("✅ Slash příkazy synchronizovány.")
 
 
