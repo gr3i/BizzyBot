@@ -115,4 +115,4 @@ For inquiries, suggestions, or bug reports, please contact the [gr3i](https://gi
 
 ---
 
-## 📚 Inspired by: [Rubbergod Bot by VUTFIT Discord](https://github.com/vutfitdiscord/rubbergod/tree/main)
+### 📚 Inspired by: [Rubbergod Bot by VUTFIT Discord](https://github.com/vutfitdiscord/rubbergod/tree/main)
