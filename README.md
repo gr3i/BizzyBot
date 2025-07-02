@@ -18,7 +18,7 @@ It handles user verification via email, assigns roles based on user input or ema
   * A specific role based on their email domain (`VUT` for university emails, `Host` for others).
 
 * 📘 **Subject and Faculty Role Selection**
-  Users can select their **subjects** and **faculty affiliation** using reaction-based messages.
+  Users can select their **subjects** and **faculty affiliation** using reaction-based messages and slash commands.
 
 * 🛠️ **Owner-Only Commands**
   Admins can manage the bot and users via several restricted commands:
