@@ -52,25 +52,6 @@ def funkce_vrati_false(ctx):
 # seznam ID zprav, ktere sleduju
 reaction_message_ids = []
 
-# predmety
-subject_list = [
-    ("**epP** Ekonomika podniku", 1359190101191688292),
-    ("**mak1P** Makroekonomie", 1359190172956233928),
-    ("**manP** Management", 1359190213867339929),
-    ("**mkP** Manažerská komunikace", 1359190249422590105),
-    ("**HA1PZ** Hospodářská angličtina 1", 1359190365370056845),
-    ("**HA2PZ** Hospodářská angličtina 2", 1359190413784911882),
-    ("**pzmP** Praktikum ze základů matematiky", 1359190519162474790),
-    ("**pmzP** Praktikum z matematiky 1", 1359190585625542858),
-    ("**prmzP** Praktikum z matematiky 1 - v ruštině", 1359190623214637231),
-    ("**KeseP** Evropská a světová ekonomika", 1359190686821519694),
-    ("**IG** Informační gramotnost", 1359194368627707965),
-    ("**KinfP** Informatika", 1359194429726003482),
-    ("**ma2P** Matematika 2", 1359194467122413758),
-    ("**mik1P** Mikroekonomie 1", 1359194500265807983),
-    ("**uceP** Účetnictví", 1359194537771270265),
-]
-
 # role 
 vut_roles_list = [
     ("FP - 1BC", 1359529613428134081),
