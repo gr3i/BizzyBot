@@ -111,7 +111,7 @@ This list is not exhaustive — more commands are available on the Discord serve
 
 ## 📩 Contact
 
-For inquiries, suggestions, or bug reports, please contact the [gr3i GitHub](https://github.com/gr3i) on GitHub or open an issue on GitHub.
+For inquiries, suggestions, or bug reports, please contact the [gr3i](https://github.com/gr3i) on GitHub or open an issue on GitHub.
 
 ---
 
