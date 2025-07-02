@@ -113,3 +113,6 @@ This list is not exhaustive — more commands are available on the Discord serve
 
 For inquiries, suggestions, or bug reports, please contact the [gr3i](https://github.com/gr3i) on GitHub or open an issue on GitHub.
 
+---
+
+## 📚 **Inspired by**: [Rubbergod Bot by VUTFIT Discord](https://github.com/vutfitdiscord/rubbergod/tree/main)
