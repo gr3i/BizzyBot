@@ -32,7 +32,7 @@ It handles user verification via email, assigns roles based on user input or ema
 ## 🧩 Project Structure
 
 ```
-project/
+BizzyBot/
 │
 ├── cogs/                     # Modular command handlers (hello.py, verify.py, etc.)
 ├── db/
