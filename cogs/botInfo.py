@@ -10,5 +10,5 @@ class BotInfo(commands.Cog):
         await interaction.response.send_message("https://github.com/gr3i/BizzyBot", ephemeral=False)
 
 async def setup(bot):
-    await bot.add_cog(BotInfo(bot)
+    await bot.add_cog(BotInfo(bot))
 
