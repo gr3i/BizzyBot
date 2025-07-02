@@ -391,6 +391,23 @@ async def strip(ctx, user_id: int):
 
     conn.close()
 
+    # ziskani uzivatele jako Member objektu
+    member = ctx.guild.get_member(user_id)
+    if member is None:
+        await ctx.send("Uživatel není na tomto serveru nebo není online.")
+        return
+
+    # odstraneni vsech roli krome @everyone
+    roles_to_remove = [role for role in member.roles if role != ctx.guild.default_role]
+    if roles_to_remove:
+        try:
+            await member.remove_roles(*roles_to_remove, reason="Odebrání rolí po zrušení ověření.")
+            await ctx.send(f"✅ Uživateli {member.mention} byly odebrány všechny role.")
+        except discord.Forbidden:
+            await ctx.send("❌ Nemám oprávnění odebrat některé role.")
+    else:
+        await ctx.send("Uživatel nemá žádné role k odebrání.")
+
 @strip.error
 async def strip_error(ctx, error):
     if isinstance(error, commands.CheckFailure):                            # pokud se objevi chyba kontroly (napr. neni vlastnik)
