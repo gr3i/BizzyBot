@@ -93,32 +93,7 @@ async def on_ready():
     await bot.tree.sync()
     print("✅ Slash příkazy synchronizovány.")
 
-@bot.command()
-@commands.check(funkce_vrati_false) # Zde by byl normalne parametr is_owner, pro bezpecnost je ted "vypnuty"
-async def create_subject_messages(ctx):
-    emojis = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
-    chunk_size = len(emojis)
 
-    for i in range(0, len(subject_list), chunk_size):
-        chunk = subject_list[i:i + chunk_size]
-        message_lines = [f"{emojis[j]} {subject[0]}" for j, subject in enumerate(chunk)]
-        msg = await ctx.send("\n".join(message_lines))
-        reaction_message_ids.append(msg.id)
-        for j in range(len(chunk)):
-            await msg.add_reaction(emojis[j])
-
-    # ulozeni ID zprav
-    try:
-        with open(REACTION_IDS_FILE, "w") as f:
-            json.dump(reaction_message_ids, f)
-        print(f"💾 Uloženo {len(reaction_message_ids)} ID zpráv do {REACTION_IDS_FILE}")
-    except Exception as e:
-        print(f"❌ Chyba při ukládání ID zpráv: {e}")
-        
-@create_subject_messages.error
-async def create_subject_messages_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):                         # pokud se objevi chyba kontroly; napr. neni vlastnik
-        await ctx.send("Tento příkaz může použít pouze vlastník bota.")  # posle zpravu, ze nema opravneni
 
 @bot.command()
 @commands.check(funkce_vrati_false)
@@ -216,10 +191,8 @@ async def on_raw_reaction_add(payload):
     if message is None:
         return
 
-    if emoji in ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]:
-        index = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"].index(emoji)
-        list_source = subject_list
-    elif emoji in ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
+   
+    if emoji in ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
     "🇰", "🇱", "🇲", "🇳"]:
         index = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
     "🇰", "🇱", "🇲", "🇳"].index(emoji)
@@ -269,10 +242,8 @@ async def on_raw_reaction_remove(payload):
     if message is None:
         return
 
-    if emoji in ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]:
-        index = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"].index(emoji)
-        list_source = subject_list
-    elif emoji in ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
+
+    if emoji in ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
     "🇰", "🇱", "🇲", "🇳"]:
         index = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
     "🇰", "🇱", "🇲", "🇳"].index(emoji)
