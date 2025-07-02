@@ -29,11 +29,26 @@ class Verify(commands.Cog):
         WHERE verified = 0 AND created_at <= datetime('now', '-10 minutes')
         ''')
 
+        # zkontrolovat, jestli mail uz je overen nekym jinym
+        cursor.execute('''
+        SELECT user_id FROM verifications WHERE mail = ? AND verified = 1 AND user_id != ?
+        ''', (mail, user_id))
+        existing = cursor.fetchone()
+
+        if existing:
+            conn.close()
+            await interaction.response.send_message(
+                f"Tento e-mail ({mail}) je již použit jiným uživatelem a nelze ho znovu ověřit.",
+                ephemeral=True
+            )
+            return
+
         # ulozit novy overovaci pokus
         cursor.execute('''
         INSERT INTO verifications (user_id, mail, verification_code)
         VALUES (?, ?, ?)
         ''', (user_id, mail, verification_code))
+      
         conn.commit()
         conn.close()
 
