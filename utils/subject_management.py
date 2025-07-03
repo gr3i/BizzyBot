@@ -242,7 +242,7 @@ async def predmet_odebrat(interaction: discord.Interaction, predmet: str):
 
     if role in interaction.user.roles:
         await interaction.user.remove_roles(role)
-        await interaction.response.send_message(f"❌ Role **{role.name}** ti byla odebrána.", ephemeral=True)
+        await interaction.response.send_message(f"❌ Byla ti odebrána role: **{role.name}**", ephemeral=True)
     else:
         await interaction.response.send_message("Tuto roli nemáš.", ephemeral=True)
 
