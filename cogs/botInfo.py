@@ -17,7 +17,7 @@ class BotInfo(commands.Cog):
         if latency < 100:
             return discord.Color.green()
         elif latency < 300:
-            return discord.Color.gold()
+            return discord.Color.yellow()
         else:
             return discord.Color.red()
 
@@ -75,7 +75,7 @@ class BotInfo(commands.Cog):
             name="🎨 Latency barva",
             value=(
                 "🟩 **Zelená** – < 100ms (vynikající)\n"
-                "🟨 **Zlatá** – 100–300ms (v pořádku)\n"
+                "🟨 **Žlutá** – 100–300ms (v pořádku)\n"
                 "🟥 **Červená** – > 300ms (vysoká latence)"
             ),
             inline=False
