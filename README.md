@@ -97,8 +97,6 @@ This list is not exhaustive — more commands are available on the Discord serve
 | `!writeasbot_longmessage`  | Sends the contents of `longmessage_for_bot.txt` as bot |
 | `!whois <user_id>`         | Displays verification info about a user                |
 | `!strip <user_id>`         | Removes user's email and roles from database           |
-| `!create_subject_messages` | Create subject selection messages                      |
-| `!vut_roles`               | Sends VUT faculty role selection message               |
 
 ---
 
