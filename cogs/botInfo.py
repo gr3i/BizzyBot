@@ -37,10 +37,22 @@ class BotInfo(commands.Cog):
             color=self.get_latency_color(latency)
         )
         embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/1138833451334424686.webp?size=96&quality=lossless")
-        embed.add_field(name="🆔 Aplikační ID", value="1358884104413904998", inline=True)
+
+        # Základní informace
+        embed.add_field(name="🆔 Aplikační ID", value="1358884104413904998", inline=False)
+
+        # Odezva a uptime vedle sebe
         embed.add_field(name="📈 Odezva", value=f"{latency} ms", inline=True)
         embed.add_field(name="⏱️ Uptime", value=uptime, inline=True)
-        embed.add_field(name="⚙️ Technologie", value=f"Python `{python_version}`\ndiscord.py `{discord_version}`", inline=False)
+
+        # Technické info
+        embed.add_field(
+            name="⚙️ Technologie",
+            value=f"Python `{python_version}`\ndiscord.py `{discord_version}`",
+            inline=False
+        )
+
+        # Příkazy
         embed.add_field(
             name="📚 Příkazy",
             value=(
@@ -50,12 +62,29 @@ class BotInfo(commands.Cog):
             ),
             inline=False
         )
+
+        # GitHub odkaz
         embed.add_field(
             name="🔗 Odkaz",
             value="[🌐 GitHub](https://github.com/gr3i/BizzyBot)",
             inline=False
         )
-        embed.set_footer(text="BizzyBot • Discord bot", icon_url=self.bot.user.avatar.url if self.bot.user.avatar else None)
+
+        # Legenda k barvě embedu
+        embed.add_field(
+            name="🎨 Latency barva",
+            value=(
+                "🟩 **Zelená** – < 100ms (vynikající)\n"
+                "🟨 **Zlatá** – 100–300ms (v pořádku)\n"
+                "🟥 **Červená** – > 300ms (vysoká latence)"
+            ),
+            inline=False
+        )
+
+        embed.set_footer(
+            text="BizzyBot • Discord bot",
+            icon_url=self.bot.user.avatar.url if self.bot.user.avatar else None
+        )
 
         await interaction.response.send_message(embed=embed)
 
