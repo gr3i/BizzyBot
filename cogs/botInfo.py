@@ -4,7 +4,6 @@ from discord.ext import commands
 from discord import app_commands, Interaction, Embed
 import time
 from datetime import timedelta
-import psutil  # pip install psutil
 
 class BotInfo(commands.Cog):
     def __init__(self, bot):
@@ -29,13 +28,6 @@ class BotInfo(commands.Cog):
         latency = round(self.bot.latency * 1000)
         uptime = self.get_uptime()
 
-        # Zjištění využití CPU a RAM
-        cpu = psutil.cpu_percent(interval=0.5)
-        mem = psutil.virtual_memory()
-        ram_percent = mem.percent
-        ram_used = mem.used // (1024**2)
-        ram_total = mem.total // (1024**2)
-
         total_commands = len(self.bot.tree.get_commands())
         slash_commands = len([cmd for cmd in self.bot.tree.get_commands() if isinstance(cmd, app_commands.Command)])
         text_commands = len(self.bot.commands)
@@ -49,11 +41,6 @@ class BotInfo(commands.Cog):
         embed.add_field(name="📈 Odezva", value=f"{latency} ms", inline=True)
         embed.add_field(name="⏱️ Uptime", value=uptime, inline=True)
         embed.add_field(name="⚙️ Technologie", value=f"Python `{python_version}`\ndiscord.py `{discord_version}`", inline=False)
-        embed.add_field(
-            name="🧪 Systémové zdroje",
-            value=f"CPU: **{cpu:.1f}%**\nRAM: **{ram_used} MB** / **{ram_total} MB** ({ram_percent:.1f}%)",
-            inline=False
-        )
         embed.add_field(
             name="📚 Příkazy",
             value=(
@@ -74,3 +61,4 @@ class BotInfo(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(BotInfo(bot))
+
