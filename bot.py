@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from db.db_setup import setup_database
 from db.db_setup import create_connection
 from utils.subject_management import predmet
-
+from utils.subject_management import predmet_odebrat
 
 
 
@@ -90,6 +90,7 @@ async def on_ready():
             print(f"❌ Chyba při načítání '{extension}': {e}")
     
     bot.tree.add_command(predmet)
+    bot.tree.add_command(predmet_odebrat)
     await bot.tree.sync()
     print("✅ Slash příkazy synchronizovány.")
 
