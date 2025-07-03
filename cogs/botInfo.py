@@ -42,8 +42,12 @@ class BotInfo(commands.Cog):
         embed.add_field(name="🆔 Aplikační ID", value="1358884104413904998", inline=False)
 
         # Odezva a uptime vedle sebe
-        embed.add_field(name="📈 Odezva", value=f"{latency} ms", inline=True)
-        embed.add_field(name="⏱️ Uptime", value=uptime, inline=True)
+        embed.add_field(
+            name="📈 Odezva & ⏱️ Uptime",
+            value=f"**{latency} ms**\n**{uptime}**",
+            inline=False
+        )
+           
 
         # Technické info
         embed.add_field(
