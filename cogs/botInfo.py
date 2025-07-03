@@ -25,11 +25,10 @@ class BotInfo(commands.Cog):
         total_commands = len(self.bot.tree.get_commands())
         slash_commands = len([cmd for cmd in self.bot.tree.get_commands() if isinstance(cmd, app_commands.Command)])
         text_commands = len(self.bot.commands)
-        user_commands = 3  # aktualizuj dle reality
-        message_commands = 3
+
 
         embed = Embed(
-            title="🤖 Rubbergod – Váš užitečný Discord pomocník",
+            title="🤖 BizzyBot – Váš užitečný Discord pomocník",
             color=discord.Color.blurple()
         )
         embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/1138833451334424686.webp?size=96&quality=lossless")
@@ -45,17 +44,15 @@ class BotInfo(commands.Cog):
                 f"Celkově: **{total_commands}**\n"
                 f"Slash: **{slash_commands}**\n"
                 f"Textové: **{text_commands}**\n"
-                f"User: **{user_commands}**\n"
-                f"Message: **{message_commands}**"
             ),
             inline=False
         )
         embed.add_field(
-            name="🔗 Odkazy",
-            value="[🌐 GitHub](https://github.com/gr3i/BizzyBot) | [📨 Pozvánka](https://discord.com/api/oauth2/authorize?client_id=1358884104413904998&permissions=8&scope=bot%20applications.commands)",
+            name="🔗 Odkaz",
+            value="[🌐 GitHub](https://github.com/gr3i/BizzyBot) ",
             inline=False
         )
-        embed.set_footer(text="Rubbergod • Moderní Discord bot", icon_url=self.bot.user.avatar.url if self.bot.user.avatar else None)
+        embed.set_footer(text="BizzyBot • Discord bot", icon_url=self.bot.user.avatar.url if self.bot.user.avatar else None)
 
         await interaction.response.send_message(embed=embed)
 
