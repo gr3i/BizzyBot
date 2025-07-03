@@ -44,7 +44,7 @@ class BotInfo(commands.Cog):
         # Odezva a uptime vedle sebe
         embed.add_field(
             name="📈 Odezva & ⏱️ Uptime",
-            value=f"**{latency} ms**\n**{uptime}**",
+            value=f"**{latency} ms, {uptime}**",
             inline=False
         )
            
