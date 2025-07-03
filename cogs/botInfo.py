@@ -29,8 +29,6 @@ class BotInfo(commands.Cog):
         uptime = self.get_uptime()
 
         total_commands = len(self.bot.tree.get_commands())
-        slash_commands = len([cmd for cmd in self.bot.tree.get_commands() if isinstance(cmd, app_commands.Command)])
-        text_commands = len(self.bot.commands)
 
         embed = Embed(
             title="🤖 BizzyBot – FP Discord Bot",
@@ -41,13 +39,12 @@ class BotInfo(commands.Cog):
         # Základní informace
         embed.add_field(name="🆔 Aplikační ID", value="1358884104413904998", inline=False)
 
-        # Odezva a uptime vedle sebe
+        # Odezva a uptime
         embed.add_field(
             name="📈 Odezva & ⏱️ Uptime",
             value=f"**{latency} ms, {uptime}**",
             inline=False
         )
-           
 
         # Technické info
         embed.add_field(
@@ -56,14 +53,10 @@ class BotInfo(commands.Cog):
             inline=False
         )
 
-        # Příkazy
+        # Příkazy (jen celkový počet)
         embed.add_field(
             name="📚 Příkazy",
-            value=(
-                f"Celkem: **{total_commands}**\n"
-                f"Slash: **{slash_commands}**\n"
-                f"Textových: **{text_commands}**"
-            ),
+            value=f"Celkem: **{total_commands}**",
             inline=False
         )
 
@@ -74,7 +67,7 @@ class BotInfo(commands.Cog):
             inline=False
         )
 
-        # Legenda k barvě embedu
+        # Legenda k barvě
         embed.add_field(
             name="🎨 Latency barva",
             value=(
