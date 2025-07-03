@@ -34,7 +34,7 @@ class BotInfo(commands.Cog):
             title="🤖 BizzyBot – FP Discord Bot",
             color=self.get_latency_color(latency)
         )
-        embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/1138833451334424686.webp?size=96&quality=lossless")
+        embed.set_thumbnail(url=self.bot.user.avatar.url if self.bot.user.avatar else None) 
 
         # Základní informace
         embed.add_field(name="🆔 Aplikační ID", value="1358884104413904998", inline=False)
