@@ -36,24 +36,24 @@ class BotInfo(commands.Cog):
         )
         embed.set_thumbnail(url=self.bot.user.avatar.url if self.bot.user.avatar else None) 
 
-        # Základní informace
+        # zakladni informace
         embed.add_field(name="🆔 Aplikační ID", value="1358884104413904998", inline=False)
 
-        # Odezva a uptime
+        # odezva a uptime
         embed.add_field(
             name="📈 Odezva & ⏱️ Uptime",
             value=f"**{latency} ms, {uptime}**",
             inline=False
         )
 
-        # Technické info
+        # technicke info
         embed.add_field(
             name="⚙️ Technologie",
             value=f"Python `{python_version}`\ndiscord.py `{discord_version}`",
             inline=False
         )
 
-        # Příkazy (jen celkový počet)
+        # prikazy (jen celkovy pocet)
         embed.add_field(
             name="📚 Příkazy",
             value=f"Celkem: **{total_commands}**",
@@ -67,7 +67,7 @@ class BotInfo(commands.Cog):
             inline=False
         )
 
-        # Legenda k barvě
+        # latency 
         embed.add_field(
             name="🎨 Latency barva",
             value=(
