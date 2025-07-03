@@ -203,7 +203,7 @@ async def predmet_autocomplete(interaction: discord.Interaction, current: str):
     return [app_commands.Choice(name=name, value=name) for name in matches[:25]]
 
 # slash command: /predmet – přidani role
-@app_commands.command(name="predmety", description="Vyber si předmět – role se přidá.")
+@app_commands.command(name="predmet", description="Vyber si předmět – role se přidá.")
 @app_commands.describe(predmet="Název předmětu")
 @app_commands.autocomplete(predmet=predmet_autocomplete)
 @app_commands.checks.has_role(1358911329737642014)
