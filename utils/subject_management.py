@@ -202,7 +202,8 @@ async def predmet_autocomplete(interaction: discord.Interaction, current: str):
     matches = [name for name, _ in subject_list if current.lower() in name.lower()]
     return [app_commands.Choice(name=name, value=name) for name in matches[:25]]
 
-@app_commands.command(name="predmet", description="Vyber si předmět – role se přidá nebo odebere.")
+# slash command: /predmet – přidani role
+@app_commands.command(name="predmet", description="Vyber si předmět – role se přidá.")
 @app_commands.describe(predmet="Název předmětu")
 @app_commands.autocomplete(predmet=predmet_autocomplete)
 @app_commands.checks.has_role(1358911329737642014)
@@ -211,24 +212,45 @@ async def predmet(interaction: discord.Interaction, predmet: str):
     if role_id is None:
         await interaction.response.send_message("Předmět nebyl nalezen.", ephemeral=True)
         return
-    
+
     role = interaction.guild.get_role(role_id)
     if not role:
         await interaction.response.send_message("Role nebyla nalezena.", ephemeral=True)
         return
-    
+
     if role in interaction.user.roles:
-        await interaction.user.remove_roles(role)
-        await interaction.response.send_message(f"❌ Role {role.name} ti byla odebrána.", ephemeral=True)
+        await interaction.response.send_message("Tuto roli už máš.", ephemeral=True)
     else:
         await interaction.user.add_roles(role)
-        await interaction.response.send_message(f"✅ Byla ti přidána role: {role.name}", ephemeral=True)
+        await interaction.response.send_message(f"✅ Byla ti přidána role: **{role.name}**", ephemeral=True)
 
+# slash command: /predmet_odebrat – odebrani role
+@app_commands.command(name="predmet_odebrat", description="Vyber si předmět – role se odebere.")
+@app_commands.describe(predmet="Název předmětu")
+@app_commands.autocomplete(predmet=predmet_autocomplete)
+@app_commands.checks.has_role(1358911329737642014)
+async def predmet_odebrat(interaction: discord.Interaction, predmet: str):
+    role_id = next((role_id for name, role_id in subject_list if name == predmet), None)
+    if role_id is None:
+        await interaction.response.send_message("Předmět nebyl nalezen.", ephemeral=True)
+        return
 
+    role = interaction.guild.get_role(role_id)
+    if not role:
+        await interaction.response.send_message("Role nebyla nalezena.", ephemeral=True)
+        return
+
+    if role in interaction.user.roles:
+        await interaction.user.remove_roles(role)
+        await interaction.response.send_message(f"❌ Role **{role.name}** ti byla odebrána.", ephemeral=True)
+    else:
+        await interaction.response.send_message("Tuto roli nemáš.", ephemeral=True)
+
+# error handler pro oba prikazy
 @predmet.error
+@predmet_odebrat.error
 async def predmet_error(interaction: discord.Interaction, error):
     if isinstance(error, app_commands.errors.MissingRole):
         await interaction.response.send_message(
             "❌ Nemáš oprávnění použít tento příkaz.", ephemeral=True
         )
-
