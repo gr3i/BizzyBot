@@ -4,7 +4,7 @@ A custom Discord bot developed for the **Brno University of Technology – Facul
 
 It handles user verification via email, assigns roles based on user input or email domain, and provides several moderation and management utilities for streamlined community onboarding.
 
-## 🔗 Link
+## 🔗 Discord Link 
 **https://discord.gg/WAStjDSx8K**
 
 ---
