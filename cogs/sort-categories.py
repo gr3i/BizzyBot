@@ -167,10 +167,10 @@ class SortCategories(commands.Cog):
     ):
         categories = [c for c in (cat1, cat2, cat3) if c is not None]
         if not categories:
-            await interaction.response.send_message("No categories specified.", ephemeral=True)
+            await interaction.response.send_message("No categories specified.")
             return
 
-        await interaction.response.defer(ephemeral=True, thinking=True)
+        await interaction.response.defer(thinking=True)
 
         try:
             if mode == "per_category":
@@ -182,7 +182,6 @@ class SortCategories(commands.Cog):
                     total_channels += len(cat.channels)
                 await interaction.followup.send(
                     f"Done (per_category). Changes: {total_changed}, total channels: {total_channels}.",
-                    ephemeral=True
                 )
             else:
                 changed, total = await _global_sort_and_reflow(
@@ -192,10 +191,9 @@ class SortCategories(commands.Cog):
                 )
                 await interaction.followup.send(
                     f"Done (global). Moves/changes: {changed}/{total}.",
-                    ephemeral=True
                 )
         except Exception as e:
-            await interaction.followup.send(f"❌ Error: `{e}`", ephemeral=True)
+            await interaction.followup.send(f"❌ Error: `{e}`")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(SortCategories(bot))
