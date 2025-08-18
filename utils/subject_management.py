@@ -197,13 +197,18 @@ subject_list = [
     ("PVB4", 1383524427681239190),
 ]
 
+predmet = app_commands.Group(
+    name="predmet"
+    description="Přidání a odebrání předmětu"
+)
 
 async def predmet_autocomplete(interaction: discord.Interaction, current: str):
     matches = [name for name, _ in subject_list if current.lower() in name.lower()]
     return [app_commands.Choice(name=name, value=name) for name in matches[:25]]
 
 # slash command: /predmet – přidani role
-@app_commands.command(name="predmet", description="Vyber si předmět – role se přidá.")
+@app_commands.command(name="pridat", description="Vyber si předmět – role se přidá.")
+@app_commands.guild_only()
 @app_commands.describe(predmet="Název předmětu")
 @app_commands.autocomplete(predmet=predmet_autocomplete)
 @app_commands.checks.has_role(1358911329737642014)
@@ -225,7 +230,8 @@ async def predmet(interaction: discord.Interaction, predmet: str):
         await interaction.response.send_message(f"✅ Byla ti přidána role: **{role.name}**", ephemeral=True)
 
 # slash command: /predmet_odebrat – odebrani role
-@app_commands.command(name="predmet odebrat", description="Vyber si předmět – role se odebere.")
+@app_commands.command(name="odebrat", description="Vyber si předmět – role se odebere.")
+@app_commands.guild_only()
 @app_commands.describe(predmet="Název předmětu")
 @app_commands.autocomplete(predmet=predmet_autocomplete)
 @app_commands.checks.has_role(1358911329737642014)
