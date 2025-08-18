@@ -144,6 +144,8 @@ class SortCategories(commands.Cog):
     @app_commands.command(
         name="sort categories",
         description="Sort channels in 1-3 categories (per_category/global, A->Z/Z->A)."
+        default_member_permissions=discord.Permissions(manage_channels=True),
+        dm_permission=False 
     )
     @app_commands.describe(
         cat1="Category 1 (required)",
