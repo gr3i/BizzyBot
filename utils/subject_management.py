@@ -212,7 +212,7 @@ async def predmet_autocomplete(interaction: discord.Interaction, current: str):
 @app_commands.describe(predmet="Název předmětu")
 @app_commands.autocomplete(predmet=predmet_autocomplete)
 @app_commands.checks.has_role(1358911329737642014)
-async def predmet(interaction: discord.Interaction, predmet: str):
+async def predmet_pridat(interaction: discord.Interaction, predmet: str):
     role_id = next((role_id for name, role_id in subject_list if name == predmet), None)
     if role_id is None:
         await interaction.response.send_message("Předmět nebyl nalezen.", ephemeral=True)
