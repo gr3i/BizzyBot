@@ -198,7 +198,7 @@ subject_list = [
 ]
 
 predmet = app_commands.Group(
-    name="predmet"
+    name="predmet",
     description="Přidání a odebrání předmětu"
 )
 
