@@ -391,8 +391,14 @@ class Obor(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    botCommand = app_commands.Group(
+        name = "obor",
+        description = "Výběr oboru" 
+    )
+
     @has_vut_role()
-    @app_commands.command(name="obor", description="Vyber si obor a získáš příslušnou roli.")
+    @botCommand.command(name="pridat", description="Vyber si obor a získáš příslušnou roli.")
+    @app_commands.guild_only()
     @app_commands.describe(obor="Název oboru a ročníku")
     @app_commands.autocomplete(obor=obor_autocomplete)
     async def obor(self, interaction: discord.Interaction, obor: str):
@@ -421,7 +427,8 @@ class Obor(commands.Cog):
         print(f"Uživatel {interaction.user} zvolil obor {obor} s předměty: {[(p[0], p[1]) for p in predmety]}")
 
     @has_vut_role()
-    @app_commands.command(name="obor odebrat", description="Odeber si roli příslušného oboru.")
+    @botCommand.command(name="odebrat", description="Odeber si roli příslušného oboru.")
+    @app_commands.guild_only()
     @app_commands.describe(obor="Název oboru a ročníku")
     @app_commands.autocomplete(obor=obor_autocomplete)
     async def obor_odebrat(self, interaction: discord.Interaction, obor: str):
