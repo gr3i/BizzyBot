@@ -421,7 +421,7 @@ class Obor(commands.Cog):
         print(f"Uživatel {interaction.user} zvolil obor {obor} s předměty: {[(p[0], p[1]) for p in predmety]}")
 
     @has_vut_role()
-    @app_commands.command(name="obor_odebrat", description="Odeber si roli příslušného oboru.")
+    @app_commands.command(name="obor odebrat", description="Odeber si roli příslušného oboru.")
     @app_commands.describe(obor="Název oboru a ročníku")
     @app_commands.autocomplete(obor=obor_autocomplete)
     async def obor_odebrat(self, interaction: discord.Interaction, obor: str):

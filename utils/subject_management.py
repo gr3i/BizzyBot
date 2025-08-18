@@ -225,7 +225,7 @@ async def predmet(interaction: discord.Interaction, predmet: str):
         await interaction.response.send_message(f"✅ Byla ti přidána role: **{role.name}**", ephemeral=True)
 
 # slash command: /predmet_odebrat – odebrani role
-@app_commands.command(name="predmet_odebrat", description="Vyber si předmět – role se odebere.")
+@app_commands.command(name="predmet odebrat", description="Vyber si předmět – role se odebere.")
 @app_commands.describe(predmet="Název předmětu")
 @app_commands.autocomplete(predmet=predmet_autocomplete)
 @app_commands.checks.has_role(1358911329737642014)

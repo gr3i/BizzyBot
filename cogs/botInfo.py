@@ -21,7 +21,7 @@ class BotInfo(commands.Cog):
         else:
             return discord.Color.red()
 
-    @app_commands.command(name="bot_info", description="Zobrazí detailní informace o botovi.")
+    @app_commands.command(name="bot info", description="Zobrazí detailní informace o botovi.")
     async def botinfo(self, interaction: Interaction):
         python_version = platform.python_version()
         discord_version = discord.__version__

@@ -64,7 +64,7 @@ class Verify(commands.Cog):
                 ephemeral=True
             )
 
-    @app_commands.command(name="verify_code", description="Zadej ověřovací kód.")
+    @app_commands.command(name="verify code", description="Zadej ověřovací kód.")
     async def verify_code(self, interaction: discord.Interaction, code: str):
         user_id = interaction.user.id
 

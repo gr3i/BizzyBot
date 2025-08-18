@@ -142,7 +142,7 @@ class SortCategories(commands.Cog):
         return True
 
     @app_commands.command(
-        name="sort-categories",
+        name="sort categories",
         description="Sort channels in 1-3 categories (per_category/global, A->Z/Z->A)."
     )
     @app_commands.describe(
