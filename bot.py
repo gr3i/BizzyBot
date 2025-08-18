@@ -89,7 +89,7 @@ async def on_ready():
         except Exception as e:
             print(f"❌ Chyba při načítání '{extension}': {e}")
     
-    bot.tree.add_command(predmet)
+    bot.tree.add_command(predmet_pridat)
     bot.tree.add_command(predmet_odebrat)
     await bot.tree.sync()
     print("✅ Slash příkazy synchronizovány.")
