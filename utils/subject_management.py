@@ -207,7 +207,7 @@ async def predmet_autocomplete(interaction: discord.Interaction, current: str):
     return [app_commands.Choice(name=name, value=name) for name in matches[:25]]
 
 # slash command: /predmet – přidani role
-@app_commands.command(name="pridat", description="Vyber si předmět – role se přidá.")
+@predmet.command(name="pridat", description="Vyber si předmět – role se přidá.")
 @app_commands.guild_only()
 @app_commands.describe(predmet="Název předmětu")
 @app_commands.autocomplete(predmet=predmet_autocomplete)
@@ -230,7 +230,7 @@ async def predmet(interaction: discord.Interaction, predmet: str):
         await interaction.response.send_message(f"✅ Byla ti přidána role: **{role.name}**", ephemeral=True)
 
 # slash command: /predmet_odebrat – odebrani role
-@app_commands.command(name="odebrat", description="Vyber si předmět – role se odebere.")
+@predmet.command(name="odebrat", description="Vyber si předmět – role se odebere.")
 @app_commands.guild_only()
 @app_commands.describe(predmet="Název předmětu")
 @app_commands.autocomplete(predmet=predmet_autocomplete)
