@@ -311,7 +311,13 @@ class Reviews(commands.Cog):
         await interaction.response.send_message("Nemáš oprávnění použít tento příkaz.", ephemeral=True)
         return False
 
-    @app_commands.command(name="hodnoceni pridat", description="Přidej hodnocení předmětu.")
+    # Skupina
+    hodnoceni = app_commands.Group(
+        name="hodnoceni",
+        description="Hodnocení předmětů"
+    )
+
+    @hodnoceni.command(name="pridat", description="Přidej hodnocení předmětu.")
     @app_commands.describe(predmet="Název předmětu", znamka="Známka A-F", recenze="Text recenze")
     @app_commands.autocomplete(predmet=predmet_autocomplete)
     async def pridat_hodnoceni(self, interaction: discord.Interaction, predmet: str, znamka: str, recenze: str):
@@ -335,7 +341,7 @@ class Reviews(commands.Cog):
         conn.commit()
         await interaction.response.send_message("Hodnocení přidáno.")
 
-    @app_commands.command(name="hodnoceni zobrazit", description="Zobraz hodnocení předmětu.")
+    @hodnoceni.command(name="zobrazit", description="Zobraz hodnocení předmětu.")
     @app_commands.describe(predmet="Název předmětu")
     @app_commands.autocomplete(predmet=predmet_autocomplete)
     async def zobraz_hodnoceni(self, interaction: discord.Interaction, predmet: str):
@@ -352,7 +358,7 @@ class Reviews(commands.Cog):
         view = ReviewView(reviews, interaction.user.id, self.bot)
         await interaction.response.send_message(embed=view.create_embed(), view=view)
 
-    @app_commands.command(name="hodnoceni upravit", description="Edituj své hodnocení.")
+    @hodnoceni.command(name="upravit", description="Edituj své hodnocení.")
     @app_commands.describe(id_hodnoceni="ID hodnocení", znamka="Nová známka", recenze="Nová recenze")
     @app_commands.autocomplete(id_hodnoceni=id_autocomplete)
     async def edit_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int, znamka: str, recenze: str):
@@ -372,7 +378,7 @@ class Reviews(commands.Cog):
         conn.commit()
         await interaction.response.send_message("Hodnocení upraveno.")
 
-    @app_commands.command(name="hodnoceni smazat", description="Smaž hodnocení.")
+    @hodnoceni.command(name="smazat", description="Smaž hodnocení.")
     @app_commands.describe(id_hodnoceni="ID hodnocení")
     @app_commands.autocomplete(id_hodnoceni=id_autocomplete)
     async def smazat_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int):
