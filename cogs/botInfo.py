@@ -21,7 +21,7 @@ class BotInfo(commands.Cog):
         else:
             return discord.Color.red()
 
-    botCommand = app_commands.Group()(
+    botCommand = app_commands.Group(
         name="bot",
         description = "Bot - Info"
     ) 
