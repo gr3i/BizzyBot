@@ -306,8 +306,13 @@ class Reviews(commands.Cog):
         self.bot = bot
 
     async def _has_allowed_role(self, interaction: discord.Interaction):
+        if not isinstance(interaction.user, discord.Member):
+            await interaction.response.send_message("Tento příkaz lze použít jen na serveru.", ephemeral=True)
+            return False
+
         if any(role.id == ALLOWED_ROLE_ID for role in interaction.user.roles):
             return True
+
         await interaction.response.send_message("Nemáš oprávnění použít tento příkaz.", ephemeral=True)
         return False
 
@@ -318,6 +323,7 @@ class Reviews(commands.Cog):
     )
 
     @hodnoceni.command(name="pridat", description="Přidej hodnocení předmětu.")
+    @app_commands.guild_only()
     @app_commands.describe(predmet="Název předmětu", znamka="Známka A-F", recenze="Text recenze")
     @app_commands.autocomplete(predmet=predmet_autocomplete)
     async def pridat_hodnoceni(self, interaction: discord.Interaction, predmet: str, znamka: str, recenze: str):
@@ -330,10 +336,12 @@ class Reviews(commands.Cog):
         if len(recenze) > MAX_REVIEW_LENGTH:
             await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
             return
+ 
 
-        if len(recenze) > MAX_REVIEW_LENGTH:
-            await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
+        if znamka.upper() not in VALID_GRADES:
+            await interaction.response.send_message("Neplatná známka (A–F).", ephemeral=True)
             return
+
 
         datum = datetime.now().isoformat()
         c.execute("INSERT INTO hodnoceni (predmet, znamka, recenze, autor_id, datum) VALUES (?, ?, ?, ?, ?)",
@@ -342,6 +350,7 @@ class Reviews(commands.Cog):
         await interaction.response.send_message("Hodnocení přidáno.")
 
     @hodnoceni.command(name="zobrazit", description="Zobraz hodnocení předmětu.")
+    @app_commands.guild_only()
     @app_commands.describe(predmet="Název předmětu")
     @app_commands.autocomplete(predmet=predmet_autocomplete)
     async def zobraz_hodnoceni(self, interaction: discord.Interaction, predmet: str):
@@ -359,10 +368,15 @@ class Reviews(commands.Cog):
         await interaction.response.send_message(embed=view.create_embed(), view=view)
 
     @hodnoceni.command(name="upravit", description="Edituj své hodnocení.")
+    @app_commands.guild_only()
     @app_commands.describe(id_hodnoceni="ID hodnocení", znamka="Nová známka", recenze="Nová recenze")
     @app_commands.autocomplete(id_hodnoceni=id_autocomplete)
     async def edit_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int, znamka: str, recenze: str):
         if not await self._has_allowed_role(interaction):
+            return
+
+        if znamka.upper() not in VALID_GRADES:
+            await interaction.response.send_message("Neplatná známka (A–F).", ephemeral=True)
             return
 
         if len(recenze) > MAX_REVIEW_LENGTH:
@@ -379,6 +393,7 @@ class Reviews(commands.Cog):
         await interaction.response.send_message("Hodnocení upraveno.")
 
     @hodnoceni.command(name="smazat", description="Smaž hodnocení.")
+    @app_commands.guild_only()
     @app_commands.describe(id_hodnoceni="ID hodnocení")
     @app_commands.autocomplete(id_hodnoceni=id_autocomplete)
     async def smazat_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int):
