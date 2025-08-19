@@ -1,1 +1,62 @@
-Zde byva mega dlouha zprava pro bota, kterou sam napisu v longmessage_for_bot.txt a pomoci !writeasbot_longmessage spustim, aby bot tuhle dlouhou zpravu napsal sam  
+:crescent_moon: Pohádka o Kouzelném Botovi
+
+Bylo nebylo, na serveru zvaném VUT Discord, žil mocný kouzelný pomocník jménem BizzyBot. Ten měl mnoho kouzel, která lidem pomáhala a chránila království před zmatkem.
+
+V království panovali dva druhy hrdinů – MODové a obyčejní studenti. Každý z nich měl jiné zaklínadla.
+
+:man_mage: Kouzla MODů
+
+MODové drželi v rukou ta nejsilnější kouzla. Když se někdo vetřel do hradu a měl na sobě podivné pláště, mohli na něj seslat kouzlo:
+
+`!strip` – a všechny role z jeho pláště zmizely.
+
+Když pak chtěli vědět, kdo cizinec doopravdy je, zvolali:
+
+`!whois` – a kouzelné zrcadlo jim ukázalo jeho jméno a přezdívku.
+
+Pokud MODové chtěli promluvit hlasem samotného Bota, použili kouzlo:
+
+`!writeasbot`, a z úst Bota zazněla jejich zpráva.
+
+Jen nejvyšší kouzelník Ent3i však měl moc použít tajemné kouzlo:
+
+`!writeasbot_longmessage`, kterým dokázal nechat Bota napsat nekonečně dlouhou zprávu, jako by se rozléhala celým královstvím.
+
+:woman_student: Kouzla obyčejných studentů
+
+Aby studenti mohli vejít do hradu, museli se nejprve ověřit. Seslali kouzlo:
+
+`/verify jejich_jmeno@vutbr.cz` – a BizzyBot jim poslal dopis s tajným kódem.
+
+Když kód přečetli nahlas pomocí kouzla `/verify_code`, objevily se na nich role VUT/HOST a Verified a mohli vstoupit.
+
+Když si chtěli ověřit, že Bot stále žije a nespí, zavolali:
+
+`/hello`, a Bot vždy odpověděl: „Ahoj“.
+
+Pak se studenti učili různým předmětům. Když si přidali nový obor či předmět, zvolali:
+
+`/predmet pridat Matematika` nebo `/obor pridat IT` – a Bot jim dal kouzelnou roli, která je pustila do učebny.
+
+Když už roli nepotřebovali, použili opačné kouzlo: `/predmet odebrat` či `/obor odebrat`.
+
+Studium nebylo jen o chození na přednášky – každý mohl ohodnotit, jak těžký nebo zajímavý je předmět.
+
+Kouzlo `/hodnoceni zobrazit` jim ukázalo, co si myslí ostatní.
+
+Kouzlem `/hodnoceni pridat` přidali vlastní hodnocení.
+
+Když se zmýlili, použili `/hodnoceni upravit`, nebo když hodnocení chtěli smazat, seslali `/hodnoceni odebrat`.
+
+A kdo chtěl vědět víc o samotném Botovi, mohl říct:
+
+`/bot info`, a BizzyBot vyprávěl o sobě, o své rychlosti i síle.
+
+Nakonec, aby se nikdo v království neztratil, existovalo kouzlo:
+
+`/role`, které ukázalo všechny důležité role v říši a jejich vysvětlení.
+
+:star2: Závěr
+
+A tak díky kouzlům MODů a studentů vládl na serveru řád. BizzyBot byl věrným průvodcem, který vždy pomohl, když někdo vyslovil správné zaklínadlo.
+
