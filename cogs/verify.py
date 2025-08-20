@@ -43,6 +43,7 @@ class Verify(commands.Cog):
 
             # save new attempt
             v = Verification(user_id=user_id, mail=mail, verification_code=verification_code)
+            print(f"[DEBUG] inserting verification: user_id={user_id}, mail={mail}, code={verification_code}")
             session.add(v)
             session.commit()
 
