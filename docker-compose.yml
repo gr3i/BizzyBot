@@ -11,5 +11,5 @@ services:
     env_file:
       - .env
     volumes:
-      - ./db:/app/db   # perzistence DB na hostiteli
+      - ./db:/app/db
 

@@ -3,20 +3,16 @@ import json
 import discord
 from db.session import engine
 from db.models import Base
-
 Base.metadata.create_all(engine)
-
 from discord.ext import commands
 from dotenv import load_dotenv
-from db.db_setup import setup_database
-from db.db_setup import create_connection
 from utils.subject_management import predmet
 from utils.subject_management import predmet_odebrat
 
 # nacteni tokenu a databaze
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
-setup_database()
+
 
 # cesta k souboru pro ukladani ID zprav
 REACTION_IDS_FILE = "utils/reaction_ids.json"
