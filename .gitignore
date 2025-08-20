@@ -3,3 +3,5 @@ verify.db
 *.log
 __pycache__
 cogs/strip.py
+db/verify.db.bak
+db/reviews.db.bak

@@ -7,7 +7,10 @@ from db.db_setup import setup_database
 from db.db_setup import create_connection
 from utils.subject_management import predmet
 from utils.subject_management import predmet_odebrat
+from db.models import Base
+from db.session import engine
 
+Base.metadata.create_all(engine)
 
 
 # nacteni tokenu a databaze
