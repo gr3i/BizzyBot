@@ -8,6 +8,9 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from utils.subject_management import predmet
 from utils.subject_management import predmet_odebrat
+from db.session import SessionLocal
+from db.models import Verification
+
 
 # nacteni tokenu a databaze
 load_dotenv()
@@ -264,49 +267,34 @@ async def on_raw_reaction_remove(payload):
                 print(f"❗ Nelze poslat DM uživateli {member.name}")
 
 @bot.command()
-@commands.check(is_owner)  # kontrola zajisti, ze prikaz muze spustit pouze vlastnik
+@commands.check(is_owner)  # only owner or allowed role
 async def whois(ctx, user_id: int):
-    """Vrati informace o uzivatelskem uctu podle ID vcetne stavu overeni e-mailem."""
-    # ziskani uzivatele jako Member objekt z guildy
+    """Vrati info o uzivateli a jeho e-mail overeni."""
     member = ctx.guild.get_member(user_id)
-
     if member is None:
-        await ctx.send(f"Uživatel s ID {user_id} není na tomto serveru.")
+        await ctx.send(f"Uzivatel s ID {user_id} neni na tomto serveru.")
         return
 
-    # ziskani informaci o overeni z databaze
-    conn = create_connection()
-    cursor = conn.cursor()
+    # ORM lookup
+    with SessionLocal() as session:
+        v = session.query(Verification).filter(Verification.user_id == user_id).order_by(Verification.id.desc()).first()
 
-    cursor.execute('''
-    SELECT mail, verified FROM verifications WHERE user_id = ?
-    ''', (user_id,))
-    row = cursor.fetchone()
-
-    if row is None:
-        verification_status = "Ověření nebylo zahájeno."
-        user_email = "Neznámý"
+    if v is None:
+        verification_status = "Overeni nebylo zahajeno."
+        user_email = "Neznamy"
     else:
-        mail, verified = row
-        if verified:
-            verification_status = "Ověřeno"
-        else:
-            verification_status = "Neověřeno"
-        user_email = mail
+        verification_status = "Overeno" if v.verified else "Neovereno"
+        user_email = v.mail
 
-    conn.close()
-
-    # vytvoreni embed zpravy
-    embed = discord.Embed(title=f"Informace o uživatelském účtu {member.name}", color=discord.Color.blue())
-    embed.add_field(name="Uživatelské jméno", value=member.name, inline=True)
+    embed = discord.Embed(title=f"Informace o uctu {member.name}", color=discord.Color.blue())
+    embed.add_field(name="Uzivatelske jmeno", value=member.name, inline=True)
     embed.add_field(name="ID", value=member.id, inline=True)
-    embed.add_field(name="Ověření", value=verification_status, inline=True)
+    embed.add_field(name="Overeni", value=verification_status, inline=True)
     embed.add_field(name="E-mail", value=user_email, inline=True)
-
     if member.avatar:
         embed.set_thumbnail(url=member.avatar.url)
-
     await ctx.send(embed=embed)
+
 
 @whois.error
 async def whois_error(ctx, error):
@@ -315,49 +303,28 @@ async def whois_error(ctx, error):
 
     
 @bot.command()
-@commands.check(is_owner)  # tato kontrola zajisti, ze prikaz muze spustit pouze vlastník
+@commands.check(is_owner)  # only owner or allowed role
 async def strip(ctx, user_id: int):
-    
-    """Odebere uživatelovi e-mail z databáze (tzn. odstraní jeho ověření)."""
+    """Smaze overeni uzivatele z DB a odebere jeho role."""
+    # delete from DB using ORM
+    with SessionLocal() as session:
+        v = session.query(Verification).filter(Verification.user_id == user_id).first()
+        if v is None:
+            await ctx.send(f"Uzivatel s ID {user_id} nema zaznam v DB.")
+            return
+        session.delete(v)
+        session.commit()
 
-    # pripojime se k databazi
-    conn = create_connection()
-    cursor = conn.cursor()
-
-    # zkontrolujeme, zda uzivatel existuje v databazi
-    cursor.execute('''
-    SELECT * FROM verifications WHERE user_id = ?
-    ''', (user_id,))
-    row = cursor.fetchone()
-
-    if row is None:
-        await ctx.send(f"Uživatel s ID {user_id} nemá uložený žádný ověřovací záznam.")
-    else:
-        # pokud existuje zaznam, odstranime ho
-        cursor.execute('''
-        DELETE FROM verifications WHERE user_id = ?
-        ''', (user_id,))
-        conn.commit()
-        await ctx.send(f"Ověření uživatele s ID {user_id} bylo odstraněno.")
-
-    conn.close()
-
-    # ziskani uzivatele jako Member objektu
+    # remove roles
     member = ctx.guild.get_member(user_id)
-    if member is None:
-        await ctx.send("Uživatel není na tomto serveru nebo není online.")
-        return
-
-    # odstraneni vsech roli krome @everyone
-    roles_to_remove = [role for role in member.roles if role != ctx.guild.default_role]
-    if roles_to_remove:
+    if member:
         try:
-            await member.remove_roles(*roles_to_remove, reason="Odebrání rolí po zrušení ověření.")
-            await ctx.send(f"✅ Uživateli {member.mention} byly odebrány všechny role.")
+            await member.remove_roles(*member.roles[1:])  # keep @everyone
+            await ctx.send("Uzivatel byl odebran z DB a role byly odebrany.")
         except discord.Forbidden:
-            await ctx.send("❌ Nemám oprávnění odebrat některé role.")
+            await ctx.send("Nemam opravneni odebrat nektere role.")
     else:
-        await ctx.send("Uživatel nemá žádné role k odebrání.")
+        await ctx.send("Uzivatel neni na serveru.")
 
 @strip.error
 async def strip_error(ctx, error):
