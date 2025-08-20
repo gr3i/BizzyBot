@@ -1,17 +1,17 @@
 import os
 import json
 import discord
+from db.session import engine
+from db.models import Base
+
+Base.metadata.create_all(engine)
+
 from discord.ext import commands
 from dotenv import load_dotenv
 from db.db_setup import setup_database
 from db.db_setup import create_connection
 from utils.subject_management import predmet
 from utils.subject_management import predmet_odebrat
-from db.models import Base
-from db.session import engine
-
-Base.metadata.create_all(engine)
-
 
 # nacteni tokenu a databaze
 load_dotenv()

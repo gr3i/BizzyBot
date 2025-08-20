@@ -7,9 +7,9 @@ services:
     restart: unless-stopped
     environment:
       TZ: Europe/Prague
-      DATABASE_URL: sqlite:////app/db/app.db   # cesta k SQLite v kontejneru
+      DATABASE_URL: sqlite:////app/db/app.db   
     env_file:
       - .env
     volumes:
-      - ./db:/app/db   # host folder ./db se namapuje do /app/db uvnitr kontejneru
+      - ./db:/app/db   # perzistence DB na hostiteli
 
