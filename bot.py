@@ -1,4 +1,4 @@
-# bot.py — minimalni jistota
+# bot.py — minimalni jistotaa
 
 import os
 import json
