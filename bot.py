@@ -8,8 +8,19 @@ from db.session import engine
 from db.models import Base
 
 load_dotenv()
+
+def _int_env(name: str, default: int = 0) -> int:
+    """Bezpecne precti INT env; prazdny nebo necislo => default."""
+    raw = os.getenv(name, "")
+    if not raw:
+        return default
+    try:
+        return int(raw.strip())
+    except ValueError:
+        return default
+
 TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD_ID = int(os.getenv("GUILD_ID", "0"))
+GUILD_ID = _int_env("GUILD_ID", 0)
 
 # create tables if not exist
 Base.metadata.create_all(engine)
