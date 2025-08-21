@@ -1,22 +1,32 @@
-# bot.py — minimalni jistotaa
+# bot.py — stabilni start + per-guild sync
 
 import os
-import json
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-# ORM init
+# --- ORM init (nechava tabulky vytvorit pri startu) ---
 from db.session import engine
 from db.models import Base
 Base.metadata.create_all(engine)
 
-# ---- config ----
+# --- Config & ENV ---
 load_dotenv()
-TOKEN    = os.getenv("DISCORD_TOKEN")
-GUILD_ID = int(os.getenv("GUILD_ID", "1357455204391321712"))  # uprav/ENV
 
-# intents
+def get_guild_id(default: int) -> int:
+    raw = os.getenv("GUILD_ID", "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        print(f"[WARN] GUILD_ID='{raw}' neni cislo, pouzivam default {default}")
+        return default
+
+TOKEN    = os.getenv("DISCORD_TOKEN")              # musi byt v .env
+GUILD_ID = get_guild_id(1357455204391321712)       # uprav default na svuj server
+
+# --- Discord intents ---
 intents = discord.Intents.default()
 intents.guilds = True
 intents.messages = True
@@ -26,7 +36,7 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# rychly test slash
+# jednoduchy testovaci slash (pomuze overit sync)
 @bot.tree.command(name="ping", description="test")
 async def ping_cmd(interaction: discord.Interaction):
     await interaction.response.send_message("pong", ephemeral=True)
@@ -35,17 +45,19 @@ async def ping_cmd(interaction: discord.Interaction):
 async def setup_hook():
     print("[setup_hook] start")
 
-    # 1) load cogy PRED syncem
+    # 1) Nacti cogy PRED synchronizaci
     extensions = [
         "cogs.hello",
         "cogs.botInfo",
         "cogs.verify",
         "cogs.role",
-        "cogs.reviews",         # tvoje reviews (registruje groupu do guildy)
+        "cogs.reviews",         # obsahuje groupu /hodnoceni
         "utils.vyber_oboru",
         "utils.nastav_prava",
-        "cogs.sort_categories", # ujisti se, ze soubor je 'cogs/sort_categories.py'
+        # POZOR: soubor musi byt cogs/sort_categories.py (podtrzitko, ne pomlcka)
+        "cogs.sort_categories",
     ]
+
     for ext in extensions:
         try:
             await bot.load_extension(ext)
@@ -53,13 +65,15 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba pri nacitani '{ext}': {e}")
 
-    # 2) per-guild sync (okamzity a spolehlivy)
+    # 2) Per-guild sync (okamzity; prikázy uvidis hned v teto guilde)
     guild = discord.Object(id=GUILD_ID)
-    # pokud mas dalsi extra prikazy mimo cogy, pridej sem jako guild-scoped:
+
+    # Pokud mas dalsi vlastni prikazy mimo cogy (napr. utils.subject_management.predmet),
+    # pridej je sem JAKO guild-scoped:
     # from utils.subject_management import predmet
     # bot.tree.add_command(predmet, guild=guild)
 
-    # pro jistotu tvrdý resync: vycistit a znovu nahrat
+    # pro jistotu „hard“ resync: vycisti a znovu zapiš do guildy
     bot.tree.clear_commands(guild=guild)
     cmds = await bot.tree.sync(guild=guild)
     print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
@@ -68,7 +82,9 @@ async def setup_hook():
 async def on_ready():
     print(f"✅ Bot prihlasen jako {bot.user} (ID: {bot.user.id})")
 
-# (tvé textové prikazy whois/strip atd. muzes nechat dole beze zmen)
+# --- start ---
+if not TOKEN:
+    raise RuntimeError("DISCORD_TOKEN neni nastaven v .env")
 
 bot.run(TOKEN)
 
