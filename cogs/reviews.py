@@ -226,18 +226,15 @@ async def predmet_autocomplete(interaction: discord.Interaction, current: str):
     ][:25]
 
 
+from sqlalchemy import text
+
 async def id_autocomplete(interaction: discord.Interaction, current: str):
-    """Autocomplete IDs from ORM (search by id or subject)."""
+    q = f"%{current}%"
     with SessionLocal() as s:
-        # try to parse numeric prefix to speed up searches
-        like = f"%{current}%"
-        rows = (
-            s.query(Review.id, Review.predmet)
-            .filter((Review.predmet.ilike(like)) | (Review.id.cast(String).ilike(like)))
-            .order_by(Review.id.desc())
-            .limit(25)
-            .all()
-        )
+        rows = s.execute(
+            text("SELECT id, predmet FROM hodnoceni WHERE CAST(id AS TEXT) LIKE :q OR predmet LIKE :q ORDER BY id DESC LIMIT 25"),
+            {"q": q},
+        ).all()
     return [app_commands.Choice(name=f"{rid} - {predmet}", value=rid) for rid, predmet in rows]
 
 
@@ -470,6 +467,11 @@ class Reviews(commands.Cog):
         await interaction.response.send_message("Hodnocení smazáno.")
 
 
-async def setup(bot):
-    await bot.add_cog(Reviews(bot))
+async def setup(bot: commands.Bot):
+    cog = Reviews(bot)
+    await bot.add_cog(cog)
+    # group je class attribute; je treba ji pridat do stromu rucne
+    bot.tree.add_command(Reviews.hodnoceni)
+    print("[reviews] group 'hodnoceni' registered")
+
 
