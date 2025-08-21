@@ -8,79 +8,110 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-class Verify(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+import re
 
-    @app_commands.command(name="verify", description="Zadej svůj mail pro ověření.")
-    async def verify(self, interaction: discord.Interaction, mail: str):
-        user_id = interaction.user.id
-        verification_code = generate_verification_code()
+VUT_PATTERN = re.compile(r"^(x?\d{6})@(vut\.cz|vutbr\.cz)$", re.IGNORECASE)
 
-        with SessionLocal() as session:
-            # 0) already verified -> stop early
-            existing_verified = (
-                session.query(Verification)
-                .filter(and_(Verification.user_id == user_id, Verification.verified == True))
-                .order_by(Verification.id.desc())
-                .first()
+def extract_vut_code(email: str) -> str | None:
+    """Return 6-digit code if email is one of allowed VUT formats, otherwise None."""
+    m = VUT_PATTERN.match(email.strip().lower())
+    if not m:
+        return None
+    local = m.group(1)           # e.g. "123456" or "x123456"
+    return local[-6:]            # take last 6 digits
+
+
+@app_commands.command(name="verify", description="Zadej svůj mail pro ověření.")
+async def verify(self, interaction: discord.Interaction, mail: str):
+    user_id = interaction.user.id
+    verification_code = generate_verification_code()
+    mail_norm = mail.strip().lower()
+
+    with SessionLocal() as session:
+        # 0) user already verified -> stop early
+        existing_verified = (
+            session.query(Verification)
+            .filter(Verification.user_id == user_id, Verification.verified == True)
+            .order_by(Verification.id.desc())
+            .first()
+        )
+        if existing_verified:
+            await interaction.response.send_message(
+                f"Uz jsi ověřen. Pokud potřebuješ změnu, kontaktuj moderátory.",
+                ephemeral=True
             )
-            if existing_verified:
-                await interaction.response.send_message(
-                    f"Už jsi ověřen. Pokud potřebujes změnu, kontaktuj moderátory.",
-                    ephemeral=True
-                )
-                return
+            return
 
-            # 1) delete this user's old unverified attempts
-            session.query(Verification).filter(
-                and_(Verification.user_id == user_id, Verification.verified == False)
-            ).delete(synchronize_session=False)
+        # 1) delete this user's old unverified attempts
+        session.query(Verification).filter(
+            Verification.user_id == user_id, Verification.verified == False
+        ).delete(synchronize_session=False)
 
-            # 2) delete global unverified attempts older than 10 minutes
-            cutoff = datetime.utcnow() - timedelta(minutes=10)
-            session.query(Verification).filter(
-                and_(Verification.verified == False, Verification.created_at <= cutoff)
-            ).delete(synchronize_session=False)
+        # 2) delete global unverified attempts older than 10 minutes
+        from datetime import datetime, timedelta
+        cutoff = datetime.utcnow() - timedelta(minutes=10)
+        session.query(Verification).filter(
+            Verification.verified == False,
+            Verification.created_at <= cutoff
+        ).delete(synchronize_session=False)
 
-            # 3) block if the same mail is already verified by someone else
-            someone_else = (
+        # 3a) if mail is one of the 4 allowed formats, block duplicates
+        code6 = extract_vut_code(mail_norm)
+        if code6:
+            # generate the 4 canonical variants for this 6-digit code
+            group_emails = [
+                f"{code6}@vut.cz",
+                f"x{code6}@vut.cz",
+                f"{code6}@vutbr.cz",
+                f"x{code6}@vutbr.cz",
+            ]
+            dup = (
                 session.query(Verification)
                 .filter(
-                    and_(
-                        Verification.mail == mail,
-                        Verification.verified == True,
-                        Verification.user_id != user_id,
-                    )
+                    Verification.verified == True,
+                    Verification.user_id != user_id,
+                    Verification.mail.in_(group_emails),
                 )
                 .first()
             )
-            if someone_else:
+            if dup:
                 await interaction.response.send_message(
-                    f"Tento e-mail ({mail}) je již použit jiným uživatelem a nelze ho znovu ověřit.",
+                    "Tento VUT kód (6 číslic) už je použit jiným uživatelem.",
+                    ephemeral=True
+                )
+                return
+        else:
+            # 3b) for non-VUT formats keep old check: exact mail already verified by someone else
+            existing = (
+                session.query(Verification)
+                .filter(Verification.mail == mail_norm, Verification.verified == True, Verification.user_id != user_id)
+                .first()
+            )
+            if existing:
+                await interaction.response.send_message(
+                    f"Tento e-mail je již použit jiným uživatelem a nelze ho znovu ovšřit.",
                     ephemeral=True
                 )
                 return
 
-            # 4) create new verification attempt
-            v = Verification(user_id=user_id, mail=mail, verification_code=verification_code, verified=False)
-            session.add(v)
-            session.commit()
+        # 4) create new verification attempt
+        v = Verification(user_id=user_id, mail=mail_norm, verification_code=verification_code, verified=False)
+        session.add(v)
+        session.commit()
 
-        # 5) send mail outside of session
-        try:
-            send_verification_mail(mail, verification_code)
-            await interaction.response.send_message(
-                f"Zadal jsi mail {mail}. Ověřovací kód byl odeslán na tvůj mail. (Zkontroluj si SPAM.)",
-                ephemeral=True
-            )
-        except Exception as e:
-            await interaction.response.send_message(
-                f"Došlo k chybě při odesílání mailu: {e}",
-                ephemeral=True
-            )
-
-   
+    # 5) send mail
+    try:
+        send_verification_mail(mail_norm, verification_code)
+        await interaction.response.send_message(
+            f"Zadal jsi mail {mail}. Ověřovací kód byl odeslán na tvůj mail. (Zkontroluj si SPAM)",
+            ephemeral=True
+        )
+    except Exception as e:
+        await interaction.response.send_message(
+            f"Došlo k chybě při odesílání mailu: {e}",
+            ephemeral=True
+        )
+       
     @app_commands.command(name="verify_code", description="Zadej ověřovací kód.")
     async def verify_code(self, interaction: discord.Interaction, code: str):
         user_id = interaction.user.id
