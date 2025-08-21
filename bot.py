@@ -305,26 +305,29 @@ async def whois_error(ctx, error):
 @bot.command()
 @commands.check(is_owner)  # only owner or allowed role
 async def strip(ctx, user_id: int):
-    """Smaze overeni uzivatele z DB a odebere jeho role."""
-    # delete from DB using ORM
+    """Smaze vsechny verifikace daneho usera a odebere role."""
+    # db delete all rows for this user
+    from db.session import SessionLocal
+    from db.models import Verification
+
     with SessionLocal() as session:
-        v = session.query(Verification).filter(Verification.user_id == user_id).first()
-        if v is None:
-            await ctx.send(f"Uživatel s ID {user_id} nemá záznam v DB.")
-            return
-        session.delete(v)
+        deleted = session.query(Verification)\
+            .filter(Verification.user_id == user_id)\
+            .delete(synchronize_session=False)  # delete all rows
         session.commit()
 
-    # remove roles
+    # remove roles from member (keep @everyone)
     member = ctx.guild.get_member(user_id)
     if member:
-        try:
-            await member.remove_roles(*member.roles[1:])  # keep @everyone
-            await ctx.send("Uživatel byl odebrán z DB a role byly odebrány.")
-        except discord.Forbidden:
-            await ctx.send("Nemám oprávnění odebrat některé role.")
+        if len(member.roles) > 1:
+            try:
+                await member.remove_roles(*member.roles[1:])
+            except discord.Forbidden:
+                await ctx.send("Nemám oprávnění odebrat některé role.")
+        await ctx.send(f"Smazáno z DB: {deleted} záznamů. Role odebrány.")
     else:
-        await ctx.send("Uživatel není na serveru.")
+        await ctx.send(f"Smazáno z DB: {deleted} záznamů. Uživatel není na serveru.")
+
 
 @strip.error
 async def strip_error(ctx, error):
