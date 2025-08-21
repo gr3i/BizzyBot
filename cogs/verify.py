@@ -122,7 +122,7 @@ class Verify(commands.Cog):
         try:
             send_verification_mail(mail_norm, verification_code)
             await interaction.response.send_message(
-                f"Zadal jsi mail {mail}. Ověřovací kód byl odeslán (zkontroluj SPAM).",
+                f"Zadal jsi mail {mail}. Ověřovací kód byl odeslán na tvůj mail. (zkontroluj si SPAM).",
                 ephemeral=True
             )
         except Exception as e:
