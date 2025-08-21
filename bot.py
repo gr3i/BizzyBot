@@ -15,7 +15,7 @@ from db.models import Verification
 # nacteni tokenu a databaze
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
-
+GUILD_ID = 1357455204391321712 
 
 # cesta k souboru pro ukladani ID zprav
 REACTION_IDS_FILE = "utils/reaction_ids.json"
@@ -351,7 +351,7 @@ async def strip_error(ctx, error):
         await ctx.send("Tento příkaz může použít pouze vlastník bota.")     # posle zpravu, ze nema opravneni
 
 
-GUILD_ID = 1357455204391321712 
+
 
 @bot.tree.command(name="ping", description="Test slash command")
 async def ping_cmd(interaction: discord.Interaction):
