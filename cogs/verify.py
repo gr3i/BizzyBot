@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta
 from sqlalchemy import and_
 from db.session import SessionLocal
@@ -8,17 +9,16 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-import re
-
+# allowed VUT formats only:
+# 123456@vut.cz, x123456@vut.cz, 123456@vutbr.cz, x123456@vutbr.cz
 VUT_PATTERN = re.compile(r"^(x?\d{6})@(vut\.cz|vutbr\.cz)$", re.IGNORECASE)
 
 def extract_vut_code(email: str) -> str | None:
-    """Return 6-digit code if email is one of allowed VUT formats, otherwise None."""
+    """Return 6-digit code if email matches allowed formats, else None."""
     m = VUT_PATTERN.match(email.strip().lower())
     if not m:
         return None
-    local = m.group(1)           # e.g. "123456" or "x123456"
-    return local[-6:]            # take last 6 digits
+    return m.group(1)[-6:]  # last 6 digits
 
 
 @app_commands.command(name="verify", description="Zadej svůj mail pro ověření.")
@@ -28,7 +28,7 @@ async def verify(self, interaction: discord.Interaction, mail: str):
     mail_norm = mail.strip().lower()
 
     with SessionLocal() as session:
-        # 0) user already verified -> stop early
+        # 0) already verified -> stop early
         existing_verified = (
             session.query(Verification)
             .filter(Verification.user_id == user_id, Verification.verified == True)
@@ -37,7 +37,7 @@ async def verify(self, interaction: discord.Interaction, mail: str):
         )
         if existing_verified:
             await interaction.response.send_message(
-                f"Uz jsi ověřen. Pokud potřebuješ změnu, kontaktuj moderátory.",
+                "Už jsi ověřen. Pokud potřebuješ změnu, kontaktuj moderátory.",
                 ephemeral=True
             )
             return
@@ -48,17 +48,15 @@ async def verify(self, interaction: discord.Interaction, mail: str):
         ).delete(synchronize_session=False)
 
         # 2) delete global unverified attempts older than 10 minutes
-        from datetime import datetime, timedelta
         cutoff = datetime.utcnow() - timedelta(minutes=10)
         session.query(Verification).filter(
             Verification.verified == False,
             Verification.created_at <= cutoff
         ).delete(synchronize_session=False)
 
-        # 3a) if mail is one of the 4 allowed formats, block duplicates
+        # 3a) if mail matches allowed VUT formats, block duplicates by 6-digit code
         code6 = extract_vut_code(mail_norm)
         if code6:
-            # generate the 4 canonical variants for this 6-digit code
             group_emails = [
                 f"{code6}@vut.cz",
                 f"x{code6}@vut.cz",
@@ -76,20 +74,24 @@ async def verify(self, interaction: discord.Interaction, mail: str):
             )
             if dup:
                 await interaction.response.send_message(
-                    "Tento VUT kód (6 číslic) už je použit jiným uživatelem.",
+                    "Tento VUT kód (6 číslic) už je použit jiným uživatelem. Kontaktuj moderátory, pokud jde o omyl.",
                     ephemeral=True
                 )
                 return
         else:
-            # 3b) for non-VUT formats keep old check: exact mail already verified by someone else
+            # 3b) for non-VUT formats: exact mail must not be verified by someone else
             existing = (
                 session.query(Verification)
-                .filter(Verification.mail == mail_norm, Verification.verified == True, Verification.user_id != user_id)
+                .filter(
+                    Verification.mail == mail_norm,
+                    Verification.verified == True,
+                    Verification.user_id != user_id
+                )
                 .first()
             )
             if existing:
                 await interaction.response.send_message(
-                    f"Tento e-mail je již použit jiným uživatelem a nelze ho znovu ovšřit.",
+                    "Tento e-mail je již použit jiným uživatelem a nelze ho znovu ověřit.",
                     ephemeral=True
                 )
                 return
@@ -103,7 +105,7 @@ async def verify(self, interaction: discord.Interaction, mail: str):
     try:
         send_verification_mail(mail_norm, verification_code)
         await interaction.response.send_message(
-            f"Zadal jsi mail {mail}. Ověřovací kód byl odeslán na tvůj mail. (Zkontroluj si SPAM)",
+            f"Zadal jsi mail {mail}. Ověřovací kód byl odeslán (zkontroluj SPAM).",
             ephemeral=True
         )
     except Exception as e:
@@ -111,59 +113,61 @@ async def verify(self, interaction: discord.Interaction, mail: str):
             f"Došlo k chybě při odesílání mailu: {e}",
             ephemeral=True
         )
-       
-    @app_commands.command(name="verify_code", description="Zadej ověřovací kód.")
-    async def verify_code(self, interaction: discord.Interaction, code: str):
-        user_id = interaction.user.id
 
-        with SessionLocal() as session:
-            v = session.query(Verification).filter(
-                Verification.user_id == user_id
-            ).order_by(Verification.id.desc()).first()
+@app_commands.command(name="verify_code", description="Zadej ověřovací kód.")
+async def verify_code(self, interaction: discord.Interaction, code: str):
+    user_id = interaction.user.id
 
-            if v is None:
-                await interaction.response.send_message(
-                    "Nemáš žádný neověřený kód. Použij příkaz /verify pro získání kódu.",
-                    ephemeral=True
-                )
-                return
+    with SessionLocal() as session:
+        v = (session.query(Verification)
+             .filter(Verification.user_id == user_id)
+             .order_by(Verification.id.desc())
+             .first())
 
-            if v.verified:
-                await interaction.response.send_message("Již jsi ověřen.", ephemeral=True)
-                return
+        if v is None:
+            await interaction.response.send_message(
+                "Nemáš žádný neověřený kód. Použij příkaz /verify pro získání kódu.",
+                ephemeral=True
+            )
+            return
 
-            if code != v.verification_code:
-                await interaction.response.send_message("Chybný kód. Zkus to znovu.", ephemeral=True)
-                return
+        if v.verified:
+            await interaction.response.send_message("Již jsi ověřen.", ephemeral=True)
+            return
 
-            # save mail value before session close
-            mail_value = v.mail
-            v.verified = True
-            session.commit()
+        if code != v.verification_code:
+            await interaction.response.send_message("Chybný kód. Zkus to znovu.", ephemeral=True)
+            return
 
-        # work with roles after session is closed
-        guild = interaction.guild
+        # cache mail before closing session
+        mail_value = v.mail
+        v.verified = True
+        session.commit()
 
-        verified_role = discord.utils.get(guild.roles, name="Verified")
-        if not verified_role:
-            verified_role = await guild.create_role(name="Verified")
-        await interaction.user.add_roles(verified_role)
+    # assign roles
+    guild = interaction.guild
 
-        if "@vut" in mail_value or "@vutbr" in mail_value:
-            specific_role_name = "VUT"
-        else:
-            specific_role_name = "Host"
+    verified_role = discord.utils.get(guild.roles, name="Verified")
+    if not verified_role:
+        verified_role = await guild.create_role(name="Verified")
+    await interaction.user.add_roles(verified_role)
 
-        specific_role = discord.utils.get(guild.roles, name=specific_role_name)
-        if not specific_role:
-            specific_role = await guild.create_role(name=specific_role_name)
-        await interaction.user.add_roles(specific_role)
+    # VUT only for allowed formats; otherwise Host
+    if extract_vut_code(mail_value):
+        specific_role_name = "VUT"
+    else:
+        specific_role_name = "Host"
 
-        await interaction.response.send_message(
-            f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{specific_role_name}'.",
-            ephemeral=True
-        )
+    specific_role = discord.utils.get(guild.roles, name=specific_role_name)
+    if not specific_role:
+        specific_role = await guild.create_role(name=specific_role_name)
+    await interaction.user.add_roles(specific_role)
 
+    await interaction.response.send_message(
+        f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{specific_role_name}'.",
+        ephemeral=True
+    )
+   
 async def setup(bot):
     await bot.add_cog(Verify(bot))
 
