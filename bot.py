@@ -335,6 +335,15 @@ async def strip_error(ctx, error):
         await ctx.send("Tento příkaz může použít pouze vlastník bota.")     # posle zpravu, ze nema opravneni
 
 
+GUILD_ID = 1357455204391321712 
+
+@bot.event
+async def setup_hook():
+    guild = discord.Object(id=GUILD_ID)
+    # zkopiruje globalni prikazy do guildy (pokud nejake jsou)
+    bot.tree.copy_global_to(guild=guild)
+    cmds = await bot.tree.sync(guild=guild)
+    print(f"[SYNC] synced {len(cmds)} app commands to guild {GUILD_ID}")
 
 # spusteni bota
 bot.run(TOKEN)

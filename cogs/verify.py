@@ -1,10 +1,12 @@
-import discord
-from discord import app_commands
-from discord.ext import commands
+from datetime import datetime, timedelta
+from sqlalchemy import and_
 from db.session import SessionLocal
 from db.models import Verification
 from utils.mailer import send_verification_mail
 from utils.codes import generate_verification_code
+import discord
+from discord import app_commands
+from discord.ext import commands
 
 class Verify(commands.Cog):
     def __init__(self, bot):
@@ -12,70 +14,72 @@ class Verify(commands.Cog):
 
     @app_commands.command(name="verify", description="Zadej svuj mail pro overeni.")
     async def verify(self, interaction: discord.Interaction, mail: str):
-    user_id = interaction.user.id
-    verification_code = generate_verification_code()
+        user_id = interaction.user.id
+        verification_code = generate_verification_code()
 
-    with SessionLocal() as session:
-        # 0) user is already verified -> stop early
-        existing_verified = (
-            session.query(Verification)
-            .filter(Verification.user_id == user_id, Verification.verified == True)
-            .order_by(Verification.id.desc())
-            .first()
-        )
-        if existing_verified:
+        with SessionLocal() as session:
+            # 0) already verified -> stop early
+            existing_verified = (
+                session.query(Verification)
+                .filter(and_(Verification.user_id == user_id, Verification.verified == True))
+                .order_by(Verification.id.desc())
+                .first()
+            )
+            if existing_verified:
+                await interaction.response.send_message(
+                    f"Uz jsi overen jako {existing_verified.mail}. Pokud potrebujes zmenu, kontaktuj moderatory.",
+                    ephemeral=True
+                )
+                return
+
+            # 1) delete this user's old unverified attempts
+            session.query(Verification).filter(
+                and_(Verification.user_id == user_id, Verification.verified == False)
+            ).delete(synchronize_session=False)
+
+            # 2) delete global unverified attempts older than 10 minutes
+            cutoff = datetime.utcnow() - timedelta(minutes=10)
+            session.query(Verification).filter(
+                and_(Verification.verified == False, Verification.created_at <= cutoff)
+            ).delete(synchronize_session=False)
+
+            # 3) block if the same mail is already verified by someone else
+            someone_else = (
+                session.query(Verification)
+                .filter(
+                    and_(
+                        Verification.mail == mail,
+                        Verification.verified == True,
+                        Verification.user_id != user_id,
+                    )
+                )
+                .first()
+            )
+            if someone_else:
+                await interaction.response.send_message(
+                    f"Tento e-mail ({mail}) je jiz pouzit jinym uzivatelem a nelze ho znovu overit.",
+                    ephemeral=True
+                )
+                return
+
+            # 4) create new verification attempt
+            v = Verification(user_id=user_id, mail=mail, verification_code=verification_code, verified=False)
+            session.add(v)
+            session.commit()
+
+        # 5) send mail outside of session
+        try:
+            send_verification_mail(mail, verification_code)
             await interaction.response.send_message(
-                f"Uz jsi overen jako {existing_verified.mail}. Pokud potrebujes zmenu, kontaktuj moderatory.",
+                f"Zadal jsi mail {mail}. Overovaci kod byl odeslan na tvuj mail. (zkontroluj SPAM)",
                 ephemeral=True
             )
-            return
-
-        # 1) delete old unverified attempts of this user
-        session.query(Verification).filter(
-            Verification.user_id == user_id, Verification.verified == False
-        ).delete(synchronize_session=False)
-
-        # 2) delete global unverified attempts older than 10 minutes
-        # sqlite server_default handles created_at; easiest is to compare via SQL func
-        from sqlalchemy import text
-        session.execute(
-            text("DELETE FROM verifications WHERE verified = 0 AND created_at <= datetime('now', '-10 minutes')")
-        )
-
-        # 3) block if this mail is already verified by someone else
-        someone_else = (
-            session.query(Verification)
-            .filter(
-                Verification.mail == mail,
-                Verification.verified == True,
-                Verification.user_id != user_id,
-            )
-            .first()
-        )
-        if someone_else:
+        except Exception as e:
             await interaction.response.send_message(
-                f"Tento e-mail ({mail}) je jiz pouzit jinym uzivatelem a nelze ho znovu overit.",
+                f"Doslo k chybe pri odesilani mailu: {e}",
                 ephemeral=True
             )
-            return
 
-        # 4) create new verification attempt
-        v = Verification(user_id=user_id, mail=mail, verification_code=verification_code, verified=False)
-        session.add(v)
-        session.commit()
-
-    # 5) send code by email (outside session)
-    try:
-        send_verification_mail(mail, verification_code)
-        await interaction.response.send_message(
-            f"Zadal jsi mail {mail}. Overovaci kod byl odeslan na tvuj mail. (zkontroluj SPAM)",
-            ephemeral=True
-        )
-    except Exception as e:
-        await interaction.response.send_message(
-            f"Doslo k chybe pri odesilani mailu: {e}",
-            ephemeral=True
-        )
    
     @app_commands.command(name="verify_code", description="Zadej ověřovací kód.")
     async def verify_code(self, interaction: discord.Interaction, code: str):
