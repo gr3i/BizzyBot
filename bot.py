@@ -1,4 +1,4 @@
-# bot.py — stabilnii start + per-guild sync
+# bot.py — stabilniii start + per-guild sync
 
 import os
 import discord
