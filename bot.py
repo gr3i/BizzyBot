@@ -324,7 +324,7 @@ async def strip(ctx, user_id: int):
                 await member.remove_roles(*member.roles[1:])
             except discord.Forbidden:
                 await ctx.send("Nemám oprávnění odebrat některé role.")
-        await ctx.send(f"Smazáno z DB: {deleted} záznamů. Role odebrány.")
+        await ctx.send(f"Smazáno z DB: {deleted} záznamů. Role byly odebrány.")
     else:
         await ctx.send(f"Smazáno z DB: {deleted} záznamů. Uživatel není na serveru.")
 
