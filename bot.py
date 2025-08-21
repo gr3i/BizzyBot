@@ -281,7 +281,7 @@ async def whois(ctx, user_id: int):
 
     if v is None:
         verification_status = "Ověření nebylo zahájeno."
-        user_email = "Neznamy"
+        user_email = "Neznámý"
     else:
         verification_status = "Ověřeno" if v.verified else "Neověřeno"
         user_email = v.mail
