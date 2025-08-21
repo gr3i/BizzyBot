@@ -27,7 +27,7 @@ class Verify(commands.Cog):
             )
             if existing_verified:
                 await interaction.response.send_message(
-                    f"Už jsi ověřen jako {existing_verified.mail}. Pokud potřebujes změnu, kontaktuj moderátory.",
+                    f"Už jsi ověřen. Pokud potřebujes změnu, kontaktuj moderátory.",
                     ephemeral=True
                 )
                 return
