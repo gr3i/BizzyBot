@@ -45,16 +45,17 @@ async def ping_cmd(interaction: discord.Interaction):
 async def setup_hook():
     print("[setup_hook] start")
 
-    # 0) zrus globalni prikazy na Discordu (kdyby tam strasily stare verze)
-    bot.tree.clear_commands()          # GLOBAL
-    await bot.tree.sync()              # GLOBAL -> prázdno
+    guild_obj = discord.Object(id=GUILD_ID)
 
-    # 0b) zrus i guild prikazy (kdybys tam mel starsi definice)
-    guild = discord.Object(id=GUILD_ID)
-    bot.tree.clear_commands(guild=guild)
-    await bot.tree.sync(guild=guild)   # GUILD -> prázdno
+    # 0) vycisti GLOBAL prikazy a zapiš prázdno
+    bot.tree.clear_commands(guild=None)     # << global strom
+    await bot.tree.sync(guild=None)
 
-    # 1) nacti cogy (tady se zaregistruji slashy)
+    # 0b) vycisti GUILD prikazy a zapiš prázdno
+    bot.tree.clear_commands(guild=guild_obj)
+    await bot.tree.sync(guild=guild_obj)
+
+    # 1) nacti cogy (tady se registruji slash prikazy)
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
@@ -63,7 +64,7 @@ async def setup_hook():
         "cogs.reviews",
         "utils.vyber_oboru",
         "utils.nastav_prava",
-        "cogs.sort_categories",  # oprav syntaxi nebo docasne vynech
+        "cogs.sort_categories",  # jen pokud v nem uz neni syntax error
     ]:
         try:
             await bot.load_extension(ext)
@@ -71,8 +72,8 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba pri nacitani '{ext}': {e}")
 
-    # 2) per-guild finalni sync
-    cmds = await bot.tree.sync(guild=guild)
+    # 2) finalni per-guild sync (prikazy uvidis hned v teto guilde)
+    cmds = await bot.tree.sync(guild=guild_obj)
     print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
 
 @bot.event
