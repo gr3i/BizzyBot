@@ -45,38 +45,32 @@ async def ping_cmd(interaction: discord.Interaction):
 async def setup_hook():
     print("[setup_hook] start")
 
-    # 1) Nacti cogy PRED synchronizaci
-    extensions = [
+    guild = discord.Object(id=GUILD_ID)
+
+  
+    # bot.tree.clear_commands(guild=guild)
+
+    # 1) nacti cogy (tady se registruji slashy, reviews zaregistruje /hodnoceni)
+    for ext in [
         "cogs.hello",
         "cogs.botInfo",
         "cogs.verify",
         "cogs.role",
-        "cogs.reviews",         # obsahuje groupu /hodnoceni
+        "cogs.reviews",
         "utils.vyber_oboru",
         "utils.nastav_prava",
-        # POZOR: soubor musi byt cogs/sort_categories.py (podtrzitko, ne pomlcka)
         "cogs.sort_categories",
-    ]
-
-    for ext in extensions:
+    ]:
         try:
             await bot.load_extension(ext)
             print(f"✅ Cog '{ext}' nacten")
         except Exception as e:
             print(f"❌ Chyba pri nacitani '{ext}': {e}")
 
-    # 2) Per-guild sync (okamzity; prikázy uvidis hned v teto guilde)
-    guild = discord.Object(id=GUILD_ID)
-
-    # Pokud mas dalsi vlastni prikazy mimo cogy (napr. utils.subject_management.predmet),
-    # pridej je sem JAKO guild-scoped:
-    # from utils.subject_management import predmet
-    # bot.tree.add_command(predmet, guild=guild)
-
-    # pro jistotu „hard“ resync: vycisti a znovu zapiš do guildy
-    bot.tree.clear_commands(guild=guild)
+    # 2) per-guild sync (uz nic nezahlazuj)
     cmds = await bot.tree.sync(guild=guild)
     print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
+
 
 @bot.event
 async def on_ready():
