@@ -1,36 +1,57 @@
 import os
 import discord
+from discord import app_commands
 from discord.ext import commands
 
-TOKEN = os.getenv("DISCORD_TOKEN")
-# PRO TEST SI TADY NASTAV PEVNE ID GUILDY (abychom vyřadili .env z rovnice)
-GUILD_ID = 1357455204391321712  # <<-- tvoje guilda
+# --- KONFIG ---
+TOKEN = os.getenv("DISCORD_TOKEN")             # musí být v .env
+GUILD_ID = 1357455204391321712                 # TVOJE guilda (pevně, ať obejdeme .env)
 
+# --- BOT / INTENTS ---
 intents = discord.Intents.default()
 intents.guilds = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# --- GLOBÁLNÍ HANDLER CHYB (ať vidíme proč by to spadlo) ---
+@bot.tree.error
+async def on_tree_error(interaction: discord.Interaction, error: Exception):
+    try:
+        await interaction.response.send_message(f"Chyba: {error}", ephemeral=True)
+    except discord.InteractionResponded:
+        await interaction.followup.send(f"Chyba: {error}", ephemeral=True)
+
+# --- /ping (rychlý test) ---
 @bot.tree.command(name="ping", description="test ping")
 async def ping_cmd(interaction: discord.Interaction):
     await interaction.response.send_message("pong", ephemeral=True)
 
+# --- /hodnoceni test (skupina + 1 příkaz) ---
+hodnoceni = app_commands.Group(name="hodnoceni", description="Test skupina")
+
+@hodnoceni.command(name="test", description="Vrati OK – test")
+async def hodnoceni_test(interaction: discord.Interaction):
+    await interaction.response.send_message("OK (hodnoceni/test)", ephemeral=True)
+
+# --- Registrace a tvrdý per-guild sync ---
 @bot.event
 async def setup_hook():
-    # načti pouze reviews (test), nic víc
-    try:
-        await bot.load_extension("cogs.reviews")
-        print("✅ loaded cogs.reviews")
-    except Exception as e:
-        print("❌ load reviews:", e)
-
-    # tvrdý per-guild sync (okamžitě viditelný)
+    print("[setup_hook] start")
     guild = discord.Object(id=GUILD_ID)
+
+    # Vyčisti aktuální guild příkazy a zaregistruj znova
+    bot.tree.clear_commands(guild=guild)        # DŮLEŽITÉ kvůli starým signaturám
+    bot.tree.add_command(hodnoceni, guild=guild)
+    bot.tree.add_command(ping_cmd, guild=guild)
+
     cmds = await bot.tree.sync(guild=guild)
-    print(f"[SYNC] {len(cmds)} commands for guild {GUILD_ID}: " + ", ".join(c.name for c in cmds))
+    print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(c.name for c in cmds))
 
 @bot.event
 async def on_ready():
-    print(f"✅ logged in as {bot.user} ({bot.user.id})")
+    print(f"✅ Bot přihlášen jako {bot.user} (ID: {bot.user.id})")
 
+# --- START ---
+if not TOKEN:
+    raise RuntimeError("DISCORD_TOKEN není nastaven!")
 bot.run(TOKEN)
 
