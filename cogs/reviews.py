@@ -1,5 +1,3 @@
-# cogs/reviews.py  — slash skupina /hodnoceni (ORM)
-
 import os
 from datetime import datetime
 
@@ -13,31 +11,23 @@ from sqlalchemy import text
 from db.session import SessionLocal
 from db.models import Review, Reaction
 
-# ---- config (ponech si svoje hodnoty) ----
+# ---- KONFIG ----
 MOD_ROLE_IDS = [1358898283782602932]
 OWNER_IDS = [685958402442133515]
 ALLOWED_ROLE_ID = 1358911329737642014
-
 MAX_REVIEW_LENGTH = 3900
 
-# sem si dopln celý tvůj seznam
+# ZKRACENY seznam – svuj dlouhy si tam vloz ty
 SUBJECTS = [
-    "epP",
-    "mak1P",
-    "manP",
-    "mkP",
-    "ma1P",
+    "epP", "mak1P", "manP", "mkP", "ma1P",
 ]
 
-
-# --- autocomplete ---
 async def predmet_autocomplete(interaction: discord.Interaction, current: str):
     return [
         app_commands.Choice(name=sub, value=sub)
         for sub in SUBJECTS
         if current.lower() in sub.lower()
     ][:25]
-
 
 async def id_autocomplete(interaction: discord.Interaction, current: str):
     q = f"%{current}%"
@@ -54,7 +44,6 @@ async def id_autocomplete(interaction: discord.Interaction, current: str):
     return [app_commands.Choice(name=f"{rid} - {predmet}", value=rid) for rid, predmet in rows]
 
 
-# --- embed + reakce view ---
 class ReviewView(View):
     def __init__(self, reviews: list[dict], user_id: int, bot: commands.Bot):
         super().__init__(timeout=300)
@@ -66,51 +55,52 @@ class ReviewView(View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.user_id
 
-    def _embed(self) -> discord.Embed:
+    def create_embed(self) -> discord.Embed:
         r = self.reviews[self.index]
-        emb = discord.Embed(
-            title=f"{r['predmet']} • #{r['id']}",
+        embed = discord.Embed(
+            title=f"{r['predmet']} - hodnoceni #{r['id']}",
             description=r['recenze'],
         )
-        emb.add_field(name="Známka", value=r['znamka'])
-        emb.add_field(name="👍", value=str(r['likes']))
-        emb.add_field(name="👎", value=str(r['dislikes']))
+        embed.add_field(name="Znamka", value=r['znamka'])
+        embed.add_field(name="Likes", value=str(r['likes']))
+        embed.add_field(name="Dislikes", value=str(r['dislikes']))
         author = self.bot.get_user(r['autor_id'])
-        footer = f"{author.display_name}" if author else f"ID: {r['autor_id']}"
-        emb.set_footer(text=f"{footer} | {r['datum']}")
-        return emb
+        if author:
+            embed.set_footer(text=f"{author.display_name} | {r['datum']}", icon_url=author.display_avatar.url)
+        else:
+            embed.set_footer(text=f"ID: {r['autor_id']} | {r['datum']}")
+        return embed
 
-    @discord.ui.button(label='⬅', style=discord.ButtonStyle.secondary)
-    async def prev(self, interaction: discord.Interaction, _btn: discord.ui.Button):
+    @discord.ui.button(label="⬅", style=discord.ButtonStyle.secondary)
+    async def prev(self, interaction: discord.Interaction, _button: discord.ui.Button):
         if self.index > 0:
             self.index -= 1
-            await interaction.response.edit_message(embed=self._embed(), view=self)
+            await interaction.response.edit_message(embed=self.create_embed(), view=self)
         else:
             await interaction.response.defer()
 
-    @discord.ui.button(label='➡', style=discord.ButtonStyle.secondary)
-    async def next(self, interaction: discord.Interaction, _btn: discord.ui.Button):
+    @discord.ui.button(label="➡", style=discord.ButtonStyle.secondary)
+    async def next(self, interaction: discord.Interaction, _button: discord.ui.Button):
         if self.index < len(self.reviews) - 1:
             self.index += 1
-            await interaction.response.edit_message(embed=self._embed(), view=self)
+            await interaction.response.edit_message(embed=self.create_embed(), view=self)
         else:
             await interaction.response.defer()
 
-    @discord.ui.button(label='👍', style=discord.ButtonStyle.success)
-    async def like(self, interaction: discord.Interaction, _btn: discord.ui.Button):
-        await self._react(interaction, "like")
+    @discord.ui.button(label="👍", style=discord.ButtonStyle.success)
+    async def like(self, interaction: discord.Interaction, _button: discord.ui.Button):
+        await self.react(interaction, "like")
 
-    @discord.ui.button(label='👎', style=discord.ButtonStyle.danger)
-    async def dislike(self, interaction: discord.Interaction, _btn: discord.ui.Button):
-        await self._react(interaction, "dislike")
+    @discord.ui.button(label="👎", style=discord.ButtonStyle.danger)
+    async def dislike(self, interaction: discord.Interaction, _button: discord.ui.Button):
+        await self.react(interaction, "dislike")
 
-    async def _react(self, interaction: discord.Interaction, typ: str):
+    async def react(self, interaction: discord.Interaction, typ: str):
         r = self.reviews[self.index]
         with SessionLocal() as s:
-            # uz reagoval?
             exists = (
                 s.query(Reaction.id)
-                .filter(Reaction.hodnoceni_id == r['id'], Reaction.user_id == interaction.user.id)
+                .filter(Reaction.hodnoceni_id == r["id"], Reaction.user_id == interaction.user.id)
                 .first()
             )
             if exists:
@@ -118,27 +108,28 @@ class ReviewView(View):
                 return
 
             s.add(Reaction(
-                hodnoceni_id=r['id'],
+                hodnoceni_id=r["id"],
                 user_id=interaction.user.id,
                 typ=typ,
                 datum=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
             ))
 
-            rev = s.query(Review).get(r['id'])
+            rev = s.query(Review).get(r["id"])
             if rev:
                 if typ == "like":
                     rev.likes += 1
-                    r['likes'] += 1
+                    r["likes"] += 1
                 else:
                     rev.dislikes += 1
-                    r['dislikes'] += 1
+                    r["dislikes"] += 1
+
             s.commit()
 
-        await interaction.response.edit_message(embed=self._embed(), view=self)
+        await interaction.response.edit_message(embed=self.create_embed(), view=self)
 
 
-# --- slash skupina ---
 class Reviews(commands.Cog):
+    """Cog s groupou /hodnoceni"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -151,8 +142,11 @@ class Reviews(commands.Cog):
         await interaction.response.send_message("Nemas opravneni pouzit tento prikaz.", ephemeral=True)
         return False
 
-    # /hodnoceni ...
-    hodnoceni = app_commands.Group(name="hodnoceni", description="Hodnoceni predmetu")
+    # GROUP
+    hodnoceni = app_commands.Group(
+        name="hodnoceni",
+        description="Hodnoceni predmetu",
+    )
 
     @hodnoceni.command(name="pridat", description="Pridej hodnoceni predmetu.")
     @app_commands.guild_only()
@@ -161,12 +155,13 @@ class Reviews(commands.Cog):
     async def pridat_hodnoceni(self, interaction: discord.Interaction, predmet: str, znamka: str, recenze: str):
         if not await self._has_allowed_role(interaction):
             return
-
         if predmet not in SUBJECTS or znamka.upper() not in ["A", "B", "C", "D", "E", "F"]:
             await interaction.response.send_message("Neplatny predmet nebo znamka.", ephemeral=True)
             return
         if len(recenze) > MAX_REVIEW_LENGTH:
-            await interaction.response.send_message(f"Recenze je prilis dlouha (max {MAX_REVIEW_LENGTH}).", ephemeral=True)
+            await interaction.response.send_message(
+                f"Recenze je prilis dlouha. Max {MAX_REVIEW_LENGTH} znaku.", ephemeral=True
+            )
             return
 
         with SessionLocal() as s:
@@ -214,7 +209,7 @@ class Reviews(commands.Cog):
         } for r in rows]
 
         view = ReviewView(reviews, interaction.user.id, self.bot)
-        await interaction.response.send_message(embed=view._embed(), view=view)
+        await interaction.response.send_message(embed=view.create_embed(), view=view)
 
     @hodnoceni.command(name="upravit", description="Edituj sve hodnoceni.")
     @app_commands.guild_only()
@@ -227,7 +222,9 @@ class Reviews(commands.Cog):
             await interaction.response.send_message("Neplatna znamka (A–F).", ephemeral=True)
             return
         if len(recenze) > MAX_REVIEW_LENGTH:
-            await interaction.response.send_message(f"Recenze je prilis dlouha (max {MAX_REVIEW_LENGTH}).", ephemeral=True)
+            await interaction.response.send_message(
+                f"Recenze je prilis dlouha. Max {MAX_REVIEW_LENGTH} znaku.", ephemeral=True
+            )
             return
 
         with SessionLocal() as s:
@@ -268,18 +265,21 @@ class Reviews(commands.Cog):
         await interaction.response.send_message("Hodnoceni smazano.")
 
 
-# registrace cogu a skupiny
-GUILD_ID = int(os.getenv("GUILD_ID", "0"))
-
+# --- setup: registrace groupy do GUILD (okamzite viditelne) ---
 async def setup(bot: commands.Bot):
-    cog = Reviews(bot)
-    await bot.add_cog(cog)
+    await bot.add_cog(Reviews(bot))
+    gid = os.getenv("GUILD_ID", "")
+    try:
+        gid_int = int(gid)
+    except Exception:
+        gid_int = 0
 
-    if GUILD_ID:
-        guild = discord.Object(id=GUILD_ID)
+    if gid_int:
+        guild = discord.Object(id=gid_int)
         bot.tree.add_command(Reviews.hodnoceni, guild=guild)
-        print(f"[reviews] group 'hodnoceni' registered for guild {GUILD_ID}")
+        print(f"[reviews] group 'hodnoceni' registered for guild {gid_int}")
     else:
+        # fallback: global (propagace muze trvat)
         bot.tree.add_command(Reviews.hodnoceni)
-        print("[reviews] group 'hodnoceni' registered (global)")
+        print("[reviews] group 'hodnoceni' registered as GLOBAL")
 
