@@ -9,8 +9,9 @@ from db.models import Base
 
 load_dotenv()
 
+
+
 def _int_env(name: str, default: int = 0) -> int:
-    """Bezpecne precti INT env; prazdny nebo necislo => default."""
     raw = os.getenv(name, "")
     if not raw:
         return default
@@ -20,7 +21,8 @@ def _int_env(name: str, default: int = 0) -> int:
         return default
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD_ID = _int_env("GUILD_ID", 0)
+GUILD_ID = _int_env("GUILD_ID", 0)  # kdyz 0 => global sync
+
 
 # create tables if not exist
 Base.metadata.create_all(engine)

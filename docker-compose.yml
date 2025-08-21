@@ -6,13 +6,12 @@ services:
     container_name: bizzybot
     restart: unless-stopped
     env_file:
-      - .env
+      - ./.env
     environment:
-      PYTHONUNBUFFERED: "1"
       TZ: Europe/Prague
-      DATABASE_URL: ${DATABASE_URL}
-      GUILD_ID: ${GUILD_ID}
+      # fallbacky, pokud by v .env nebyly:
+      GUILD_ID: ${GUILD_ID:-0}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/db/app.db}
     volumes:
       - ./db:/app/db
-
 
