@@ -5,11 +5,14 @@ services:
       dockerfile: Dockerfile
     container_name: bizzybot
     restart: unless-stopped
-    environment:
-      TZ: Europe/Prague
-      DATABASE_URL: sqlite:////app/db/app.db   
     env_file:
       - .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+      TZ: Europe/Prague
+      DATABASE_URL: ${DATABASE_URL}
+      GUILD_ID: ${GUILD_ID}
     volumes:
       - ./db:/app/db
+
 
