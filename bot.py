@@ -45,13 +45,17 @@ async def ping_cmd(interaction: discord.Interaction):
 async def setup_hook():
     print("[setup_hook] start")
 
+    # 0) zrus globalni prikazy na Discordu (kdyby tam strasily stare verze)
+    bot.tree.clear_commands()          # GLOBAL
+    await bot.tree.sync()              # GLOBAL -> prázdno
+
+    # 0b) zrus i guild prikazy (kdybys tam mel starsi definice)
     guild = discord.Object(id=GUILD_ID)
-
-    # 1) vycistit lokalni strom pro guildu (POZOR: pred loadem cogů)
     bot.tree.clear_commands(guild=guild)
+    await bot.tree.sync(guild=guild)   # GUILD -> prázdno
 
-    # 2) nacist cogy (tady se do stromu zaregistruji slash prikazy)
-    extensions = [
+    # 1) nacti cogy (tady se zaregistruji slashy)
+    for ext in [
         "cogs.hello",
         "cogs.botInfo",
         "cogs.verify",
@@ -59,19 +63,17 @@ async def setup_hook():
         "cogs.reviews",
         "utils.vyber_oboru",
         "utils.nastav_prava",
-       
-    ]
-    for ext in extensions:
+        "cogs.sort_categories",  # oprav syntaxi nebo docasne vynech
+    ]:
         try:
             await bot.load_extension(ext)
             print(f"✅ Cog '{ext}' nacten")
         except Exception as e:
             print(f"❌ Chyba pri nacitani '{ext}': {e}")
 
-    # 3) per-guild SYNC (zapise aktualni definice)
+    # 2) per-guild finalni sync
     cmds = await bot.tree.sync(guild=guild)
     print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
-
 
 @bot.event
 async def on_ready():
