@@ -7,9 +7,7 @@ services:
     restart: unless-stopped
     environment:
       TZ: Europe/Prague
-      DATABASE_URL: sqlite:////app/db/app.db
-      PYTHONUNBUFFERED: "1"     
-      GUILD_ID: "${GUILD_ID:-1357455204391321712}" 
+      DATABASE_URL: sqlite:////app/db/app.db   
     env_file:
       - .env
     volumes:
