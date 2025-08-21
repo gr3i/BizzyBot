@@ -80,20 +80,11 @@ if os.path.exists(REACTION_IDS_FILE):
 else:
     print("📌 Soubor s ID zpráv nenalezen.")
 
+
 @bot.event
 async def on_ready():
     print(f"✅ Bot je přihlášen jako {bot.user} (ID: {bot.user.id})")
     
-    for extension in ["cogs.hello","cogs.botInfo", "cogs.verify", "cogs.role", "cogs.reviews", "utils.vyber_oboru", "utils.nastav_prava", "cogs.sort-categories"]: # oddelano "utils.role_script" 
-        try: 
-            await bot.load_extension(extension)
-            print(f"✅ Cog '{extension}' načten.")
-        except Exception as e:
-            print(f"❌ Chyba při načítání '{extension}': {e}")
-    
-    bot.tree.add_command(predmet)
-    await bot.tree.sync()
-    print("✅ Slash příkazy synchronizovány.")
 
 
 
@@ -339,11 +330,22 @@ GUILD_ID = 1357455204391321712
 
 @bot.event
 async def setup_hook():
+    # 1) load all extensions BEFORE sync
+    for extension in ["cogs.hello","cogs.botInfo","cogs.verify","cogs.role","cogs.reviews","utils.vyber_oboru","utils.nastav_prava"]:
+        try:
+            await bot.load_extension(extension)
+            print(f"✅ Cog '{extension}' načten.")
+        except Exception as e:
+            print(f"❌ Chyba při načítání '{extension}': {e}")
+
+    # 2) add extra commands (like your 'predmet') and do PER-GUILD sync
     guild = discord.Object(id=GUILD_ID)
-    # zkopiruje globalni prikazy do guildy (pokud nejake jsou)
-    bot.tree.copy_global_to(guild=guild)
+    # pokud je predmet globalni command a chces ho jen v guild, udelej:
+    bot.tree.add_command(predmet, guild=guild)
+
     cmds = await bot.tree.sync(guild=guild)
     print(f"[SYNC] synced {len(cmds)} app commands to guild {GUILD_ID}")
+
 
 # spusteni bota
 bot.run(TOKEN)
