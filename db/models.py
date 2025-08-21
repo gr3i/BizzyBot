@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, Boolean, DateTime, func, ForeignKey  # <- add ForeignKey
+from sqlalchemy import Integer, String, Boolean, DateTime, func, ForeignKey 
 
 
 class Base(DeclarativeBase):
