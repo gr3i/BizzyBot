@@ -12,7 +12,7 @@ class Verify(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="verify", description="Zadej svuj mail pro overeni.")
+    @app_commands.command(name="verify", description="Zadej svůj mail pro ověření.")
     async def verify(self, interaction: discord.Interaction, mail: str):
         user_id = interaction.user.id
         verification_code = generate_verification_code()
@@ -27,7 +27,7 @@ class Verify(commands.Cog):
             )
             if existing_verified:
                 await interaction.response.send_message(
-                    f"Uz jsi overen jako {existing_verified.mail}. Pokud potrebujes zmenu, kontaktuj moderatory.",
+                    f"Už jsi ověřen jako {existing_verified.mail}. Pokud potřebujes změnu, kontaktuj moderátory.",
                     ephemeral=True
                 )
                 return
@@ -57,7 +57,7 @@ class Verify(commands.Cog):
             )
             if someone_else:
                 await interaction.response.send_message(
-                    f"Tento e-mail ({mail}) je jiz pouzit jinym uzivatelem a nelze ho znovu overit.",
+                    f"Tento e-mail ({mail}) je již použit jiným uživatelem a nelze ho znovu ověřit.",
                     ephemeral=True
                 )
                 return
@@ -71,12 +71,12 @@ class Verify(commands.Cog):
         try:
             send_verification_mail(mail, verification_code)
             await interaction.response.send_message(
-                f"Zadal jsi mail {mail}. Overovaci kod byl odeslan na tvuj mail. (zkontroluj SPAM)",
+                f"Zadal jsi mail {mail}. Ověřovací kód byl odeslán na tvůj mail. (Zkontroluj si SPAM.)",
                 ephemeral=True
             )
         except Exception as e:
             await interaction.response.send_message(
-                f"Doslo k chybe pri odesilani mailu: {e}",
+                f"Došlo k chybě při odesílání mailu: {e}",
                 ephemeral=True
             )
 
