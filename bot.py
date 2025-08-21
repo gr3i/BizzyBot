@@ -47,11 +47,11 @@ async def setup_hook():
 
     guild = discord.Object(id=GUILD_ID)
 
-  
-    # bot.tree.clear_commands(guild=guild)
+    # 1) vycistit lokalni strom pro guildu (POZOR: pred loadem cogů)
+    bot.tree.clear_commands(guild=guild)
 
-    # 1) nacti cogy (tady se registruji slashy, reviews zaregistruje /hodnoceni)
-    for ext in [
+    # 2) nacist cogy (tady se do stromu zaregistruji slash prikazy)
+    extensions = [
         "cogs.hello",
         "cogs.botInfo",
         "cogs.verify",
@@ -59,15 +59,16 @@ async def setup_hook():
         "cogs.reviews",
         "utils.vyber_oboru",
         "utils.nastav_prava",
-        
-    ]:
+       
+    ]
+    for ext in extensions:
         try:
             await bot.load_extension(ext)
             print(f"✅ Cog '{ext}' nacten")
         except Exception as e:
             print(f"❌ Chyba pri nacitani '{ext}': {e}")
 
-    # 2) per-guild sync (uz nic nezahlazuj)
+    # 3) per-guild SYNC (zapise aktualni definice)
     cmds = await bot.tree.sync(guild=guild)
     print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
 
