@@ -279,11 +279,24 @@ class Reviews(commands.Cog):
         await interaction.response.send_message("Hodnocení smazáno.")
 
 
+# cogs/reviews.py (konec souboru)
+import os
+import discord
+from discord.ext import commands
+
+GUILD_ID = int(os.getenv("GUILD_ID", "0"))  # nastav v .env nebo sem dej cislo
+
 async def setup(bot: commands.Bot):
     cog = Reviews(bot)
     await bot.add_cog(cog)
-    # group je class attribute; je treba ji pridat do stromu rucne
-    bot.tree.add_command(Reviews.hodnoceni)
-    print("[reviews] group 'hodnoceni' registered")
 
+    # registrace groupy do konkretni guildy -> okamzite viditelne po per-guild sync
+    if GUILD_ID:
+        guild = discord.Object(id=GUILD_ID)
+        bot.tree.add_command(Reviews.hodnoceni, guild=guild)
+        print(f"[reviews] group 'hodnoceni' registered for guild {GUILD_ID}")
+    else:
+        # fallback: global command (pak je nutne copy_global_to v bot.py)
+        bot.tree.add_command(Reviews.hodnoceni)
+        print("[reviews] group 'hodnoceni' registered (global)")
 

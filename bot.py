@@ -80,12 +80,37 @@ if os.path.exists(REACTION_IDS_FILE):
 else:
     print("📌 Soubor s ID zpráv nenalezen.")
 
+@bot.event
+async def setup_hook():
+    # 1) load extensions PRED syncem
+    for extension in [
+        "cogs.hello",
+        "cogs.botInfo",
+        "cogs.verify",
+        "cogs.role",
+        "cogs.reviews",
+        "utils.vyber_oboru",
+        "utils.nastav_prava",
+        "cogs.sort_categories", 
+    ]:
+        try:
+            await bot.load_extension(extension)
+            print(f"✅ Cog '{extension}' načten.")
+        except Exception as e:
+            print(f"❌ Chyba při načítání '{extension}': {e}")
+
+    # 2) per-guild registrace extra slash prikazu (pokud mas vlastni globalni)
+    guild = discord.Object(id=GUILD_ID)
+    bot.tree.add_command(predmet, guild=guild)
+    # bot.tree.add_command(predmet_odebrat, guild=guild)  # pokud chces
+
+    # 3) per-guild SYNC (okamzity)
+    cmds = await bot.tree.sync(guild=guild)
+    print(f"[SYNC] synced {len(cmds)} app commands to guild {GUILD_ID}")
 
 @bot.event
 async def on_ready():
     print(f"✅ Bot je přihlášen jako {bot.user} (ID: {bot.user.id})")
-    
-
 
 
 @bot.command()
@@ -328,24 +353,9 @@ async def strip_error(ctx, error):
 
 GUILD_ID = 1357455204391321712 
 
-@bot.event
-async def setup_hook():
-    # 1) load all extensions BEFORE sync
-    for extension in ["cogs.hello","cogs.botInfo","cogs.verify","cogs.role","cogs.reviews","utils.vyber_oboru","utils.nastav_prava"]:
-        try:
-            await bot.load_extension(extension)
-            print(f"✅ Cog '{extension}' načten.")
-        except Exception as e:
-            print(f"❌ Chyba při načítání '{extension}': {e}")
-
-    # 2) add extra commands (like your 'predmet') and do PER-GUILD sync
-    guild = discord.Object(id=GUILD_ID)
-    # pokud je predmet globalni command a chces ho jen v guild, udelej:
-    bot.tree.add_command(predmet, guild=guild)
-
-    cmds = await bot.tree.sync(guild=guild)
-    print(f"[SYNC] synced {len(cmds)} app commands to guild {GUILD_ID}")
-
+@bot.tree.command(name="ping", description="Test slash command")
+async def ping_cmd(interaction: discord.Interaction):
+    await interaction.response.send_message("pong", ephemeral=True)
 
 # spusteni bota
 bot.run(TOKEN)
