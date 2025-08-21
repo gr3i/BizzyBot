@@ -17,7 +17,7 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 
-# cesta k souboru pro ukladani ID zprav
+# cesta k souboru pro ukladaniID zprav
 REACTION_IDS_FILE = "utils/reaction_ids.json"
 
 
