@@ -322,14 +322,7 @@ async def strip_error(ctx, error):
 async def setup_hook():
     print("[setup_hook] start")
 
-    guild = discord.Object(id=GUILD_ID) if GUILD_ID else None
-
-    # 0) JEDNOU vyčisti globální příkazy (aby zmizely duplicitní /predmet z globálu)
-    bot.tree.clear_commands(guild=None)   # <<< důležité
-    await bot.tree.sync()                 # po clear je nutný sync
-    print("[SYNC] global commands cleared")
-
-    # 1) načti cogy (ne 'utils.subject_management')
+    
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
@@ -345,10 +338,10 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # 2) per-guild registrace skupiny /predmet
+    # per-guild registrace skupiny /predmet
     if guild:
-        bot.tree.clear_commands(guild=guild)          # smaž staré definice v téhle guildě
-        bot.tree.add_command(predmet, guild=guild)    # přidej /predmet jen do guildy
+        bot.tree.clear_commands(guild=guild)          # smaz stare definice v tehle guilde
+        bot.tree.add_command(predmet, guild=guild)    # pridej /predmet jen do guildy
         cmds = await bot.tree.sync(guild=guild)       # a sync
         print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " +
               ", ".join(sorted(c.name for c in cmds)))
