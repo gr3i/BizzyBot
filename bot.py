@@ -8,7 +8,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from db.session import SessionLocal
 from db.models import Verification
-
+from utils.subject_management import predmet
 
 # nacteni tokenu a databaze
 load_dotenv()
@@ -326,31 +326,40 @@ async def ping_cmd(interaction: discord.Interaction):
 async def setup_hook():
     print("[setup_hook] start")
 
-    # (1) NEJDŘÍV SMAZAT STARÉ DEFINICE (volitelné)
+    # 1) (volitelné) vyčisti guildu, ať odstraníš staré definice
     if GUILD_ID:
         guild = discord.Object(id=GUILD_ID)
         bot.tree.clear_commands(guild=guild)
+    else:
+        guild = None
 
-    # (2) PAK NAČÍST EXTENSIONS – subject_management si přidá groupu do tree
+    # 2) NACTI OSTATNÍ COGY (ALE NE 'utils.subject_management'!)
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
         "cogs.verify",
         "cogs.role",
         "cogs.reviews",
-        "utils.subject_management",  # <- TADY ZŮSTÁVÁ
         "utils.vyber_oboru",
         "utils.nastav_prava",
         # "cogs.sort_categories",
     ]:
         try:
             await bot.load_extension(ext)
-            print(f"✅ Cog '{ext}' nacten")
+            print(f"✅ Cog '{ext}' načten")
         except Exception as e:
-            print(f"❌ Chyba pri nacitani '{ext}': {e}")
+            print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # (3) AŽ TEĎ SYNC
-    if GUILD_ID:
+    # 3) PŘIDEJ GROUPU /predmet PŘÍMO Z IMPORTU
+    if guild:
+        bot.tree.add_command(predmet, guild=guild)
+        print(f"[subjects] group 'predmet' registered for guild {GUILD_ID}")
+    else:
+        bot.tree.add_command(predmet)
+        print("[subjects] group 'predmet' registered (global)")
+
+    # 4) SYNC
+    if guild:
         cmds = await bot.tree.sync(guild=guild)
         print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
     else:
