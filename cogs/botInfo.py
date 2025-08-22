@@ -5,69 +5,90 @@ from discord import app_commands, Interaction, Embed
 import time
 from datetime import timedelta
 import psutil
-import os   # pro získání PID procesu
+import os   # pro ziskani PID procesu
 
 
-@botCommand.command(name="info", description="Zobrazí detailní informace o botovi.")
-async def botinfo(self, interaction: Interaction):
-python_version = platform.python_version()
-discord_version = discord.__version__
-latency = round(self.bot.latency * 1000)
-uptime = self.get_uptime()
+class BotInfo(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.start_time = time.time()
 
-# kolik paměti zabírá proces
-process = psutil.Process(os.getpid())
-mem_info = process.memory_info()
-ram_usage_mb = mem_info.rss / 1024 / 1024
+    def get_uptime(self):
+        return str(timedelta(seconds=int(time.time() - self.start_time)))
 
-total_commands = len(self.bot.tree.get_commands())
+    def get_latency_color(self, latency: int) -> discord.Color:
+        if latency < 100:
+            return discord.Color.green()
+        elif latency < 300:
+            return discord.Color.yellow()
+        else:
+            return discord.Color.red()
 
-embed = Embed(
-    title="🤖 BizzyBot – FP Discord Bot",
-    color=self.get_latency_color(latency)
-)
-embed.set_thumbnail(url=self.bot.user.avatar.url if self.bot.user.avatar else None) 
+    botCommand = app_commands.Group(
+        name="bot",
+        description = "Bot - Info"
+    ) 
+    @botCommand.command(name="info", description="Zobrazí detailní informace o botovi.")
+    async def botinfo(self, interaction: Interaction):
+        python_version = platform.python_version()
+        discord_version = discord.__version__
+        latency = round(self.bot.latency * 1000)
+        uptime = self.get_uptime()
 
-# základní informace
-embed.add_field(name="🆔 Aplikační ID", value="1358884104413904998", inline=False)
+        # kolik paměti zabírá proces
+        process = psutil.Process(os.getpid())
+        mem_info = process.memory_info()
+        ram_usage_mb = mem_info.rss / 1024 / 1024
 
-# odezva a uptime
-embed.add_field(
-    name="📈 Odezva & ⏱️ Uptime",
-    value=f"**{latency} ms, {uptime}**",
-    inline=False
-)
+        total_commands = len(self.bot.tree.get_commands())
 
-# technické info
-embed.add_field(
-    name="⚙️ Technologie",
-    value=f"Python `{python_version}`\ndiscord.py `{discord_version}`",
-    inline=False
-)
+        embed = Embed(
+            title="🤖 BizzyBot – FP Discord Bot",
+            color=self.get_latency_color(latency)
+        )
+        embed.set_thumbnail(url=self.bot.user.avatar.url if self.bot.user.avatar else None) 
 
-# paměť
-embed.add_field(
-    name="💾 Paměť",
-    value=f"{ram_usage_mb:.2f} MB",
-    inline=False
-)
+        # základní informace
+        embed.add_field(name="🆔 Aplikační ID", value="1358884104413904998", inline=False)
 
-# příkazy
-embed.add_field(
-    name="📚 Příkazy",
-    value=f"Celkem: **{total_commands}**",
-    inline=False
-)
+        # odezva a uptime
+        embed.add_field(
+            name="📈 Odezva & ⏱️ Uptime",
+            value=f"**{latency} ms, {uptime}**",
+            inline=False
+        )
 
-# GitHub odkaz
-embed.add_field(
-    name="🔗 Odkaz",
-    value="[🌐 GitHub](https://github.com/gr3i/BizzyBot)",
-    inline=False
-)
+        # technické info
+        embed.add_field(
+            name="⚙️ Technologie",
+            value=f"Python `{python_version}`\ndiscord.py `{discord_version}`",
+            inline=False
+        )
 
-await interaction.response.send_message(embed=embed)
+        # paměť
+        embed.add_field(
+            name="💾 Paměť",
+            value=f"{ram_usage_mb:.2f} MB",
+            inline=False
+        )
 
-async def setup(bot: commands.Bot):
+        # příkazy
+        embed.add_field(
+            name="📚 Příkazy",
+            value=f"Celkem: **{total_commands}**",
+            inline=False
+        )
+
+        # GitHub odkaz
+        embed.add_field(
+            name="🔗 Odkaz",
+            value="[🌐 GitHub](https://github.com/gr3i/BizzyBot)",
+            inline=False
+        )
+
+        await interaction.response.send_message(embed=embed)
+
+async def setup(bot):
     await bot.add_cog(BotInfo(bot))
+
 
