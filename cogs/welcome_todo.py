@@ -7,9 +7,9 @@ from discord import app_commands
 from discord.ext import commands
 
 # --------- KONFIG ---------
-VUT_ROLE_ID = 1358915656782844094               # ID role VUT
-OWNER_IDS: Set[int] = {685958402442133515}      # kdo může volat /todo_reset
-GUILD_ID = int(os.getenv("GUILD_ID", "0"))      # pro per-guild registraci slash příkazu
+VUT_ROLE_ID = 1358911329737642014               # ID role VUT
+OWNER_IDS: Set[int] = {685958402442133515}      # kdo muze volat /todo_reset
+GUILD_ID = int(os.getenv("GUILD_ID", "0"))      # pro per-guild registraci slash prikazu
 
 TODO_LINES = [
     "✅ Nastav si VUT roli podle fakulty (#vut-role).",
@@ -23,11 +23,11 @@ TODO_LINES = [
 class WelcomeTodo(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # runtime cache, aby se TODO neposílal víckrát během jednoho běhu bota
+        # runtime cache, aby se TODO neposilal vickrat behem jednoho behu bota
         self._sent_users: Set[int] = set()
 
-    # ------- SLASH: /todo_reset -------
-    # Per-guild registrace (rychlé) – pokud máš GUILD_ID
+    # slash: /todo_reset
+    # per-guild registrace (rychla) - pokud mam GUILD_ID
     if GUILD_ID:
         @app_commands.command(name="todo_reset", description="Resetuje TODO DM cache (owner only).")
         @app_commands.describe(user="Komu znovu povolit DM; nech prázdné pro reset všech")
@@ -44,7 +44,7 @@ class WelcomeTodo(commands.Cog):
                 msg = "Cache vyprázdněna pro všechny."
             await interaction.response.send_message(msg, ephemeral=True)
     else:
-        # Fallback: globální registrace (pomalejší propagace)
+        # fallback: globalni registrace (pomalejsi propagace)
         @app_commands.command(name="todo_reset", description="Resetuje TODO DM cache (owner only).")
         @app_commands.describe(user="Komu znovu povolit DM; nech prázdné pro reset všech")
         async def todo_reset(self, interaction: discord.Interaction, user: Optional[discord.User] = None):
@@ -59,7 +59,7 @@ class WelcomeTodo(commands.Cog):
                 msg = "Cache vyprázdněna pro všechny."
             await interaction.response.send_message(msg, ephemeral=True)
 
-    # ------- LISTENER: když někdo nově dostane roli VUT, pošli TODO do DM -------
+    # kdyz nekdo nove dostane roli VUT, posli TODO do DM
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
         """Spustí se, když se uživateli změní role. Když nově dostane VUT, pošleme TODO do DM."""
@@ -67,19 +67,19 @@ class WelcomeTodo(commands.Cog):
         if after.bot:
             return
 
-        # 2) zjisti, zda přibyla role VUT
+        # 2) zjisti, zda pribyla role VUT
         before_roles = {r.id for r in before.roles}
         after_roles = {r.id for r in after.roles}
         just_got_vut = (VUT_ROLE_ID not in before_roles) and (VUT_ROLE_ID in after_roles)
         if not just_got_vut:
             return
 
-        # 3) neposílej víckrát v rámci jednoho běhu bota
+        # 3) neposílej vickrat v ramci jednoho behu bota
         if after.id in self._sent_users:
             return
         self._sent_users.add(after.id)
 
-        # 4) pošli TODO do DM
+        # 4) posli TODO do DM
         try:
             dm = await after.create_dm()
             embed = discord.Embed(
