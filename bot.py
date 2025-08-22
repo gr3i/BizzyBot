@@ -317,18 +317,19 @@ async def strip_error(ctx, error):
         await ctx.send("Tento příkaz může použít pouze vlastník bota.")     # posle zpravu, ze nema opravneni
 
 
+
 @bot.event
 async def setup_hook():
     print("[setup_hook] start")
 
     guild = discord.Object(id=GUILD_ID) if GUILD_ID else None
 
-    # 0) Zruš VŠECHNY globální app commands (zabrání duplicitám)
-    bot.tree.clear_commands()          # bez parametru = global scope
-    await bot.tree.sync()              # tím se globální příkazy skutečně smažou u Discordu
+    # 0) JEDNOU vyčisti globální příkazy (aby zmizely duplicitní /predmet z globálu)
+    bot.tree.clear_commands(guild=None)   # <<< důležité
+    await bot.tree.sync()                 # po clear je nutný sync
     print("[SYNC] global commands cleared")
 
-    # 1) Načti ostatní cogy (ale ne utils.subject_management)
+    # 1) načti cogy (ne 'utils.subject_management')
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
@@ -337,7 +338,6 @@ async def setup_hook():
         "cogs.reviews",
         "utils.vyber_oboru",
         "utils.nastav_prava",
-        # "cogs.sort_categories",
     ]:
         try:
             await bot.load_extension(ext)
@@ -345,19 +345,15 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # 2) Připrav guild scope a smaž tam staré definice
+    # 2) per-guild registrace skupiny /predmet
     if guild:
-        bot.tree.clear_commands(guild=guild)
-
-        # 3) Registruj /predmet skupinu JEN do téhle guildy
-        bot.tree.add_command(predmet, guild=guild)
-        print(f"[subjects] group 'predmet' registered for guild {GUILD_ID}")
-
-        # 4) Sync jen pro guildu
-        cmds = await bot.tree.sync(guild=guild)
-        print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
+        bot.tree.clear_commands(guild=guild)          # smaž staré definice v téhle guildě
+        bot.tree.add_command(predmet, guild=guild)    # přidej /predmet jen do guildy
+        cmds = await bot.tree.sync(guild=guild)       # a sync
+        print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " +
+              ", ".join(sorted(c.name for c in cmds)))
     else:
-        print("⚠️ GUILD_ID není nastaven – žádná per-guild registrace /predmet")
+        print("⚠️ GUILD_ID není nastaven – per-guild registrace /predmet přeskočena")
 
 
 @bot.event
