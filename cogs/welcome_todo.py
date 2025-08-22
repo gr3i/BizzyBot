@@ -83,7 +83,7 @@ class WelcomeTodo(commands.Cog):
         try:
             dm = await after.create_dm()
             embed = discord.Embed(
-                title="🎉 Vítej na serveru VUT!",
+                title="🎉 Vítej na serveru VUT FP!",
                 description=(
                     "Super, ověření proběhlo a máš roli **VUT**.\n"
                     "Tady je rychlý TODO list, ať máš vše po ruce:"
