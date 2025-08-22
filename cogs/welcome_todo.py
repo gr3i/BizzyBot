@@ -5,23 +5,23 @@ from typing import Set
 import discord
 from discord.ext import commands
 
-# ID role VUT – použij ten, který už máš v projektu
-VUT_ROLE_ID = 1358915656782844094  # pokud bys měl jiný, přepiš
+# ID role VUT
+VUT_ROLE_ID = 1358915656782844094
 
-# Jednoduchý seznam úkolů – můžeš libovolně upravit text
+
 TODO_LINES = [
-    "✅ Přečti si pravidla serveru (#pravidla).",
-    "✅ Nastav si předměty pomocí /predmet pridat.",
-    "✅ Zkontroluj si oznámení a důležité kanály (#oznameni).",
-    "✅ Přidej si fakultu/ročník, pokud je potřeba (#role).",
-    "✅ Když něco nejde, napiš do #podpora nebo @moderátorům.",
+    "✅ Nastav si VUT roli podle fakulty (#vut-role).",
+    "✅ Pokud jsi z FP, nastav si obor, který studuješ. (napiš `/` a vyber `obor`)",
+    "✅ Když budeš potřebovat, tak pomocí `/predmet` si můžeš přidat předmět",
+    "✅ Pokud všechno tohle uděláš, dostaneš přístup do nových místností.",
+    "✅ Když něco nejde, napiš do #general nebo @moderátorům.",
 ]
 
 class WelcomeTodo(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # V jednoduché verzi si držíme runtime cache, ať uživatele nespamujeme,
-        # když by mu někdo roli odebral a znovu přidal během jedné session.
+        # v jednoduche verzi si drzim runtime cache, at uzivatele nespamujeme,
+        # kdyz by mu nekdo roli odebral a znovu pridal behem jedne session.
         self._sent_users: Set[int] = set()
 
     @commands.Cog.listener()
@@ -31,22 +31,22 @@ class WelcomeTodo(commands.Cog):
         if after.bot:
             return
 
-        # 2) zjisti, zda přibyla role VUT
+        # 2) zjisti, zda pribyla role VUT
         before_roles = {r.id for r in before.roles}
         after_roles = {r.id for r in after.roles}
         just_got_vut = (VUT_ROLE_ID not in before_roles) and (VUT_ROLE_ID in after_roles)
         if not just_got_vut:
             return
 
-        # 3) ať neposíláme víckrát v rámci jednoho běhu bota
+        # at neposilame vickrat v ramci jednoho behu bota
         if after.id in self._sent_users:
             return
         self._sent_users.add(after.id)
 
-        # 4) pošli TODO do DM
+        # posli TODO do DM
         try:
             dm = await after.create_dm()
-            # hezký embed
+            # embed
             embed = discord.Embed(
                 title="🎉 Vítej na serveru VUT!",
                 description="Super, ověření proběhlo a máš roli **VUT**.\n"
@@ -62,8 +62,6 @@ class WelcomeTodo(commands.Cog):
 
             await dm.send(embed=embed)
         except discord.Forbidden:
-            # Uživatel má zamčené DMs – zkusíme mu po chvilce napsat do kanálu (pokud chceš),
-            # ale nejjednodušší je to jen zalogovat.
             print(f"[welcome_todo] Nelze poslat DM uživateli {after} (DM uzamčené).")
         except Exception as e:
             print(f"[welcome_todo] Chyba při posílání TODO DM {after}: {e}")
