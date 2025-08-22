@@ -28,7 +28,7 @@ class Verify(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # If you want instant per-guild availability, uncomment and set your guild ID:
+    # If I will want instant per-guild availability, uncomment and set your guild ID:
     # @app_commands.guilds(discord.Object(id=123456789012345678))
     @app_commands.command(name="verify", description="Zadej svůj mail pro ověření.")
     async def verify(self, interaction: discord.Interaction, mail: str):
@@ -131,7 +131,7 @@ class Verify(commands.Cog):
                 ephemeral=True
             )
 
-    # If you want instant per-guild availability, uncomment and set your guild ID:
+    # If I want instant per-guild availability, uncomment and set your guild ID:
     # @app_commands.guilds(discord.Object(id=123456789012345678))
     @app_commands.command(name="verify_code", description="Zadej ověřovací kód.")
     async def verify_code(self, interaction: discord.Interaction, code: str):

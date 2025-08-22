@@ -13,7 +13,7 @@ from discord.ui import View
 from db.session import SessionLocal
 from db.models import Review, Reaction
 
-# ---- konfigurace ----
+# konfigurace
 MOD_ROLE_IDS = [1358898283782602932]
 OWNER_IDS = [685958402442133515]
 ALLOWED_ROLE_ID = 1358911329737642014
@@ -213,9 +213,10 @@ SUBJECTS = [
     "PVB3",
     "PVB4",
 ]
+
 VALID_GRADES = ["A", "B", "C", "D", "E", "F"]
 
-# --- pomocné funkce pro autocomplete ---
+# pomocne funkce pro autocomplete
 
 async def predmet_autocomplete(inter: discord.Interaction, current: str):
     items = [s for s in SUBJECTS if current.lower() in s.lower()]
@@ -234,7 +235,7 @@ async def id_autocomplete(inter: discord.Interaction, current: str):
     return [app_commands.Choice(name=f"{rid} - {predmet}", value=rid) for rid, predmet in rows]
 
 
-# --- view s tlačítky ---
+# view s tlacitky
 
 class ReviewView(View):
     def __init__(self, reviews: list[dict], user_id: int, bot: commands.Bot):
@@ -290,7 +291,7 @@ class ReviewView(View):
     async def _react(self, interaction: discord.Interaction, typ: str):
         r = self.reviews[self.index]
         with SessionLocal() as s:
-            # už reagoval?
+            # uz reagoval?
             exists = (
                 s.query(Reaction.id)
                 .filter(Reaction.hodnoceni_id == r['id'], Reaction.user_id == interaction.user.id)
@@ -300,7 +301,7 @@ class ReviewView(View):
                 await interaction.response.send_message("Už jsi reagoval.", ephemeral=True)
                 return
 
-            # uložit reakci
+            # ulozit reakci
             s.add(Reaction(
                 hodnoceni_id=r['id'],
                 user_id=interaction.user.id,
@@ -308,7 +309,7 @@ class ReviewView(View):
                 datum=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
             ))
 
-            # aktualizovat počitadla
+            # aktualizovat pocitadla
             rev = s.query(Review).get(r['id'])
             if rev:
                 if typ == 'like':
@@ -451,7 +452,7 @@ class Reviews(commands.Cog):
                 await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
                 return
 
-            # smazat navázané reakce (čisté)
+            # smazat navazane reakce
             s.query(Reaction).filter(Reaction.hodnoceni_id == id_hodnoceni).delete(synchronize_session=False)
             s.delete(r)
             s.commit()
@@ -459,7 +460,7 @@ class Reviews(commands.Cog):
         await interaction.response.send_message("Hodnocení smazáno.")
 
 
-# registrace slash groupy do konkrétní guildy (okamžitě viditelné)
+# registrace slash groupy do konkretni guildy (okamzite viditelne)
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 
 async def setup(bot: commands.Bot):

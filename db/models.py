@@ -19,7 +19,7 @@ class Base(DeclarativeBase):
     pass
 
 
-# --- Verification table (zachovat data) ---
+# verification table (zachovat data)
 class Verification(Base):
     __tablename__ = "verifications"
 
@@ -37,7 +37,7 @@ class Verification(Base):
     )
 
 
-# --- New reviews schema ---
+# reviews schema 
 class Review(Base):
     __tablename__ = "hodnoceni"
 
@@ -46,7 +46,7 @@ class Review(Base):
     znamka: Mapped[str] = mapped_column(String(2), nullable=False)  # A..F
     recenze: Mapped[str] = mapped_column(String, nullable=False)
     autor_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-    # for compatibility you can keep string timestamp; here keep simple string
+    # for compatibility I can keep string timestamp; here keep simple string
     datum: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     likes: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     dislikes: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")

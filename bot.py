@@ -81,9 +81,6 @@ else:
     print("📌 Soubor s ID zpráv nenalezen.")
 
 
-
-
-
 @bot.command()
 @commands.check(funkce_vrati_false)
 async def vut_roles(ctx):
@@ -331,16 +328,16 @@ async def ping_cmd(interaction: discord.Interaction):
 async def setup_hook():
     print("[setup_hook] start")
 
-    # 1) načíst cogy
+    # nacist cogy...
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
         "cogs.verify",
         "cogs.role",
-        "cogs.reviews",   # DŮLEŽITÉ: tenhle cog registruje groupu do guildy
+        "cogs.reviews",   # tenhle cog registruje groupu do guildy
         "utils.vyber_oboru",
         "utils.nastav_prava",
-        # "cogs.sort_categories",  # nech klidně zakomentované, pokud dřív padalo
+        # "cogs.sort_categories",
     ]:
         try:
             await bot.load_extension(ext)
@@ -348,10 +345,10 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba pri nacitani '{ext}': {e}")
 
-    # 2) per-guild sync (tvrdý resync – zamezí „CommandSignatureMismatch“)
+    # per-guild sync (tvrdy resync – zamezi „CommandSignatureMismatch“)
     if GUILD_ID:
         guild = discord.Object(id=GUILD_ID)
-        bot.tree.clear_commands(guild=guild)   # smaž definice v téhle guildě
+        bot.tree.clear_commands(guild=guild)   # smaz definice v tehle guilde
         cmds = await bot.tree.sync(guild=guild)
         print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
     else:
