@@ -323,11 +323,8 @@ async def strip_error(ctx, error):
 async def setup_hook():
     print("[setup_hook] start")
 
-    # musíš mít GUILD_ID v .env (už máš)
     guild = discord.Object(id=GUILD_ID)
 
-    # 1) načti cogy (NEnačítej utils.subject_management jako extension,
-    #    protože /predmet přidáváš ručně níže přes import `predmet`)
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
@@ -344,13 +341,13 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # 2) /predmet přidej přímo do TÉHLE guildy (okamžitě viditelné)
+    # 2) /predmet pridej primo do tehle guildy (okamzite viditelne)
     bot.tree.add_command(predmet, guild=guild)
 
-    # 3) zkopíruj globální příkazy (např. z verify/role/botInfo/hello) do guildy
+    # 3) zkopiruj globalni prikazy (napr. z verify/role/botInfo/hello) do guildy
     bot.tree.copy_global_to(guild=guild)
 
-    # 4) sync pouze pro guildu (rychlý, bez čekání)
+    # sync pouze pro guildu (rychly, bez cekani) <-- snad je to pravda...
     cmds = await bot.tree.sync(guild=guild)
     print(f"[SYNC] {len(cmds)} commands -> {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
 
