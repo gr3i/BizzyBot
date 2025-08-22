@@ -24,6 +24,20 @@ class WelcomeTodo(commands.Cog):
         # kdyz by mu nekdo roli odebral a znovu pridal behem jedne session.
         self._sent_users: Set[int] = set()
 
+    @app_commands.command(name="todo_reset", description="Resetuje TODO DM cache (owner only).")
+    @app_commands.describe(user="Komu znovu povolit DM; nech prázdné pro reset všech")
+    async def todo_reset(self, interaction: discord.Interaction, user: discord.User | None = None):
+        if interaction.user.id not in OWNER_IDS:
+            await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
+            return
+        if user:
+            self._sent_users.discard(user.id)
+            msg = f"Resetnuto pro {user.mention}."
+        else:
+            self._sent_users.clear()
+            msg = "Cache vyprázdněna pro všechny."
+        await interaction.response.send_message(msg, ephemeral=True)
+   
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
         """Spustí se, když se uživateli změní role. Když nově dostane VUT, pošleme TODO do DM."""
