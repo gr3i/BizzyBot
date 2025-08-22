@@ -1,20 +1,27 @@
+# db/session.py
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:////app/db/app.db")
+# read DATABASE_URL from env, eg:
+#   sqlite:////app/db/app.db
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
 
-# sqlite tip: better performance & fewer locks in docker
+# echo=False to keep logs clean. For debug set echo=True
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
+    future=True,
     pool_pre_ping=True,
 )
 
+# expire_on_commit=False so objects keep values after commit
 SessionLocal = sessionmaker(
     bind=engine,
     autoflush=False,
     autocommit=False,
-    expire_on_commit=False,  # nechceme DetachedInstanceError
+    expire_on_commit=False,
+    future=True,
 )
 
