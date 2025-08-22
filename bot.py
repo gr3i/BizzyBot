@@ -6,8 +6,6 @@ from db.models import Base
 Base.metadata.create_all(engine)
 from discord.ext import commands
 from dotenv import load_dotenv
-from utils.subject_management import predmet
-from utils.subject_management import predmet_odebrat
 from db.session import SessionLocal
 from db.models import Verification
 
