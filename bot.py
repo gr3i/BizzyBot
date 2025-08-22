@@ -15,7 +15,7 @@ from db.models import Verification
 # nacteni tokenu a databaze
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
-
+GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 
 # cesta k souboru pro ukladani ID zprav
 REACTION_IDS_FILE = "utils/reaction_ids.json"
@@ -80,20 +80,7 @@ if os.path.exists(REACTION_IDS_FILE):
 else:
     print("📌 Soubor s ID zpráv nenalezen.")
 
-@bot.event
-async def on_ready():
-    print(f"✅ Bot je přihlášen jako {bot.user} (ID: {bot.user.id})")
-    
-    for extension in ["cogs.hello","cogs.botInfo", "cogs.verify", "cogs.role", "cogs.reviews", "utils.vyber_oboru", "utils.nastav_prava", "cogs.sort-categories"]: # oddelano "utils.role_script" 
-        try: 
-            await bot.load_extension(extension)
-            print(f"✅ Cog '{extension}' načten.")
-        except Exception as e:
-            print(f"❌ Chyba při načítání '{extension}': {e}")
-    
-    bot.tree.add_command(predmet)
-    await bot.tree.sync()
-    print("✅ Slash příkazy synchronizovány.")
+
 
 
 
@@ -335,17 +322,43 @@ async def strip_error(ctx, error):
         await ctx.send("Tento příkaz může použít pouze vlastník bota.")     # posle zpravu, ze nema opravneni
 
 
-GUILD_ID = 1357455204391321712 
+
+@bot.tree.command(name="ping", description="test")
+async def ping_cmd(interaction: discord.Interaction):
+    await interaction.response.send_message("pong", ephemeral=True)
 
 @bot.event
 async def setup_hook():
-    guild = discord.Object(id=GUILD_ID)
-    # zkopiruje globalni prikazy do guildy (pokud nejake jsou)
-    bot.tree.copy_global_to(guild=guild)
-    cmds = await bot.tree.sync(guild=guild)
-    print(f"[SYNC] synced {len(cmds)} app commands to guild {GUILD_ID}")
+    print("[setup_hook] start")
 
-# spusteni bota
+    # 1) načíst cogy
+    for ext in [
+        "cogs.hello",
+        "cogs.botInfo",
+        "cogs.verify",
+        "cogs.role",
+        "cogs.reviews",   # DŮLEŽITÉ: tenhle cog registruje groupu do guildy
+        "utils.vyber_oboru",
+        "utils.nastav_prava",
+        # "cogs.sort_categories",  # nech klidně zakomentované, pokud dřív padalo
+    ]:
+        try:
+            await bot.load_extension(ext)
+            print(f"✅ Cog '{ext}' nacten")
+        except Exception as e:
+            print(f"❌ Chyba pri nacitani '{ext}': {e}")
+
+    # 2) per-guild sync (tvrdý resync – zamezí „CommandSignatureMismatch“)
+    if GUILD_ID:
+        guild = discord.Object(id=GUILD_ID)
+        bot.tree.clear_commands(guild=guild)   # smaž definice v téhle guildě
+        cmds = await bot.tree.sync(guild=guild)
+        print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
+    else:
+        print("⚠️ GUILD_ID není nastaven – přeskočen per-guild sync")
+
+@bot.event
+async def on_ready():
+    print(f"✅ Bot prihlasen jako {bot.user} (ID: {bot.user.id})")
+
 bot.run(TOKEN)
-
-

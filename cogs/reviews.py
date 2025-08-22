@@ -411,7 +411,19 @@ class Reviews(commands.Cog):
         conn.commit()
         await interaction.response.send_message("Hodnocení smazáno.")
 
-async def setup(bot):
-    await bot.add_cog(Reviews(bot))
 
+GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 
+async def setup(bot: commands.Bot):
+    cog = Reviews(bot)
+    await bot.add_cog(cog)
+
+    # Registrace skupiny /hodnoceni jen do konkrétní guildy → je vidět ihned
+    if GUILD_ID:
+        guild = discord.Object(id=GUILD_ID)
+        bot.tree.add_command(Reviews.hodnoceni, guild=guild)
+        print(f"[reviews] group 'hodnoceni' registered for guild {GUILD_ID}")
+    else:
+        # fallback: globálně (pomalejší propagace), ale ať něco máme
+        bot.tree.add_command(Reviews.hodnoceni)
+        print("[reviews] group 'hodnoceni' registered (global)")
