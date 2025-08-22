@@ -8,7 +8,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from db.session import SessionLocal
 from db.models import Verification
-from utils.subject_management import predmet
+
 
 # nacteni tokenu a databaze
 load_dotenv()
@@ -318,43 +318,40 @@ async def strip_error(ctx, error):
 
 
 
+@bot.tree.command(name="ping", description="test")
+async def ping_cmd(interaction: discord.Interaction):
+    await interaction.response.send_message("pong", ephemeral=True)
+
 @bot.event
 async def setup_hook():
     print("[setup_hook] start")
 
-    guild = discord.Object(id=GUILD_ID) if GUILD_ID else None
-
-    # vycisti globalni prikazy (aby zmizely duplicitni /predmet z globalu)
-    bot.tree.clear_commands(guild=None)
-    await bot.tree.sync()       
-    print("[SYNC] global commands cleared")
-
-    
+    # nacist cogy...
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
         "cogs.verify",
         "cogs.role",
-        "cogs.reviews",
+        "cogs.reviews",   # tenhle cog registruje groupu do guildy
+        "utils.subject_management",
         "utils.vyber_oboru",
         "utils.nastav_prava",
+        # "cogs.sort_categories",
     ]:
         try:
             await bot.load_extension(ext)
-            print(f"✅ Cog '{ext}' načten")
+            print(f"✅ Cog '{ext}' nacten")
         except Exception as e:
-            print(f"❌ Chyba při načítání '{ext}': {e}")
+            print(f"❌ Chyba pri nacitani '{ext}': {e}")
 
-    # 2) per-guild registrace skupiny /predmet
-    if guild:
-        bot.tree.clear_commands(guild=guild)          # smaz stare definice v tehle guilde
-        bot.tree.add_command(predmet, guild=guild)    # pridej /predmet jen do guildy
-        cmds = await bot.tree.sync(guild=guild)       # a sync
-        print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " +
-              ", ".join(sorted(c.name for c in cmds)))
+    # per-guild sync (tvrdy resync – zamezi „CommandSignatureMismatch“)
+    if GUILD_ID:
+        guild = discord.Object(id=GUILD_ID)
+        bot.tree.clear_commands(guild=guild)   # smaz definice v tehle guilde
+        cmds = await bot.tree.sync(guild=guild)
+        print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
     else:
-        print("⚠️ GUILD_ID není nastaven – per-guild registrace /predmet přeskočena")
-
+        print("⚠️ GUILD_ID není nastaven – přeskočen per-guild sync")
 
 @bot.event
 async def on_ready():
