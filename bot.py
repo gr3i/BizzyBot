@@ -322,10 +322,10 @@ async def strip_error(ctx, error):
 async def setup_hook():
     print("[setup_hook] start")
 
-    # pokud máš GUILD_ID v .env, připrav objekt gildy
+    # pokud mam GUILD_ID v .env, mam pripravit objekt gildy
     guild = discord.Object(id=GUILD_ID) if GUILD_ID else None
 
-    # 1) načti ostatní cogy (NE subject_management)
+
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
@@ -342,10 +342,10 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # 2) registruj /predmet jen do konkrétní gildy
+    # registrovani /predmet jen do konkretni gildy
     if guild:
-        bot.tree.clear_commands(guild=guild)           # smaž staré definice v téhle gildě
-        bot.tree.add_command(predmet, guild=guild)     # přidej groupu
+        bot.tree.clear_commands(guild=guild)           # smaze stare definice v tehle gilde
+        bot.tree.add_command(predmet, guild=guild)     # prida groupu
         cmds = await bot.tree.sync(guild=guild)        # syncni jen tuhle guildu
         print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " +
               ", ".join(sorted(c.name for c in cmds)))
