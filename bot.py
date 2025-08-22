@@ -317,23 +317,18 @@ async def strip_error(ctx, error):
         await ctx.send("Tento příkaz může použít pouze vlastník bota.")     # posle zpravu, ze nema opravneni
 
 
-
-@bot.tree.command(name="ping", description="test")
-async def ping_cmd(interaction: discord.Interaction):
-    await interaction.response.send_message("pong", ephemeral=True)
-
 @bot.event
 async def setup_hook():
     print("[setup_hook] start")
 
-    # 1) (volitelné) vyčisti guildu, ať odstraníš staré definice
-    if GUILD_ID:
-        guild = discord.Object(id=GUILD_ID)
-        bot.tree.clear_commands(guild=guild)
-    else:
-        guild = None
+    guild = discord.Object(id=GUILD_ID) if GUILD_ID else None
 
-    # 2) NACTI OSTATNÍ COGY (ALE NE 'utils.subject_management'!)
+    # 0) Zruš VŠECHNY globální app commands (zabrání duplicitám)
+    bot.tree.clear_commands()          # bez parametru = global scope
+    await bot.tree.sync()              # tím se globální příkazy skutečně smažou u Discordu
+    print("[SYNC] global commands cleared")
+
+    # 1) Načti ostatní cogy (ale ne utils.subject_management)
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
@@ -350,21 +345,19 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # 3) PŘIDEJ GROUPU /predmet PŘÍMO Z IMPORTU
+    # 2) Připrav guild scope a smaž tam staré definice
     if guild:
+        bot.tree.clear_commands(guild=guild)
+
+        # 3) Registruj /predmet skupinu JEN do téhle guildy
         bot.tree.add_command(predmet, guild=guild)
         print(f"[subjects] group 'predmet' registered for guild {GUILD_ID}")
-    else:
-        bot.tree.add_command(predmet)
-        print("[subjects] group 'predmet' registered (global)")
 
-    # 4) SYNC
-    if guild:
+        # 4) Sync jen pro guildu
         cmds = await bot.tree.sync(guild=guild)
         print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
     else:
-        cmds = await bot.tree.sync()
-        print(f"[SYNC] {len(cmds)} global commands: " + ", ".join(sorted(c.name for c in cmds)))
+        print("⚠️ GUILD_ID není nastaven – žádná per-guild registrace /predmet")
 
 
 @bot.event
