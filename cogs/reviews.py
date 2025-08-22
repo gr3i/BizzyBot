@@ -1,12 +1,19 @@
+# cogs/reviews.py  – ORM (SQLAlchemy) verze pro app.db
+
+import os
+from datetime import datetime
+from typing import List
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import View, Button
-import sqlite3
-import os
-from datetime import datetime
+from discord.ui import View
 
-DB_PATH = "db/reviews.db"
+# ORM importy
+from db.session import SessionLocal
+from db.models import Review, Reaction
+
+# ---- konfigurace ----
 MOD_ROLE_IDS = [1358898283782602932]
 OWNER_IDS = [685958402442133515]
 ALLOWED_ROLE_ID = 1358911329737642014
@@ -206,54 +213,46 @@ SUBJECTS = [
     "PVB3",
     "PVB4",
 ]
-
-
 VALID_GRADES = ["A", "B", "C", "D", "E", "F"]
 
-os.makedirs("db", exist_ok=True)
-conn = sqlite3.connect(DB_PATH)
-c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS hodnoceni (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    predmet TEXT,
-    znamka TEXT,
-    recenze TEXT,
-    autor_id INTEGER,
-    datum TEXT,
-    likes INTEGER DEFAULT 0,
-    dislikes INTEGER DEFAULT 0
-)''')
-c.execute('''CREATE TABLE IF NOT EXISTS reakce (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    hodnoceni_id INTEGER,
-    user_id INTEGER,
-    typ TEXT,
-    datum TEXT
-)''')
-conn.commit()
+# --- pomocné funkce pro autocomplete ---
 
-async def predmet_autocomplete(interaction: discord.Interaction, current: str):
-    return [app_commands.Choice(name=sub, value=sub) for sub in SUBJECTS if current.lower() in sub.lower()][:25]
+async def predmet_autocomplete(inter: discord.Interaction, current: str):
+    items = [s for s in SUBJECTS if current.lower() in s.lower()]
+    return [app_commands.Choice(name=s, value=s) for s in items[:25]]
 
-async def id_autocomplete(interaction: discord.Interaction, current: str):
-    c.execute("SELECT id, predmet FROM hodnoceni WHERE CAST(id AS TEXT) LIKE ? OR predmet LIKE ? LIMIT 25", (f"%{current}%", f"%{current}%"))
-    rows = c.fetchall()
-    return [app_commands.Choice(name=f"{row[0]} - {row[1]}", value=row[0]) for row in rows]
+async def id_autocomplete(inter: discord.Interaction, current: str):
+    q = f"%{current}%"
+    with SessionLocal() as s:
+        rows = (
+            s.query(Review.id, Review.predmet)
+            .filter((Review.predmet.ilike(q)) | (Review.id.cast(str).ilike(q)))
+            .order_by(Review.id.desc())
+            .limit(25)
+            .all()
+        )
+    return [app_commands.Choice(name=f"{rid} - {predmet}", value=rid) for rid, predmet in rows]
+
+
+# --- view s tlačítky ---
 
 class ReviewView(View):
-    def __init__(self, reviews, user_id, bot):
+    def __init__(self, reviews: list[dict], user_id: int, bot: commands.Bot):
         super().__init__(timeout=300)
         self.reviews = reviews
         self.index = 0
         self.user_id = user_id
         self.bot = bot
 
-    async def interaction_check(self, interaction):
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user.id == self.user_id
 
-    def create_embed(self):
+    def create_embed(self) -> discord.Embed:
         r = self.reviews[self.index]
-        embed = discord.Embed(title=f"{r['predmet']} - hodnocení #{r['id']}", description=r['recenze'])
+        embed = discord.Embed(
+            title=f"{r['predmet']} - hodnocení #{r['id']}",
+            description=r['recenze'],
+        )
         embed.add_field(name="Známka", value=r['znamka'])
         embed.add_field(name="Likes", value=str(r['likes']))
         embed.add_field(name="Dislikes", value=str(r['dislikes']))
@@ -265,58 +264,77 @@ class ReviewView(View):
         return embed
 
     @discord.ui.button(label='⬅', style=discord.ButtonStyle.secondary)
-    async def prev(self, interaction, button):
+    async def prev(self, interaction: discord.Interaction, _button: discord.ui.Button):
         if self.index > 0:
             self.index -= 1
             await interaction.response.edit_message(embed=self.create_embed(), view=self)
+        else:
+            await interaction.response.defer()
 
     @discord.ui.button(label='➡', style=discord.ButtonStyle.secondary)
-    async def next(self, interaction, button):
+    async def next(self, interaction: discord.Interaction, _button: discord.ui.Button):
         if self.index < len(self.reviews) - 1:
             self.index += 1
             await interaction.response.edit_message(embed=self.create_embed(), view=self)
+        else:
+            await interaction.response.defer()
 
     @discord.ui.button(label='👍', style=discord.ButtonStyle.success)
-    async def like(self, interaction, button):
-        await self.react(interaction, 'like')
+    async def like(self, interaction: discord.Interaction, _button: discord.ui.Button):
+        await self._react(interaction, 'like')
 
     @discord.ui.button(label='👎', style=discord.ButtonStyle.danger)
-    async def dislike(self, interaction, button):
-        await self.react(interaction, 'dislike')
+    async def dislike(self, interaction: discord.Interaction, _button: discord.ui.Button):
+        await self._react(interaction, 'dislike')
 
-    async def react(self, interaction, typ):
+    async def _react(self, interaction: discord.Interaction, typ: str):
         r = self.reviews[self.index]
-        c.execute("SELECT * FROM reakce WHERE hodnoceni_id = ? AND user_id = ?", (r['id'], interaction.user.id))
-        if c.fetchone():
-            await interaction.response.send_message("Už jsi reagoval.", ephemeral=True)
-            return
-        datum = datetime.now().isoformat()
-        c.execute("INSERT INTO reakce (hodnoceni_id, user_id, typ, datum) VALUES (?, ?, ?, ?)", (r['id'], interaction.user.id, typ, datum))
-        if typ == 'like':
-            c.execute("UPDATE hodnoceni SET likes = likes + 1 WHERE id = ?", (r['id'],))
-            r['likes'] += 1
-        else:
-            c.execute("UPDATE hodnoceni SET dislikes = dislikes + 1 WHERE id = ?", (r['id'],))
-            r['dislikes'] += 1
-        conn.commit()
+        with SessionLocal() as s:
+            # už reagoval?
+            exists = (
+                s.query(Reaction.id)
+                .filter(Reaction.hodnoceni_id == r['id'], Reaction.user_id == interaction.user.id)
+                .first()
+            )
+            if exists:
+                await interaction.response.send_message("Už jsi reagoval.", ephemeral=True)
+                return
+
+            # uložit reakci
+            s.add(Reaction(
+                hodnoceni_id=r['id'],
+                user_id=interaction.user.id,
+                typ=typ,
+                datum=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            ))
+
+            # aktualizovat počitadla
+            rev = s.query(Review).get(r['id'])
+            if rev:
+                if typ == 'like':
+                    rev.likes += 1
+                    r['likes'] += 1
+                else:
+                    rev.dislikes += 1
+                    r['dislikes'] += 1
+            s.commit()
+
         await interaction.response.edit_message(embed=self.create_embed(), view=self)
 
+
 class Reviews(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    async def _has_allowed_role(self, interaction: discord.Interaction):
+    async def _has_allowed_role(self, interaction: discord.Interaction) -> bool:
         if not isinstance(interaction.user, discord.Member):
             await interaction.response.send_message("Tento příkaz lze použít jen na serveru.", ephemeral=True)
             return False
-
         if any(role.id == ALLOWED_ROLE_ID for role in interaction.user.roles):
             return True
-
         await interaction.response.send_message("Nemáš oprávnění použít tento příkaz.", ephemeral=True)
         return False
 
-    # Skupina
     hodnoceni = app_commands.Group(
         name="hodnoceni",
         description="Hodnocení předmětů"
@@ -329,6 +347,7 @@ class Reviews(commands.Cog):
     async def pridat_hodnoceni(self, interaction: discord.Interaction, predmet: str, znamka: str, recenze: str):
         if not await self._has_allowed_role(interaction):
             return
+
         if predmet not in SUBJECTS or znamka.upper() not in VALID_GRADES:
             await interaction.response.send_message("Neplatný předmět nebo známka.", ephemeral=True)
             return
@@ -336,17 +355,18 @@ class Reviews(commands.Cog):
         if len(recenze) > MAX_REVIEW_LENGTH:
             await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
             return
- 
 
-        if znamka.upper() not in VALID_GRADES:
-            await interaction.response.send_message("Neplatná známka (A–F).", ephemeral=True)
-            return
+        with SessionLocal() as s:
+            r = Review(
+                predmet=predmet,
+                znamka=znamka.upper(),
+                recenze=recenze,
+                autor_id=interaction.user.id,
+                datum=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            s.add(r)
+            s.commit()
 
-
-        datum = datetime.now().isoformat()
-        c.execute("INSERT INTO hodnoceni (predmet, znamka, recenze, autor_id, datum) VALUES (?, ?, ?, ?, ?)",
-                  (predmet, znamka.upper(), recenze, interaction.user.id, datum))
-        conn.commit()
         await interaction.response.send_message("Hodnocení přidáno.")
 
     @hodnoceni.command(name="zobrazit", description="Zobraz hodnocení předmětu.")
@@ -356,14 +376,30 @@ class Reviews(commands.Cog):
     async def zobraz_hodnoceni(self, interaction: discord.Interaction, predmet: str):
         if not await self._has_allowed_role(interaction):
             return
-        c.execute("SELECT * FROM hodnoceni WHERE predmet = ? ORDER BY datum DESC", (predmet,))
-        rows = c.fetchall()
+
+        with SessionLocal() as s:
+            rows: List[Review] = (
+                s.query(Review)
+                .filter(Review.predmet == predmet)
+                .order_by(Review.id.desc())
+                .all()
+            )
+
         if not rows:
             await interaction.response.send_message("Žádná hodnocení.", ephemeral=True)
             return
+
         reviews = [{
-            'id': r[0], 'predmet': r[1], 'znamka': r[2], 'recenze': r[3], 'autor_id': r[4], 'datum': r[5], 'likes': r[6], 'dislikes': r[7]
+            'id': r.id,
+            'predmet': r.predmet,
+            'znamka': r.znamka,
+            'recenze': r.recenze,
+            'autor_id': r.autor_id,
+            'datum': r.datum or "",
+            'likes': r.likes,
+            'dislikes': r.dislikes,
         } for r in rows]
+
         view = ReviewView(reviews, interaction.user.id, self.bot)
         await interaction.response.send_message(embed=view.create_embed(), view=view)
 
@@ -383,13 +419,16 @@ class Reviews(commands.Cog):
             await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
             return
 
-        c.execute("SELECT autor_id FROM hodnoceni WHERE id = ?", (id_hodnoceni,))
-        row = c.fetchone()
-        if not row or row[0] != interaction.user.id:
-            await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
-            return
-        c.execute("UPDATE hodnoceni SET znamka = ?, recenze = ? WHERE id = ?", (znamka.upper(), recenze, id_hodnoceni))
-        conn.commit()
+        with SessionLocal() as s:
+            r = s.query(Review).get(id_hodnoceni)
+            if not r or r.autor_id != interaction.user.id:
+                await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
+                return
+
+            r.znamka = znamka.upper()
+            r.recenze = recenze
+            s.commit()
+
         await interaction.response.send_message("Hodnocení upraveno.")
 
     @hodnoceni.command(name="smazat", description="Smaž hodnocení.")
@@ -399,31 +438,39 @@ class Reviews(commands.Cog):
     async def smazat_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int):
         if not await self._has_allowed_role(interaction):
             return
-        c.execute("SELECT autor_id FROM hodnoceni WHERE id = ?", (id_hodnoceni,))
-        row = c.fetchone()
-        if not row:
-            await interaction.response.send_message("Hodnocení nenalezeno.", ephemeral=True)
-            return
-        if row[0] != interaction.user.id and not any(r.id in MOD_ROLE_IDS for r in interaction.user.roles) and interaction.user.id not in OWNER_IDS:
-            await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
-            return
-        c.execute("DELETE FROM hodnoceni WHERE id = ?", (id_hodnoceni,))
-        conn.commit()
+
+        with SessionLocal() as s:
+            r = s.query(Review).get(id_hodnoceni)
+            if not r:
+                await interaction.response.send_message("Hodnocení nenalezeno.", ephemeral=True)
+                return
+
+            is_mod = any(role.id in MOD_ROLE_IDS for role in interaction.user.roles)
+            is_owner = interaction.user.id in OWNER_IDS
+            if r.autor_id != interaction.user.id and not is_mod and not is_owner:
+                await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
+                return
+
+            # smazat navázané reakce (čisté)
+            s.query(Reaction).filter(Reaction.hodnoceni_id == id_hodnoceni).delete(synchronize_session=False)
+            s.delete(r)
+            s.commit()
+
         await interaction.response.send_message("Hodnocení smazáno.")
 
 
+# registrace slash groupy do konkrétní guildy (okamžitě viditelné)
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 
 async def setup(bot: commands.Bot):
     cog = Reviews(bot)
     await bot.add_cog(cog)
 
-    # Registrace skupiny /hodnoceni jen do konkrétní guildy → je vidět ihned
     if GUILD_ID:
         guild = discord.Object(id=GUILD_ID)
         bot.tree.add_command(Reviews.hodnoceni, guild=guild)
         print(f"[reviews] group 'hodnoceni' registered for guild {GUILD_ID}")
     else:
-        # fallback: globálně (pomalejší propagace), ale ať něco máme
         bot.tree.add_command(Reviews.hodnoceni)
         print("[reviews] group 'hodnoceni' registered (global)")
+
