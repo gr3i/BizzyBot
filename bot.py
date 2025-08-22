@@ -322,10 +322,14 @@ async def strip_error(ctx, error):
 async def setup_hook():
     print("[setup_hook] start")
 
-    # pokud mam GUILD_ID v .env, mam pripravit objekt gildy
     guild = discord.Object(id=GUILD_ID) if GUILD_ID else None
 
+    # vycisti globalni prikazy (aby zmizely duplicitni /predmet z globalu)
+    bot.tree.clear_commands(guild=None)
+    await bot.tree.sync()       
+    print("[SYNC] global commands cleared")
 
+    
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
@@ -334,7 +338,6 @@ async def setup_hook():
         "cogs.reviews",
         "utils.vyber_oboru",
         "utils.nastav_prava",
-        # "cogs.sort_categories",
     ]:
         try:
             await bot.load_extension(ext)
@@ -342,16 +345,15 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # registrovani /predmet jen do konkretni gildy
+    # 2) per-guild registrace skupiny /predmet
     if guild:
-        bot.tree.clear_commands(guild=guild)           # smaze stare definice v tehle gilde
-        bot.tree.add_command(predmet, guild=guild)     # prida groupu
-        cmds = await bot.tree.sync(guild=guild)        # syncni jen tuhle guildu
+        bot.tree.clear_commands(guild=guild)          # smaz stare definice v tehle guilde
+        bot.tree.add_command(predmet, guild=guild)    # pridej /predmet jen do guildy
+        cmds = await bot.tree.sync(guild=guild)       # a sync
         print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " +
               ", ".join(sorted(c.name for c in cmds)))
     else:
-        print("⚠️ GUILD_ID není nastaven – /predmet se neregistruje.")
-
+        print("⚠️ GUILD_ID není nastaven – per-guild registrace /predmet přeskočena")
 
 
 @bot.event
@@ -359,3 +361,4 @@ async def on_ready():
     print(f"✅ Bot prihlasen jako {bot.user} (ID: {bot.user.id})")
 
 bot.run(TOKEN)
+
