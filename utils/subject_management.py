@@ -3,9 +3,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-
+# ====== DATA ======
+# (ponech tvůj dlouhý seznam 1:1)
 subject_list = [
-  ("epP",1383522736986656950 ),
+   ("epP",1383522736986656950 ),
     ("mak1P", 1383522746167857202),
     ("manP", 1383522758658490551),
     ("mkP", 1383522765092425788),
@@ -198,11 +199,10 @@ subject_list = [
     ("PVB4", 1383524427681239190), 
 ]
 
-
-# slash group /predmet
+# skupina /predmet
 predmet = app_commands.Group(
     name="predmet",
-    description="Přidání a odebrání předmětu (rolí)"
+    description="Přidání a odebrání předmětu (role)"
 )
 
 async def predmet_autocomplete(interaction: discord.Interaction, current: str):
@@ -251,25 +251,20 @@ async def predmet_odebrat(interaction: discord.Interaction, predmet: str):
     else:
         await interaction.response.send_message("Tuto roli nemáš.", ephemeral=True)
 
-# Per-command error handlery (správně na konkrétní příkazy)
-@predmet_pridat.error
-async def predmet_pridat_error(interaction: discord.Interaction, error):
+# společný error handler
+@predmet.error
+@predmet_odebrat.error  # type: ignore[name-defined]
+async def predmet_error(interaction: discord.Interaction, error: Exception):
     if isinstance(error, app_commands.errors.MissingRole):
         await interaction.response.send_message("❌ Nemáš oprávnění použít tento příkaz.", ephemeral=True)
     else:
         await interaction.response.send_message("Něco se pokazilo.", ephemeral=True)
 
-@predmet_odebrat.error
-async def predmet_odebrat_error(interaction: discord.Interaction, error):
-    if isinstance(error, app_commands.errors.MissingRole):
-        await interaction.response.send_message("❌ Nemáš oprávnění použít tento příkaz.", ephemeral=True)
-    else:
-        await interaction.response.send_message("Něco se pokazilo.", ephemeral=True)
-
-# Extension entrypoint – tady se groupa přidá do stromu
+# ====== REGISTRACE DO STROMU PŘÍKAZŮ ======
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 
 async def setup(bot: commands.Bot):
+    """Extension entry-point. Přidá groupu /predmet do guildy (nebo globálně)."""
     if GUILD_ID:
         guild = discord.Object(id=GUILD_ID)
         bot.tree.add_command(predmet, guild=guild)
