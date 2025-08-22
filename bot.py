@@ -326,14 +326,19 @@ async def ping_cmd(interaction: discord.Interaction):
 async def setup_hook():
     print("[setup_hook] start")
 
-    # nacist cogy...
+    # (1) NEJDŘÍV SMAZAT STARÉ DEFINICE (volitelné)
+    if GUILD_ID:
+        guild = discord.Object(id=GUILD_ID)
+        bot.tree.clear_commands(guild=guild)
+
+    # (2) PAK NAČÍST EXTENSIONS – subject_management si přidá groupu do tree
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
         "cogs.verify",
         "cogs.role",
-        "cogs.reviews",   # tenhle cog registruje groupu do guildy
-        "utils.subject_management",
+        "cogs.reviews",
+        "utils.subject_management",  # <- TADY ZŮSTÁVÁ
         "utils.vyber_oboru",
         "utils.nastav_prava",
         # "cogs.sort_categories",
@@ -344,14 +349,14 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba pri nacitani '{ext}': {e}")
 
-    # per-guild sync (tvrdy resync – zamezi „CommandSignatureMismatch“)
+    # (3) AŽ TEĎ SYNC
     if GUILD_ID:
-        guild = discord.Object(id=GUILD_ID)
-        bot.tree.clear_commands(guild=guild)   # smaz definice v tehle guilde
         cmds = await bot.tree.sync(guild=guild)
         print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
     else:
-        print("⚠️ GUILD_ID není nastaven – přeskočen per-guild sync")
+        cmds = await bot.tree.sync()
+        print(f"[SYNC] {len(cmds)} global commands: " + ", ".join(sorted(c.name for c in cmds)))
+
 
 @bot.event
 async def on_ready():
