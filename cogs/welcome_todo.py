@@ -16,7 +16,7 @@ TODO_LINES = [
     "✅ Pokud jsi z FP, nastav si obor, který studuješ. (napiš `/` a vyber `obor`)",
     "✅ Když budeš potřebovat, tak pomocí `/predmet` si můžeš přidat předmět",
     "✅ Pokud všechno tohle uděláš, dostaneš přístup do nových místností.",
-    "✅ Když něco nejde, napiš do #general nebo @moderátorům.",
+    "✅ Potřebuješ-li podrobnější popis, jak co udělat --> #info",
 ]
 
 
