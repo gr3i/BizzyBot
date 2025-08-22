@@ -333,6 +333,7 @@ async def setup_hook():
         "cogs.reviews",
         "utils.vyber_oboru",
         "utils.nastav_prava",
+        "cogs.welcome_todo",
         # "cogs.sort_categories",
     ]:
         try:
