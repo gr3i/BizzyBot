@@ -335,6 +335,7 @@ async def setup_hook():
         "cogs.verify",
         "cogs.role",
         "cogs.reviews",   # tenhle cog registruje groupu do guildy
+        "utils.subject_management",
         "utils.vyber_oboru",
         "utils.nastav_prava",
         # "cogs.sort_categories",
