@@ -321,19 +321,9 @@ async def strip_error(ctx, error):
 @bot.event
 async def setup_hook():
     print("[setup_hook] start")
-
     guild = discord.Object(id=GUILD_ID) if GUILD_ID else None
 
-    # 0) (volitelné) globální úklid – zbaví se starých globálních definic
-    bot.tree.clear_commands(guild=None)
-    await bot.tree.sync()
-    print("[SYNC] global commands cleared")
-
-    # 1) (volitelné) per-guild úklid MUSÍ BÝT PŘED načtením cogů
-    if guild:
-        bot.tree.clear_commands(guild=guild)
-
-    # 2) teď načti cogy – ony si samy zaregistrují své slashy
+    # 1) Načti cogy (NEmaž teď nic)
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
@@ -349,19 +339,20 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # 3) přidej /predmet přímo z importu
+    # 2) /predmet přidat per-guild
     if guild:
         bot.tree.add_command(predmet, guild=guild)
-        # 4) a JEDEN společný sync pro guildu (nevolat clear_commands znovu!)
+
+        # 3) ZKOPÍRUJ globální příkazy do guildy a synchronizuj
+        bot.tree.copy_global_to(guild=guild)
         cmds = await bot.tree.sync(guild=guild)
-        print(f"[SYNC] {len(cmds)} commands -> guild {GUILD_ID}: " +
-              ", ".join(sorted(c.name for c in cmds)))
+        print(f"[SYNC] {len(cmds)} guild cmds -> {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
     else:
-        # fallback: globálně (pokud bys chtěl /predmet i globálně)
+        # bez GUILD_ID – publikuj globálně (pomalejší propagace)
         bot.tree.add_command(predmet)
         cmds = await bot.tree.sync()
-        print(f"[SYNC] {len(cmds)} global commands: " +
-              ", ".join(sorted(c.name for c in cmds)))
+        print(f"[SYNC] {len(cmds)} global cmds: " + ", ".join(sorted(c.name for c in cmds)))
+
 
 
 @bot.event
