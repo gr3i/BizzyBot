@@ -61,7 +61,7 @@ BizzyBot/
 - [discord.py 2.x](https://discordpy.readthedocs.io/)
 - [SQLAlchemy](https://www.sqlalchemy.org/) (ORM)
 - SQLite (default DB) – stored as `app.db`
-- Docker + Docker Compose (recommended for deployment)
+- Docker + Docker Compose
 - `.env` file with configuration:
 
 ```env
