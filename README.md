@@ -101,6 +101,7 @@ docker compose up --build -d
 | ------------------------- | ------------------------------------ |
 | `/verify <email>`         | Start verification                   |
 | `/verify_code <code>`     | Finish verification                  |
+| `/obor`                   | Set your major                       |
 | `/predmet ...`            | Manage your subjects                 |
 | `/hodnoceni ...`          | Manage reviews                       |
 | `/bot info`               | Show bot stats (latency, RAM, etc.)  |
