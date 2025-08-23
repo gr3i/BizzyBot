@@ -12,7 +12,7 @@ It handles user verification via email, assigns roles based on user input or ema
 ## 📌 Features
 
 * 🔐 **Email Verification** 
-  Verify with your university email to gain access. Each email can only be used once. 
+  Users must verify their identity using a university email. Only **one user per email address** is allowed. 
 
 * 🎓 **Automatic Role Assignment**
   Upon successful verification, users are granted:
@@ -50,7 +50,7 @@ BizzyBot/
 │   ├── nastav_prava.py       # role/permissions script
 │   └── reaction_ids.json     # tracked reaction messages
 ├── bot.py                    # Main
-└── longmessage_for_bot.txt   # Optional file for owner commandse
+└── longmessage_for_bot.txt   # Optional file used for long-form bot messages
 ```
 
 ---
@@ -69,7 +69,7 @@ DISCORD_TOKEN=your_token_here
 GUILD_ID=123456789012345678
 ```
 
-* SMTP settings in `utils/mailer.py` (for email verification)
+* SMTP credentials configured inside utils/mailer.py for sending emails.
 
 ### Install dependencies
 
@@ -102,10 +102,7 @@ docker compose up --build -d
 | `/verify <email>`         | Start verification                   |
 | `/verify_code <code>`     | Finish verification                  |
 | `/predmet ...`            | Manage your subjects                 |
-| `/hodnoceni pridat`       | Add subject review                   |
-| `/hodnoceni zobrazit`     | Show subject reviews                 |
-| `/hodnoceni upravit`      | Edit your review                     |
-| `/hodnoceni smazat`       | Delete review                        |
+| `/hodnoceni ...`          | Manage reviews                       |
 | `/bot info`               | Show bot stats (latency, RAM, etc.)  |
 | `/todo_reset` *(owner)*   | Reset TODO DM cache                  |
 
