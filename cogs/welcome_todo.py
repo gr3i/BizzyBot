@@ -13,7 +13,7 @@ GUILD_ID = int(os.getenv("GUILD_ID", "0"))      # pro per-guild registraci slash
 
 TODO_LINES = [
     "✅ Nastav si VUT roli podle fakulty (#vut-role).",
-    "✅ Pokud jsi z FP, nastav si obor, který studuješ. (napiš `/` a vyber `obor`)",
+    "✅ Pokud jsi z FP, nastav si obor, který studuješ (napiš `/` a vyber `obor`).",
     "✅ Když budeš potřebovat, tak pomocí `/predmet` si můžeš přidat předmět.",
     "✅ Pokud všechno tohle uděláš, dostaneš přístup do nových místností.",
     "✅ Potřebuješ-li podrobnější popis, jak co udělat (#info).",
