@@ -8,6 +8,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
+import sqlalchemy as sa 
 
 # ORM importy
 from db.session import SessionLocal
@@ -224,14 +225,20 @@ async def predmet_autocomplete(inter: discord.Interaction, current: str):
 
 async def id_autocomplete(inter: discord.Interaction, current: str):
     q = f"%{current}%"
+
+    filters = [Review.predmet.ilike(q)]
+    if current.strip().isdigit():
+        filters.append(Review.id == int(current))
+
     with SessionLocal() as s:
         rows = (
             s.query(Review.id, Review.predmet)
-            .filter((Review.predmet.ilike(q)) | (Review.id.cast(str).ilike(q)))
+            .filter(sa.or_(*filters))
             .order_by(Review.id.desc())
             .limit(25)
             .all()
         )
+
     return [app_commands.Choice(name=f"{rid} - {predmet}", value=rid) for rid, predmet in rows]
 
 
