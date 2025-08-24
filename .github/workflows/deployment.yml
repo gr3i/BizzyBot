@@ -30,5 +30,4 @@ jobs:
           script: |
             echo "================== Restart BizzyBot Service =================="
             cd /home/opc/bizzyBot
-            git pull
             docker compose down && docker compose up -d --build
