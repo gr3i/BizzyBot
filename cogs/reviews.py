@@ -225,18 +225,20 @@ async def predmet_autocomplete(inter: discord.Interaction, current: str):
 
 async def id_autocomplete(inter: discord.Interaction, current: str):
     q = f"%{current}%"
+
+    filters = [Review.predmet.ilike(q)]
+    if current.strip().isdigit():
+        filters.append(Review.id == int(current))
+
     with SessionLocal() as s:
         rows = (
             s.query(Review.id, Review.predmet)
-            .filter(
-                (Review.predmet.ilike(q)) |
-                (sa.cast(Review.id, sa.String).ilike(q))  
-            )
+            .filter(sa.or_(*filters))
             .order_by(Review.id.desc())
             .limit(25)
             .all()
         )
-        
+
     return [app_commands.Choice(name=f"{rid} - {predmet}", value=rid) for rid, predmet in rows]
 
 
