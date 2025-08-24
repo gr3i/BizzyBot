@@ -1,4 +1,4 @@
-# BUT FP Discord Bot [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+ BUT FP Discord Bot [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 A custom Discord bot developed for the **Brno University of Technology – Faculty of Business and Management (BUT FP)** Discord server.
 
