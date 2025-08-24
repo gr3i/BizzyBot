@@ -9,7 +9,7 @@ jobs:
   deployment_production:
     runs-on: ubuntu-latest
     steps:
-      - name: Pull changes
+      - name: Pull changes (force-sync)
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
@@ -18,7 +18,10 @@ jobs:
           port: 22
           script: |
             cd /home/opc/bizzyBot
-            git pull
+            # stáhni reference a ukliď staré
+            git fetch origin --prune
+            # srovnej lokální main přesně na origin/main (obejde staré nastavení na logs-repair)
+            git checkout -B main origin/main
 
       - name: Restart BizzyBot service
         uses: appleboy/ssh-action@v1.2.2
@@ -28,7 +31,7 @@ jobs:
           username: ${{ secrets.PRODUCTION_USERNAME }}
           port: 22
           script: |
-            echo "================== Restart BizzyBot Service =================="
+            echo "=============== Restart BizzyBot Service ==============="
             cd /home/opc/bizzyBot
-            git pull
+            # žádný další git pull – už jsme srovnali výše
             docker compose down && docker compose up -d --build
