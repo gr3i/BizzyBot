@@ -9,7 +9,7 @@ jobs:
   deployment_production:
     runs-on: ubuntu-latest
     steps:
-      - name: Pull changes
+      - name: Pull changes (force sync)
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
