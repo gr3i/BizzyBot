@@ -49,7 +49,7 @@ BizzyBot/
 │   ├── vyber_oboru.py        # faculty role selection
 │   ├── nastav_prava.py       # role/permissions script
 │   └── reaction_ids.json     # tracked reaction messages
-├── bot.py                    # Run bot 
+├── bot.py                    # Run a bot 
 └── longmessage_for_bot.txt   # Optional file used for long-form bot messages
 ```
 
