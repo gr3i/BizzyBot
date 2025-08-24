@@ -8,7 +8,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
-import sqlalchemy sa 
+import sqlalchemy as sa 
 
 # ORM importy
 from db.session import SessionLocal
