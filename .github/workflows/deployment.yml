@@ -31,7 +31,6 @@ jobs:
           username: ${{ secrets.PRODUCTION_USERNAME }}
           port: 22
           script: |
-            echo "=============== Restart BizzyBot Service ==============="
             cd /home/opc/bizzyBot
             # žádný další git pull – už jsme srovnali výše
             docker compose down && docker compose up -d --build
