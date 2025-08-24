@@ -8,7 +8,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View
-from sqlalchemy import String, cast
+import sqlalchemy sa 
 
 # ORM importy
 from db.session import SessionLocal
@@ -230,7 +230,7 @@ async def id_autocomplete(inter: discord.Interaction, current: str):
             s.query(Review.id, Review.predmet)
             .filter(
                 (Review.predmet.ilike(q)) |
-                (cast(Review.id, String).ilike(q))  
+                (sa.cast(Review.id, sa.String).ilike(q))  
             )
             .order_by(Review.id.desc())
             .limit(25)
