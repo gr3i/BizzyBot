@@ -22,6 +22,10 @@ ALLOWED_ROLE_ID = 1358911329737642014
 
 MAX_REVIEW_LENGTH = 3900
 
+
+GUILD_ID = int(os.getenv("GUILD_ID", "0"))
+GUILD_OBJ = discord.Object(id=GUILD_ID) if GUILD_ID else None
+
 SUBJECTS = [
     "epP",
     "mak1P",
@@ -393,7 +397,7 @@ class RecenzeEditModal(Modal, title="Upravit hodnocení"):
 class Reviews(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-
+        print("[reviews] Cog __init__") 
     async def _has_allowed_role(self, interaction: discord.Interaction) -> bool:
         if not isinstance(interaction.user, discord.Member):
             await interaction.response.send_message("Tento příkaz lze použít jen na serveru.", ephemeral=True)
@@ -402,7 +406,11 @@ class Reviews(commands.Cog):
             return True
         await interaction.response.send_message("Nemáš oprávnění použít tento příkaz.", ephemeral=True)
         return False
-
+    
+    @app_commands.guilds(GUILD_OBJ) 
+    @app_commands.default_permissions() 
+    @app_commands.checks.cooldown(1, 1.0)
+    @app_commands.describe()
     hodnoceni = app_commands.Group(
         name="hodnoceni",
         description="Hodnocení předmětů"
@@ -513,14 +521,14 @@ class Reviews(commands.Cog):
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 
 async def setup(bot: commands.Bot):
+    print("[reviews] setup() start") 
     cog = Reviews(bot)
     await bot.add_cog(cog)
 
     if GUILD_ID:
-        guild = discord.Object(id=GUILD_ID)
         bot.tree.add_command(Reviews.hodnoceni, guild=guild)
         print(f"[reviews] group 'hodnoceni' registered for guild {GUILD_ID}")
     else:
         bot.tree.add_command(Reviews.hodnoceni)
         print("[reviews] group 'hodnoceni' registered (global)")
-
+    print("[reviews] setup() done") 
