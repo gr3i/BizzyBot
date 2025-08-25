@@ -322,9 +322,24 @@ async def strip_error(ctx, error):
 @bot.event
 async def setup_hook():
     print("[setup_hook] start")
+    guild = discord.Object(id=GUILD_ID) if GUILD_ID else None
 
-    guild = discord.Object(id=GUILD_ID)
+    # 1) Smaž staré definice v guilde i globálně (pro jistotu)
+    try:
+        bot.tree.clear_commands(guild=guild)
+        await bot.tree.sync(guild=guild)
+        print("[SYNC] cleared guild commands")
+    except Exception as e:
+        print(f"[SYNC] guild clear failed: {e}")
 
+    try:
+        bot.tree.clear_commands(guild=None)
+        await bot.tree.sync()
+        print("[SYNC] cleared global commands")
+    except Exception as e:
+        print(f"[SYNC] global clear failed: {e}")
+
+    # 2) Načti cogy
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
@@ -334,7 +349,6 @@ async def setup_hook():
         "utils.vyber_oboru",
         "utils.nastav_prava",
         "cogs.welcome_todo",
-        # "cogs.sort_categories",
     ]:
         try:
             await bot.load_extension(ext)
@@ -342,15 +356,19 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # 2) /predmet pridej primo do tehle guildy (okamzite viditelne)
-    bot.tree.add_command(predmet, guild=guild)
+    # 3) Zaregistruj skupiny jen do guildu (rychlá propagace)
+    if guild:
+        # /predmet z utils.subject_management
+        from utils.subject_management import predmet
+        bot.tree.add_command(predmet, guild=guild)
 
-    # 3) zkopiruj globalni prikazy (napr. z verify/role/botInfo/hello) do guildy
-    bot.tree.copy_global_to(guild=guild)
-
-    # sync pouze pro guildu (rychly, bez cekani) <-- snad je to pravda...
-    cmds = await bot.tree.sync(guild=guild)
-    print(f"[SYNC] {len(cmds)} commands -> {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
+        # /hodnoceni skupina je přidaná v cogu reviews.setup(), takže stačí jen sync
+        cmds = await bot.tree.sync(guild=guild)
+        print(f"[SYNC] {len(cmds)} guild cmds -> {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
+    else:
+        # fallback: globální (pomalejší)
+        cmds = await bot.tree.sync()
+        print(f"[SYNC] {len(cmds)} global cmds: " + ", ".join(sorted(c.name for c in cmds)))
 
 
 
