@@ -259,7 +259,7 @@ class ReviewView(View):
         r = self.reviews[self.index]
         embed = discord.Embed(
             title=f"{r['predmet']} - hodnocení #{r['id']}",
-            description=r['recenze'],
+            description=r['recenze'].replace("[NL]", "\n"),
         )
         embed.add_field(name="Známka", value=r['znamka'])
         embed.add_field(name="Likes", value=str(r['likes']))
@@ -363,6 +363,7 @@ class Reviews(commands.Cog):
         if len(recenze) > MAX_REVIEW_LENGTH:
             await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
             return
+        recenze = recenze.replace("\n", "[NL]")
 
         with SessionLocal() as s:
             r = Review(
@@ -401,7 +402,7 @@ class Reviews(commands.Cog):
             'id': r.id,
             'predmet': r.predmet,
             'znamka': r.znamka,
-            'recenze': r.recenze,
+            'recenze': r.recenze.replace("[NL]", "\n"),
             'autor_id': r.autor_id,
             'datum': r.datum or "",
             'likes': r.likes,
@@ -426,6 +427,10 @@ class Reviews(commands.Cog):
         if len(recenze) > MAX_REVIEW_LENGTH:
             await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
             return
+
+        recenze = recenze.replace("\n", "[NL]")
+        r.recenze = recenze
+
 
         with SessionLocal() as s:
             r = s.query(Review).get(id_hodnoceni)
