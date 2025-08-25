@@ -353,12 +353,13 @@ bot.tree.add_command(wipe_commands, guild=discord.Object(id=GUILD_ID))
 bot.tree.add_command(sync_cmd,     guild=discord.Object(id=GUILD_ID))
 
 
+
 @bot.event
 async def setup_hook():
     print("[setup_hook] start")
     guild = discord.Object(id=GUILD_ID) if GUILD_ID else None
 
-    # 1) Smaž staré definice v guilde i globálně (pro jistotu)
+    # 1) Pro jistotu vyčisti staré slash příkazy (guild i globální)
     try:
         bot.tree.clear_commands(guild=guild)
         await bot.tree.sync(guild=guild)
@@ -390,17 +391,27 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # 3) Zaregistruj skupiny jen do guildu (rychlá propagace)
+    # 3) Zaregistruj slash příkazy a udělej finální sync
     if guild:
-        # /predmet z utils.subject_management
+        # /predmet (z utils.subject_management)
         from utils.subject_management import predmet
         bot.tree.add_command(predmet, guild=guild)
 
-        # /hodnoceni skupina je přidaná v cogu reviews.setup(), takže stačí jen sync
+        # /wipe_commands a /sync (definované v tomto souboru výše)
+        bot.tree.add_command(wipe_commands, guild=guild)
+        bot.tree.add_command(sync_cmd,     guild=guild)
+
+        # /hodnoceni skupina se přidává v cogu cogs.reviews při setup(), takže stačí jen sync
         cmds = await bot.tree.sync(guild=guild)
         print(f"[SYNC] {len(cmds)} guild cmds -> {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
     else:
-        # fallback: globální (pomalejší)
+        # fallback: registrace globálně (pomalejší propagace)
+        from utils.subject_management import predmet
+        bot.tree.add_command(predmet)
+
+        bot.tree.add_command(wipe_commands)  # globální
+        bot.tree.add_command(sync_cmd)       # globální
+
         cmds = await bot.tree.sync()
         print(f"[SYNC] {len(cmds)} global cmds: " + ", ".join(sorted(c.name for c in cmds)))
 
