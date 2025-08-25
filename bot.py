@@ -321,36 +321,36 @@ from discord import app_commands
 
 OWNER_IDS = {685958402442133515}
 
-    @app_commands.command(name="wipe_commands", description="Hard reset slash příkazů v této guilde (owner only).")
-    async def wipe_commands(interaction: discord.Interaction):
-        if interaction.user.id not in OWNER_IDS:
-            await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
-            return
-        guild = interaction.guild
-        if guild:
-            interaction.client.tree.clear_commands(guild=guild)
-            await interaction.client.tree.sync(guild=guild)
-            await interaction.response.send_message("🧹 Smazáno & resyncnuto v této guilde.", ephemeral=True)
-        else:
-            interaction.client.tree.clear_commands(guild=None)
-            await interaction.client.tree.sync()
-            await interaction.response.send_message("🧹 Smazáno & resyncnuto globálně.", ephemeral=True)
+@app_commands.command(name="wipe_commands", description="Hard reset slash příkazů v této guilde (owner only).")
+async def wipe_commands(interaction: discord.Interaction):
+    if interaction.user.id not in OWNER_IDS:
+        await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
+        return
+    guild = interaction.guild
+    if guild:
+        interaction.client.tree.clear_commands(guild=guild)
+        await interaction.client.tree.sync(guild=guild)
+        await interaction.response.send_message("🧹 Smazáno & resyncnuto v této guilde.", ephemeral=True)
+    else:
+        interaction.client.tree.clear_commands(guild=None)
+        await interaction.client.tree.sync()
+        await interaction.response.send_message("🧹 Smazáno & resyncnuto globálně.", ephemeral=True)
 
-    @app_commands.command(name="sync", description="Resync slash příkazů (owner only).")
-    async def sync_cmd(interaction: discord.Interaction):
-        if interaction.user.id not in OWNER_IDS:
-            await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
-            return
-        if interaction.guild:
-            cmds = await interaction.client.tree.sync(guild=interaction.guild)
-            await interaction.response.send_message(f"✅ Synced {len(cmds)} příkazů do této guildy.", ephemeral=True)
-        else:
-            cmds = await interaction.client.tree.sync()
-            await interaction.response.send_message(f"✅ Synced {len(cmds)} globálních příkazů.", ephemeral=True)
+@app_commands.command(name="sync", description="Resync slash příkazů (owner only).")
+async def sync_cmd(interaction: discord.Interaction):
+    if interaction.user.id not in OWNER_IDS:
+        await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
+        return
+    if interaction.guild:
+        cmds = await interaction.client.tree.sync(guild=interaction.guild)
+        await interaction.response.send_message(f"✅ Synced {len(cmds)} příkazů do této guildy.", ephemeral=True)
+    else:
+        cmds = await interaction.client.tree.sync()
+        await interaction.response.send_message(f"✅ Synced {len(cmds)} globálních příkazů.", ephemeral=True)
 
-    # při startu registruj do své guildy (rychlá propagace)
-    bot.tree.add_command(wipe_commands, guild=discord.Object(id=GUILD_ID))
-    bot.tree.add_command(sync_cmd,     guild=discord.Object(id=GUILD_ID))
+# při startu registruj do své guildy (rychlá propagace)
+bot.tree.add_command(wipe_commands, guild=discord.Object(id=GUILD_ID))
+bot.tree.add_command(sync_cmd,     guild=discord.Object(id=GUILD_ID))
 
 
 @bot.event
