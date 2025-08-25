@@ -418,18 +418,26 @@ class Reviews(commands.Cog):
 
     @hodnoceni.command(name="pridat", description="Přidej hodnocení předmětu.")
     @app_commands.guild_only()
-    @app_commands.describe(predmet="Název předmětu", znamka="Známka A-F")
+    @app_commands.describe(predmet="Název předmětu", znamka="Známka A–F")
     @app_commands.autocomplete(predmet=predmet_autocomplete)
-    async def pridat_hodnoceni(self, interaction: discord.Interaction, predmet: str, znamka: str):
+    async def pridat_hodnoceni(
+        self,
+        interaction: discord.Interaction,
+        predmet: str,
+        znamka: str
+    ):
+        # kontrola role
         if not await self._has_allowed_role(interaction):
             return
 
+        # validace
         if predmet not in SUBJECTS or znamka.upper() not in VALID_GRADES:
-            await interaction.response.send_message("Neplatný předmět nebo známka.", ephemeral=True)
+            await interaction.response.send_message("❌ Neplatný předmět nebo známka.", ephemeral=True)
             return
 
+        # otevri modalni okno
         await interaction.response.send_modal(RecenzeAddModal(predmet, znamka))
-
+         
        
     @hodnoceni.command(name="zobrazit", description="Zobraz hodnocení předmětu.")
     @app_commands.guild_only()
@@ -465,28 +473,36 @@ class Reviews(commands.Cog):
         view = ReviewView(reviews, interaction.user.id, self.bot)
         await interaction.response.send_message(embed=view.create_embed(), view=view)
 
-    @hodnoceni.command(name="upravit", description="Edituj své hodnocení.")
+    @hodnoceni.command(name="upravit", description="Uprav své hodnocení.")
     @app_commands.guild_only()
-    @app_commands.describe(id_hodnoceni="ID hodnocení", znamka="Nová známka")
+    @app_commands.describe(id_hodnoceni="ID hodnocení", znamka="Nová známka (volitelné)")
     @app_commands.autocomplete(id_hodnoceni=id_autocomplete)
-    async def edit_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int, znamka: str | None = None):
+    async def edit_hodnoceni(
+        self,
+        interaction: discord.Interaction,
+        id_hodnoceni: int,
+        znamka: str | None = None
+    ):
+        # kontrola role
         if not await self._has_allowed_role(interaction):
             return
 
+        # validace znamky (pokud byla zadana)
         if znamka and znamka.upper() not in VALID_GRADES:
-            await interaction.response.send_message("Neplatná známka (A–F).", ephemeral=True)
+            await interaction.response.send_message("❌ Neplatná známka (A–F).", ephemeral=True)
             return
-    
 
+        # z DB vezmi puvodni text
         with SessionLocal() as s:
             r = s.query(Review).get(id_hodnoceni)
             if not r or r.autor_id != interaction.user.id:
-                await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
+                await interaction.response.send_message("❌ Nemáš oprávnění upravit toto hodnocení.", ephemeral=True)
                 return
             puvodni_text = r.recenze or ""
 
-        await interaction.response.send_modal(RecenzeEditModal(id_hodnoceni, znamka, puvodni_text)) 
-
+        # otevri modal s predvyplnenym textem
+        await interaction.response.send_modal(RecenzeEditModal(id_hodnoceni, znamka, puvodni_text))
+        
             
 
     @hodnoceni.command(name="smazat", description="Smaž hodnocení.")
