@@ -317,64 +317,14 @@ async def strip_error(ctx, error):
         await ctx.send("Tento příkaz může použít pouze vlastník bota.")     # posle zpravu, ze nema opravneni
 
 
-from discord import app_commands
-
-OWNER_IDS = {685958402442133515}
-
-@app_commands.command(name="wipe_commands", description="Hard reset slash příkazů v této guilde (owner only).")
-async def wipe_commands(interaction: discord.Interaction):
-    if interaction.user.id not in OWNER_IDS:
-        await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
-        return
-    guild = interaction.guild
-    if guild:
-        interaction.client.tree.clear_commands(guild=guild)
-        await interaction.client.tree.sync(guild=guild)
-        await interaction.response.send_message("🧹 Smazáno & resyncnuto v této guilde.", ephemeral=True)
-    else:
-        interaction.client.tree.clear_commands(guild=None)
-        await interaction.client.tree.sync()
-        await interaction.response.send_message("🧹 Smazáno & resyncnuto globálně.", ephemeral=True)
-
-@app_commands.command(name="sync", description="Resync slash příkazů (owner only).")
-async def sync_cmd(interaction: discord.Interaction):
-    if interaction.user.id not in OWNER_IDS:
-        await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
-        return
-    if interaction.guild:
-        cmds = await interaction.client.tree.sync(guild=interaction.guild)
-        await interaction.response.send_message(f"✅ Synced {len(cmds)} příkazů do této guildy.", ephemeral=True)
-    else:
-        cmds = await interaction.client.tree.sync()
-        await interaction.response.send_message(f"✅ Synced {len(cmds)} globálních příkazů.", ephemeral=True)
-
-# při startu registruj do své guildy (rychlá propagace)
-bot.tree.add_command(wipe_commands, guild=discord.Object(id=GUILD_ID))
-bot.tree.add_command(sync_cmd,     guild=discord.Object(id=GUILD_ID))
-
 
 
 @bot.event
 async def setup_hook():
     print("[setup_hook] start")
-    guild = discord.Object(id=GUILD_ID) if GUILD_ID else None
 
-    # 1) Pro jistotu vyčisti staré slash příkazy (guild i globální)
-    try:
-        bot.tree.clear_commands(guild=guild)
-        await bot.tree.sync(guild=guild)
-        print("[SYNC] cleared guild commands")
-    except Exception as e:
-        print(f"[SYNC] guild clear failed: {e}")
+    guild = discord.Object(id=GUILD_ID)
 
-    try:
-        bot.tree.clear_commands(guild=None)
-        await bot.tree.sync()
-        print("[SYNC] cleared global commands")
-    except Exception as e:
-        print(f"[SYNC] global clear failed: {e}")
-
-    # 2) Načti cogy
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
@@ -384,6 +334,7 @@ async def setup_hook():
         "utils.vyber_oboru",
         "utils.nastav_prava",
         "cogs.welcome_todo",
+        # "cogs.sort_categories",
     ]:
         try:
             await bot.load_extension(ext)
@@ -391,29 +342,15 @@ async def setup_hook():
         except Exception as e:
             print(f"❌ Chyba při načítání '{ext}': {e}")
 
-    # 3) Zaregistruj slash příkazy a udělej finální sync
-    if guild:
-        # /predmet (z utils.subject_management)
-        from utils.subject_management import predmet
-        bot.tree.add_command(predmet, guild=guild)
+    # 2) /predmet pridej primo do tehle guildy (okamzite viditelne)
+    bot.tree.add_command(predmet, guild=guild)
 
-        # /wipe_commands a /sync (definované v tomto souboru výše)
-        bot.tree.add_command(wipe_commands, guild=guild)
-        bot.tree.add_command(sync_cmd,     guild=guild)
+    # 3) zkopiruj globalni prikazy (napr. z verify/role/botInfo/hello) do guildy
+    bot.tree.copy_global_to(guild=guild)
 
-        # /hodnoceni skupina se přidává v cogu cogs.reviews při setup(), takže stačí jen sync
-        cmds = await bot.tree.sync(guild=guild)
-        print(f"[SYNC] {len(cmds)} guild cmds -> {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
-    else:
-        # fallback: registrace globálně (pomalejší propagace)
-        from utils.subject_management import predmet
-        bot.tree.add_command(predmet)
-
-        bot.tree.add_command(wipe_commands)  # globální
-        bot.tree.add_command(sync_cmd)       # globální
-
-        cmds = await bot.tree.sync()
-        print(f"[SYNC] {len(cmds)} global cmds: " + ", ".join(sorted(c.name for c in cmds)))
+    # sync pouze pro guildu (rychly, bez cekani) <-- snad je to pravda...
+    cmds = await bot.tree.sync(guild=guild)
+    print(f"[SYNC] {len(cmds)} commands -> {GUILD_ID}: " + ", ".join(sorted(c.name for c in cmds)))
 
 
 
@@ -422,4 +359,5 @@ async def on_ready():
     print(f"✅ Bot prihlasen jako {bot.user} (ID: {bot.user.id})")
 
 bot.run(TOKEN)
+
 
