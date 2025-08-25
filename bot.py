@@ -36,7 +36,7 @@ def is_owner(ctx):
     # seznam ID uzivatele, kteri maji pristup k prikazu
     allowed_ids = [685958402442133515]  # mohu pridavat vice ID, pokud chci; kazdy uzivatel zvlast 685958402442133515
 
-    allowed_role_ids = [1358898283782602932] # pridat povoleni pro konkretni roli napr. MOD 1358898283782602932
+    allowed_role_ids = [1358898283782602932,1359508102222975087, 1370841996977246218, 1370842282084925541] # pridat povoleni pro konkretni roli napr. MOD 1358898283782602932
 
     if ctx.author.id in allowed_ids:
         return True
