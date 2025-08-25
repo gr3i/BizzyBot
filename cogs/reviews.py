@@ -428,9 +428,6 @@ class Reviews(commands.Cog):
             await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
             return
 
-        recenze = recenze.replace("\n", "[NL]")
-        r.recenze = recenze
-
 
         with SessionLocal() as s:
             r = s.query(Review).get(id_hodnoceni)
@@ -439,7 +436,7 @@ class Reviews(commands.Cog):
                 return
 
             r.znamka = znamka.upper()
-            r.recenze = recenze
+            r.recenze = recenze("\n", "[NL]")
             s.commit()
 
         await interaction.response.send_message("Hodnocení upraveno.")
