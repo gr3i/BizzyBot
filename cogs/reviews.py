@@ -348,135 +348,34 @@ class Reviews(commands.Cog):
         description="Hodnocení předmětů"
     )
 
-# --- do třídy Reviews ---------------------------------------------
-
-async def _ask_for_review_text(self, interaction: discord.Interaction, prompt: str, timeout_sec: int = 300) -> str | None:
-    """Požádá autora o další zprávu v tomto kanálu a vrátí její text (multi-line)."""
-    await interaction.response.send_message(
-        f"{prompt}\n\n**Pošli prosím svou recenzi jako další zprávu v tomto kanálu.** "
-        f"Můžeš používat více řádků (Shift+Enter). Napiš `cancel` pro zrušení.",
-        ephemeral=True
-    )
-
-    def check(m: discord.Message) -> bool:
-        return (
-            m.author.id == interaction.user.id
-            and m.channel.id == interaction.channel_id
-        )
-
-    try:
-        msg: discord.Message = await self.bot.wait_for("message", check=check, timeout=timeout_sec)
-    except asyncio.TimeoutError:
-        await interaction.followup.send("⏳ Čas vypršel, zkus to prosím znovu.", ephemeral=True)
-        return None
-
-    content = msg.content.strip()
-    if content.lower() == "cancel":
-        await interaction.followup.send("❌ Zrušeno.", ephemeral=True)
-        return None
-
-    return content
-
-
     @hodnoceni.command(name="pridat", description="Přidej hodnocení předmětu.")
     @app_commands.guild_only()
-    @app_commands.describe(predmet="Název předmětu", znamka="Známka A–F")
+    @app_commands.describe(predmet="Název předmětu", znamka="Známka A-F", recenze="Text recenze")
     @app_commands.autocomplete(predmet=predmet_autocomplete)
-    async def pridat_hodnoceni(
-        self,
-        interaction: discord.Interaction,
-        predmet: str,
-        znamka: str
-    ):
-        # oprávnění
+    async def pridat_hodnoceni(self, interaction: discord.Interaction, predmet: str, znamka: str, recenze: str):
         if not await self._has_allowed_role(interaction):
             return
 
-        # validace
         if predmet not in SUBJECTS or znamka.upper() not in VALID_GRADES:
-            await interaction.response.send_message("❌ Neplatný předmět nebo známka.", ephemeral=True)
+            await interaction.response.send_message("Neplatný předmět nebo známka.", ephemeral=True)
             return
 
-        # vyžádej si multi-line text ve folow-up zprávě uživatele
-        text = await self._ask_for_review_text(interaction, f"📝 Předmět: **{predmet}**, známka: **{znamka.upper()}**.")
-        if text is None:
+        if len(recenze) > MAX_REVIEW_LENGTH:
+            await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
             return
 
-        if len(text) > MAX_REVIEW_LENGTH:
-            await interaction.followup.send(f"❌ Recenze je příliš dlouhá. Maximum je {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
-            return
-
-        # ulož do DB 1:1 i s odstavci
         with SessionLocal() as s:
             r = Review(
                 predmet=predmet,
                 znamka=znamka.upper(),
-                recenze=text,                    # ← zachováme přesně, včetně prázdných řádků
+                recenze=recenze,
                 autor_id=interaction.user.id,
                 datum=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
             )
             s.add(r)
             s.commit()
 
-        await interaction.followup.send("✅ Hodnocení přidáno.", ephemeral=True)
-
-
-    @hodnoceni.command(name="upravit", description="Uprav své hodnocení.")
-    @app_commands.guild_only()
-    @app_commands.describe(id_hodnoceni="ID hodnocení", znamka="Nová známka (volitelné)")
-    @app_commands.autocomplete(id_hodnoceni=id_autocomplete)
-    async def edit_hodnoceni(
-        self,
-        interaction: discord.Interaction,
-        id_hodnoceni: int,
-        znamka: str | None = None
-    ):
-        # oprávnění
-        if not await self._has_allowed_role(interaction):
-            return
-
-        if znamka and znamka.upper() not in VALID_GRADES:
-            await interaction.response.send_message("❌ Neplatná známka (A–F).", ephemeral=True)
-            return
-
-        with SessionLocal() as s:
-            r = s.query(Review).get(id_hodnoceni)
-            if not r or r.autor_id != interaction.user.id:
-                await interaction.response.send_message("❌ Nemáš oprávnění upravit toto hodnocení.", ephemeral=True)
-                return
-            puvodni = r.recenze or ""
-
-        # vyžádej si nový multi-line text
-        prompt = (
-            f"✏️ Upravuješ hodnocení **#{id_hodnoceni}** pro **{r.predmet}**"
-            + (f", nová známka **{znamka.upper()}**" if znamka else "")
-            + ".\n\n"
-              "Pošli **nový text** jako další zprávu (více řádků povoleno). "
-              "Pokud chceš **ponechat původní text**, napiš `-`."
-        )
-        text = await self._ask_for_review_text(interaction, prompt)
-        if text is None:
-            return
-
-        # `-` = ponechat původní obsah
-        final_text = puvodni if text == "-" else text
-
-        if len(final_text) > MAX_REVIEW_LENGTH:
-            await interaction.followup.send(f"❌ Recenze je příliš dlouhá. Maximum je {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
-            return
-
-        with SessionLocal() as s:
-            r = s.query(Review).get(id_hodnoceni)
-            if not r or r.autor_id != interaction.user.id:
-                await interaction.followup.send("❌ Nemáš oprávnění upravit toto hodnocení.", ephemeral=True)
-                return
-            if znamka:
-                r.znamka = znamka.upper()
-            r.recenze = final_text            # ← zachováme přesně, včetně odstavců
-            s.commit()
-
-        await interaction.followup.send("✅ Hodnocení upraveno.", ephemeral=True)
-    
+        await interaction.response.send_message("Hodnocení přidáno.")
 
     @hodnoceni.command(name="zobrazit", description="Zobraz hodnocení předmětu.")
     @app_commands.guild_only()
@@ -512,7 +411,34 @@ async def _ask_for_review_text(self, interaction: discord.Interaction, prompt: s
         view = ReviewView(reviews, interaction.user.id, self.bot)
         await interaction.response.send_message(embed=view.create_embed(), view=view)
 
-   
+    @hodnoceni.command(name="upravit", description="Edituj své hodnocení.")
+    @app_commands.guild_only()
+    @app_commands.describe(id_hodnoceni="ID hodnocení", znamka="Nová známka", recenze="Nová recenze")
+    @app_commands.autocomplete(id_hodnoceni=id_autocomplete)
+    async def edit_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int, znamka: str, recenze: str):
+        if not await self._has_allowed_role(interaction):
+            return
+
+        if znamka.upper() not in VALID_GRADES:
+            await interaction.response.send_message("Neplatná známka (A–F).", ephemeral=True)
+            return
+
+        if len(recenze) > MAX_REVIEW_LENGTH:
+            await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
+            return
+
+        with SessionLocal() as s:
+            r = s.query(Review).get(id_hodnoceni)
+            if not r or r.autor_id != interaction.user.id:
+                await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
+                return
+
+            r.znamka = znamka.upper()
+            r.recenze = recenze
+            s.commit()
+
+        await interaction.response.send_message("Hodnocení upraveno.")
+
     @hodnoceni.command(name="smazat", description="Smaž hodnocení.")
     @app_commands.guild_only()
     @app_commands.describe(id_hodnoceni="ID hodnocení")
