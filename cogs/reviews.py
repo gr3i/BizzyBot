@@ -472,7 +472,7 @@ class Reviews(commands.Cog):
         await interaction.response.send_message("Hodnocení smazáno.")
 
 
-# registrace slash groupy do konkretni guildy (okamzite viditelne)
+# registrace slash groupy do konkretni guidy
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 
 async def setup(bot: commands.Bot):
