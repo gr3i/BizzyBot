@@ -436,7 +436,7 @@ class Reviews(commands.Cog):
                 return
 
             r.znamka = znamka.upper()
-            r.recenze = recenze("\n", "[NL]")
+            r.recenze = recenze.replace("\n", "[NL]")
             s.commit()
 
         await interaction.response.send_message("Hodnocení upraveno.")
