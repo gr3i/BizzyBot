@@ -3,11 +3,12 @@
 import os
 from datetime import datetime
 from typing import List
+from discord.ui import View, Modal, TextInput
+from discord import TextStyle
 
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import View
 import sqlalchemy as sa 
 
 # ORM importy
@@ -329,6 +330,65 @@ class ReviewView(View):
 
         await interaction.response.edit_message(embed=self.create_embed(), view=self)
 
+class RecenzeAddModal(Modal, title="Přidat hodnocení"):
+    def __init__(self, predmet: str, znamka: str):
+        super().__init__()
+        self.predmet = predmet
+        self.znamka = znamka
+
+        self.recenze_input = TextInput(
+            label="Recenze (více řádků povoleno)",
+            style=TextStyle.paragraph,
+            max_length=MAX_REVIEW_LENGTH,
+            required=True,
+            placeholder="Napiš zkušenost, můžeš používat odstavce (Enter)…"
+        )
+        self.add_item(self.recenze_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        text = str(self.recenze_input.value)
+        with SessionLocal() as s:
+            r = Review(
+                predmet=self.predmet,
+                znamka=self.znamka.upper(),
+                recenze=text,
+                autor_id=interaction.user.id,
+                datum=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            )
+            s.add(r)
+            s.commit()
+
+        await interaction.response.send_message("Hodnocení přidáno.", ephemeral=True)
+
+class RecenzeEditModal(Modal, title="Upravit hodnocení"):
+    def __init__(self, rec_id: int, znamka: str | None, puvodni_text: str):
+        super().__init__()
+        self.rec_id = rec_id
+        self.nova_znamka = znamka.upper() if znamka else None
+
+        self.recenze_input = TextInput(
+            label="Nová recenze",
+            style=TextStyle.paragraph,
+            max_length=MAX_REVIEW_LENGTH,
+            required=True,
+            default=puvodni_text[:MAX_REVIEW_LENGTH]  # predvyplnit puvodni text
+        )
+        self.add_item(self.recenze_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        with SessionLocal() as s:
+            r = s.query(Review).get(self.rec_id)
+            if not r or r.autor_id != interaction.user.id:
+                await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
+                return
+
+            r.recenze = str(self.recenze_input.value)
+            if self.nova_znamka:
+                r.znamka = self.nova_znamka
+            s.commit()
+
+        await interaction.response.send_message("Hodnocení upraveno.", ephemeral=True)
+
 
 class Reviews(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -350,9 +410,9 @@ class Reviews(commands.Cog):
 
     @hodnoceni.command(name="pridat", description="Přidej hodnocení předmětu.")
     @app_commands.guild_only()
-    @app_commands.describe(predmet="Název předmětu", znamka="Známka A-F", recenze="Text recenze")
+    @app_commands.describe(predmet="Název předmětu", znamka="Známka A-F")
     @app_commands.autocomplete(predmet=predmet_autocomplete)
-    async def pridat_hodnoceni(self, interaction: discord.Interaction, predmet: str, znamka: str, recenze: str):
+    async def pridat_hodnoceni(self, interaction: discord.Interaction, predmet: str, znamka: str):
         if not await self._has_allowed_role(interaction):
             return
 
@@ -360,23 +420,9 @@ class Reviews(commands.Cog):
             await interaction.response.send_message("Neplatný předmět nebo známka.", ephemeral=True)
             return
 
-        if len(recenze) > MAX_REVIEW_LENGTH:
-            await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
-            return
+        await interaction.response.send_modal(RecenzeAddModal(predmet, znamka))
 
-        with SessionLocal() as s:
-            r = Review(
-                predmet=predmet,
-                znamka=znamka.upper(),
-                recenze=recenze,
-                autor_id=interaction.user.id,
-                datum=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-            )
-            s.add(r)
-            s.commit()
-
-        await interaction.response.send_message("Hodnocení přidáno.")
-
+       
     @hodnoceni.command(name="zobrazit", description="Zobraz hodnocení předmětu.")
     @app_commands.guild_only()
     @app_commands.describe(predmet="Název předmětu")
@@ -413,31 +459,27 @@ class Reviews(commands.Cog):
 
     @hodnoceni.command(name="upravit", description="Edituj své hodnocení.")
     @app_commands.guild_only()
-    @app_commands.describe(id_hodnoceni="ID hodnocení", znamka="Nová známka", recenze="Nová recenze")
+    @app_commands.describe(id_hodnoceni="ID hodnocení", znamka="Nová známka")
     @app_commands.autocomplete(id_hodnoceni=id_autocomplete)
-    async def edit_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int, znamka: str, recenze: str):
+    async def edit_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int, znamka: str | None = None):
         if not await self._has_allowed_role(interaction):
             return
 
-        if znamka.upper() not in VALID_GRADES:
+        if znamka and znamka.upper() not in VALID_GRADES:
             await interaction.response.send_message("Neplatná známka (A–F).", ephemeral=True)
             return
-
-        if len(recenze) > MAX_REVIEW_LENGTH:
-            await interaction.response.send_message(f"Recenze je příliš dlouhá. Maximálně {MAX_REVIEW_LENGTH} znaků.", ephemeral=True)
-            return
+    
 
         with SessionLocal() as s:
             r = s.query(Review).get(id_hodnoceni)
             if not r or r.autor_id != interaction.user.id:
                 await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
                 return
+            puvodni_text = r.recenze or ""
 
-            r.znamka = znamka.upper()
-            r.recenze = recenze
-            s.commit()
+       await interaction.response.send_modal(RecenzeEditModal(id_hodnoceni, znamka, puvodni_text)) 
 
-        await interaction.response.send_message("Hodnocení upraveno.")
+            
 
     @hodnoceni.command(name="smazat", description="Smaž hodnocení.")
     @app_commands.guild_only()
