@@ -477,7 +477,7 @@ class Reviews(commands.Cog):
                 return
             puvodni_text = r.recenze or ""
 
-       await interaction.response.send_modal(RecenzeEditModal(id_hodnoceni, znamka, puvodni_text)) 
+        await interaction.response.send_modal(RecenzeEditModal(id_hodnoceni, znamka, puvodni_text)) 
 
             
 
