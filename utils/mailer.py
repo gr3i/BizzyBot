@@ -1,4 +1,4 @@
-import smtplib
+import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
@@ -18,7 +18,11 @@ def send_verification_mail(to_mail, verification_code):
     message['Subject'] = subject
     message.attach(MIMEText(body, 'plain'))
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+    context = ssl.create_default_context()
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.ehlo()                                                   # pozdrav
+        server.starttls(context=context)                                # prepnuti na TLS
+        server.ehlo()                                                   # znovu pozdrav pro TLS
         server.login(sender_mail, sender_password)
-        server.sendmail(sender_mail, to_mail, message.as_string())
+        server.sendmail(sender_mail, to_mail, message.as_string()) 
 
