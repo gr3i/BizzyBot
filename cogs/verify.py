@@ -1,6 +1,7 @@
 # cogs/verify.py
 import re
 from datetime import datetime, timedelta
+import asyncio
 
 import discord
 from discord import app_commands
@@ -32,6 +33,9 @@ class Verify(commands.Cog):
     # @app_commands.guilds(discord.Object(id=123456789012345678))
     @app_commands.command(name="verify", description="Zadej svůj mail pro ověření.")
     async def verify(self, interaction: discord.Interaction, mail: str):
+
+        await interaction.response.defer(ephemeral=True) # ack do 3s, at neexpiruje interaction token
+
         user_id = interaction.user.id
         verification_code = generate_verification_code()
         mail_norm = mail.strip().lower()
@@ -45,7 +49,7 @@ class Verify(commands.Cog):
                 .first()
             )
             if existing_verified:
-                await interaction.response.send_message(
+                await interaction.followup.send(
                     "Už jsi ověřen. Pokud potřebuješ změnu, kontaktuj moderátory.",
                     ephemeral=True
                 )
@@ -83,7 +87,7 @@ class Verify(commands.Cog):
                     .first()
                 )
                 if dup:
-                    await interaction.response.send_message(
+                    await interaction.followup.send(
                         "Tento VUT kód (6 číslic) už je použit jiným uživatelem. Kontaktuj moderátory, pokud jde o omyl.",
                         ephemeral=True
                     )
@@ -102,7 +106,7 @@ class Verify(commands.Cog):
                     .first()
                 )
                 if existing:
-                    await interaction.response.send_message(
+                    await interaction.followup.send(
                         "Tento e-mail je již použit jiným uživatelem a nelze ho znovu ověřit.",
                         ephemeral=True
                     )
@@ -118,23 +122,40 @@ class Verify(commands.Cog):
             session.add(v)
             session.commit()
 
-        # 5) send mail (outside session)
+        # 5) send mail (outside session), sync SMTP spustime mimo event loop + timeout
         try:
-            send_verification_mail(mail_norm, verification_code)
-            await interaction.response.send_message(
-                f"Zadal jsi mail {mail}. Ověřovací kód byl odeslán na tvůj mail. (zkontroluj si SPAM).",
+            await asyncio.wait_for(
+                asyncio.to_thread(send_verification_mail, mail_norm, verification_code),
+                timeout=15
+            )
+            await interaction.followup.send(
+                f"Zadal jsi mail {mail}. Ověřovací kód byl odeslán na tvůj mail. (zkontroluj si SPAM)",
+                ephemeral=True
+            )
+        except asyncio.TimeoutError:
+            await interaction.followup.send(
+                "Odesílání e-mailu trvalo příliš dlouho. Zkus to prosím znovu.",
+                ephemeral=True
+            )
+        except OSError as e:
+            # typicky: [Errno 101] Network unreachable / blokovany SMTP port
+            await interaction.followup.send(
+                f"Nelze se připojit k poštovnímu serveru ({e}). Zkus to později.",
                 ephemeral=True
             )
         except Exception as e:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"Došlo k chybě při odesílání mailu: {e}",
                 ephemeral=True
-            )
+            ) 
 
     # If I want instant per-guild availability, uncomment and set your guild ID:
     # @app_commands.guilds(discord.Object(id=123456789012345678))
     @app_commands.command(name="verify_code", description="Zadej ověřovací kód.")
     async def verify_code(self, interaction: discord.Interaction, code: str):
+
+        await interaction.response.defer(ephemeral=True) 
+
         user_id = interaction.user.id
 
         with SessionLocal() as session:
@@ -146,18 +167,18 @@ class Verify(commands.Cog):
             )
 
             if v is None:
-                await interaction.response.send_message(
+                await interaction.followup.send(
                     "Nemáš žádný neověřený kód. Použij příkaz /verify pro získání kódu.",
                     ephemeral=True
                 )
                 return
 
             if v.verified:
-                await interaction.response.send_message("Již jsi ověřen.", ephemeral=True)
+                await interaction.followup.send("Již jsi ověřen.", ephemeral=True)
                 return
 
             if code != v.verification_code:
-                await interaction.response.send_message("Chybný kód. Zkus to znovu.", ephemeral=True)
+                await interaction.followup.send("Chybný kód. Zkus to znovu.", ephemeral=True)
                 return
 
             # cache mail before closing session
@@ -184,7 +205,7 @@ class Verify(commands.Cog):
             specific_role = await guild.create_role(name=specific_role_name)
         await interaction.user.add_roles(specific_role)
 
-        await interaction.response.send_message(
+        await interaction.followup.send(
             f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{specific_role_name}'.",
             ephemeral=True
         )
