@@ -20,9 +20,9 @@ def send_verification_mail(to_mail, verification_code):
 
     context = ssl.create_default_context()
     with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.ehlo()
-        server.starttls(context=context)
-        server.ehlo()
+        server.ehlo()                                                   # pozdrav
+        server.starttls(context=context)                                # prepnuti na TLS
+        server.ehlo()                                                   # znovu pozdrav pro TLS
         server.login(sender_mail, sender_password)
         server.sendmail(sender_mail, to_mail, message.as_string()) 
 
