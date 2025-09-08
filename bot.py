@@ -334,7 +334,7 @@ async def setup_hook():
         "utils.vyber_oboru",
         "utils.nastav_prava",
         "cogs.welcome_todo",
-        "cogs.qrcode",
+        "cogs.pozvanka",
         # "cogs.sort_categories",
     ]:
         try:

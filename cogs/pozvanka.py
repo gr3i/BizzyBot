@@ -15,7 +15,7 @@ class QRCode(commands.Cog):
             print("[WARN] QR_CODE_IMAGE neni nastavene. Pridat do .env")
 
     @app_commands.command(
-        name="qrcode",
+        name="pozvanka",
         description="Pošle QR kód VUT FP Discord serveru a invite link."
     )
     async def qrcode(self, interaction: discord.Interaction):
