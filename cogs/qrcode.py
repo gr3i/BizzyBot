@@ -15,7 +15,7 @@ class QRCode(commands.Cog):
 
     @app_commands.command(
         name="qrcode",
-        description="Posle predem dany QR kod."
+        description="Pošle QR kód VUT FP Discord serveru."
     )
     async def qrcode(self, interaction: discord.Interaction):
         if not QR_CODE_IMAGE:
