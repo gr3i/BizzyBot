@@ -1,4 +1,4 @@
-# posle do chatu qrcode 
+# posle do chatu qrcode a invite link
 
 import os
 import discord
@@ -6,6 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 
 QR_CODE_IMAGE = os.getenv("QR_CODE_IMAGE")
+INVITE_LINK   = "https://discord.gg/8Gxm6MhSbj"
 
 class QRCode(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -15,7 +16,7 @@ class QRCode(commands.Cog):
 
     @app_commands.command(
         name="qrcode",
-        description="Pošle QR kód VUT FP Discord serveru."
+        description="Pošle QR kód VUT FP Discord serveru a invite link."
     )
     async def qrcode(self, interaction: discord.Interaction):
         if not QR_CODE_IMAGE:
@@ -23,9 +24,14 @@ class QRCode(commands.Cog):
                 "Chybi konfigurace `QR_CODE_IMAGE`.", ephemeral=True
             )
 
-        embed = discord.Embed(title="QR kód")
+        embed = discord.Embed(title="QR kód VUT FP Discord serveru")
         embed.set_image(url=QR_CODE_IMAGE)
-        await interaction.response.send_message(embed=embed)
+
+        # Posle embed + odkaz pod nim
+        await interaction.response.send_message(
+            embed=embed,
+            content=f"Pozvánka: {INVITE_LINK}"
+        )
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(QRCode(bot))
