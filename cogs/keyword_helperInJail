@@ -1,0 +1,52 @@
+import time
+import discord
+from discord.ext import commands
+
+# ID kanalu, ve kterem ma bot reagovat
+TARGET_CHANNEL_ID = 1358876461825523863
+
+# klicova slova, na ktere bude reagovat 
+KEYWORDS = {
+    "problém",
+    "problem",
+    "pomoc",
+    "nejde",
+    "nefunguje",
+    # ...
+}
+
+# Aby bot nespamoval, tak po odpovedi ceka 45 sekund, nez zareaguje na dalsi vhodnou zpravu
+COOLDOWN_SECONDS = 30
+
+
+class KeywordHelper(commands.Cog):
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+        self._last_trigger_ts: float = 0.0 
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+
+        # ignoruj bota a DMs
+        if message.author.bot or not message.guild:
+            return
+
+        # pouze cilový kanal
+        if message.channel.id != TARGET_CHANNEL_ID:
+            return
+
+        # cool-down proti spamu
+        now = time.time()
+        if now - self._last_trigger_ts < COOLDOWN_SECONDS:
+            return
+
+        # kontrola klicovych slov (case-insensitive)
+        text = message.content.lower()
+        if any(keyword.lower() in text for keyword in KEYWORDS):
+            await message.channel.send("Napiš lomítko `/` a vyjede ti příkaz.")
+            self._last_trigger_ts = now
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(KeywordHelper(bot))
+
