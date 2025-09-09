@@ -42,6 +42,7 @@ class VerificationImageModal(discord.ui.Modal, title="Poslat obrázek jako bot")
     def __init__(self, reply_ephemeral: bool = False, embed_title: str | None = None):
         super().__init__()
         self.reply_ephemeral = reply_ephemeral
+        self.embed_title = embed_title 
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         url = str(self.image_url.value).strip()
