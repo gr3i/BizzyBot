@@ -46,6 +46,21 @@ class KeywordHelper(commands.Cog):
         except Exception as e:
             if DEBUG: print("[KW] error:", e)
 
+class KeywordHelper(commands.Cog):
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+        self._last_trigger_ts: float = 0.0
+
+    async def cog_load(self):
+        # po startu jednorázově napiš do cílového kanálu, že běžíš
+        channel = self.bot.get_channel(TARGET_CHANNEL_ID)
+        if channel:
+            try:
+                await channel.send("🔎 KeywordHelper je aktivní (test).")
+            except discord.Forbidden:
+                pass
+
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(KeywordHelper(bot))
 
