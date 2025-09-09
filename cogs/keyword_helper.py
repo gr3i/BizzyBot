@@ -38,7 +38,8 @@ class KeywordHelper(commands.Cog):
             # kontrola zda text obsahuje nejake klicove slovo
             text = (message.content or "").lower()
             if any(k.lower() in text for k in KEYWORDS):
-                await message.channel.send("Napiš lomítko `/` a vyjede ti příkaz.")
+                # odpovez primo na zpravu a pingni autora aby dostal upozorneni
+                await message.reply("Napiš lomítko `/` a vyjede ti příkaz.", mention_author=True)
                 self._last_trigger_ts = now
 
         except discord.Forbidden:
