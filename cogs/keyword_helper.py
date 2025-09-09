@@ -13,28 +13,32 @@ KEYWORDS = {"problém", "problem", "pomoc", "nejde", "nefunguje", "/verify",
 # casova prodleva mezi odpovedmi aby bot nespamoval
 COOLDOWN_SECONDS = 5
 
-content = """### Nejčastější problém?
-    **Nenapsal jsi lomítko! `/` Tam teprve vložíš mail!**
+import textwrap
 
-    Zda ti to furt nejde, tak to zkusíme ještě jednou.
+content = textwrap.dedent("""
+### Nejčastější problém?
+**Nenapsal jsi lomítko! `/` Tam teprve vložíš mail!**
 
-    Postup je fakt jednoduchý:
+Zda ti to furt nejde, tak to zkusíme ještě jednou.
 
-    ### ✅ Jak se ověřit
-    1. Napiš lomítko **`/`** a najdi `/verify`
-    2. Tam zadej svůj školní e-mail (`123456@vutbr.cz`)
-    3. Otevři Outlook → najdi e-mail s kódem (často ve **spamu**)
-    4. Napiš znovu lomítko **`/`** a najdi `/verify_code`
-    5. Po tomto získáš přístup na server
+Postup je fakt jednoduchý:
 
-    ---
+### ✅ Jak se ověřit
+1. Napiš lomítko **`/`** a najdi `/verify`
+2. Tam zadej svůj školní e-mail (`123456@vutbr.cz`)
+3. Otevři Outlook → najdi e-mail s kódem (často ve **spamu**)
+4. Napiš znovu lomítko **`/`** a najdi `/verify_code`
+5. Po tomto získáš přístup na server
 
-    ## ℹ️ Jsi původně z FITu?
-    * Pokud máš školní e-mail ve formátu **xlogin00@vutbr.cz**, použij ten – dostaneš roli *Host*.
-    * Pro roli *VUT* kontaktuj někoho z mods.
+---
 
-    Teprve když nic z tohoto nepomůže, napiš někomu z MOD týmu: MOD • Shadow MOD • Shadow SubMOD.
-    """
+## ℹ️ Jsi původně z FITu?
+* Pokud máš školní e-mail ve formátu **xlogin00@vutbr.cz**, použij ten – dostaneš roli *Host*.
+* Pro roli *VUT* kontaktuj někoho z mods.
+
+Teprve když nic z tohoto nepomůže, napiš někomu z MOD týmu: MOD • Shadow MOD • Shadow SubMOD.
+""").strip()
+
 
 
 class KeywordHelper(commands.Cog):
