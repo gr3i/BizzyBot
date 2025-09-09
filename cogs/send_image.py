@@ -54,7 +54,11 @@ class VerificationImageModal(discord.ui.Modal, title="Poslat obrázek jako bot")
             return
 
         embed = discord.Embed(title=self.embed_title)
-       
+        
+        if self.description.value:
+            embed.description = self.description.value
+        embed.set_image(url=url) 
+
 
         # ephemeralne „defer“, abych si mohl odpovedet pozdeji a nic neni videt v kanalu
         await interaction.response.defer(ephemeral=True)
