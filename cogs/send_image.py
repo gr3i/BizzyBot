@@ -46,7 +46,7 @@ class VerificationImageModal(discord.ui.Modal, title="Poslat obrázek jako bot")
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         url = str(self.image_url.value).strip()
-        # velmi lehká validace
+        
         if not (url.startswith("http://") or url.startswith("https://")):
             await interaction.response.send_message(
                 "URL musí začínat na http(s)://", ephemeral=True
@@ -54,11 +54,16 @@ class VerificationImageModal(discord.ui.Modal, title="Poslat obrázek jako bot")
             return
 
         embed = discord.Embed(title=self.embed_title)
-        if self.description.value:
-            embed.description = self.description.value
-        embed.set_image(url=url)
+       
 
-        await interaction.response.send_message(embed=embed, ephemeral=self.reply_ephemeral)
+        # ephemeralne „defer“, abych si mohl odpovedet pozdeji a nic neni videt v kanalu
+        await interaction.response.defer(ephemeral=True)
+
+        # posle cistou zpravu jako bot do kanalu (bez viditelne vazby na slash command)
+        await interaction.channel.send(embed=embed)
+
+        # kratke ephemeralni potvrzeni jen volajicimu
+        await interaction.followup.send("Obrázek byl odeslán jako bot.", ephemeral=True) 
 
 
 class VerificationImage(commands.Cog):
