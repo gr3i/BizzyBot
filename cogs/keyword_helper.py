@@ -41,7 +41,33 @@ class KeywordHelper(commands.Cog):
             text = (message.content or "").lower()
             if any(k.lower() in text for k in KEYWORDS):
                 # odpovez primo na zpravu a pingni autora aby dostal upozorneni
-                await message.reply("Napiš lomítko `/` a vyjede ti příkaz.", mention_author=True)
+                await message.reply("
+                    ### Nejčastější problém?
+                    **Nenapsal jsi lomítko! `/` Tam teprve vložís mail!**
+
+                    Zda ti to furt nejde, tak to zkusíme ještě jednou.
+
+                    Postup je fakt jednoduchý:
+
+                    ### ✅ Jak se ověřit
+
+                    1. Napiš lomítko **`/`** a najdi `/verify`
+                    2. Tam zadej svůj školní e-mail (`123456@vutbr.cz`)
+                    3. Otevři Outlook → najdi e-mail s kódem (často ve **spamu**)
+                    4. Napiš znovu lomítko **`/`** a najdi `/verify_code`
+                    5. Po tomto získáš přístup na server
+
+                    ---
+
+                    ## ℹ️ Jsi původně z FITu?
+
+                    * Pokud máš školní e-mail ve formátu podobný **xlogin00@vutbr.cz**, tak ti "nečekaně" nedojde mail na Outlook, když jsi zkusil napsat 123456@vutbr.cz. V tomto případě použíj svůj VUT mail ve formátu podobný **xlogin00@vutbr.cz** a dostaneš roli *Host*.
+                    * Pro roli *VUT* budeš muset kontaktovat někoho z mods.
+
+                    Teprve když nic z tohoto nepomůže, napiš někomu z MOD týmu: MOD • Shadow MOD • Shadow SubMOD.
+
+                    ", mention_author=True)
+
                 self._last_trigger_ts = now
 
         except discord.Forbidden:
