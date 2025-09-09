@@ -6,7 +6,9 @@ from discord.ext import commands
 TARGET_CHANNEL_ID = 1358876461825523863
 
 # klicova slova na ktera bot reaguje
-KEYWORDS = {"problém", "problem", "pomoc", "nejde", "nefunguje"}
+KEYWORDS = {"problém", "problem", "pomoc", "nejde", "nefunguje", "/verify",
+            "/", "ver",
+}
 
 # casova prodleva mezi odpovedmi aby bot nespamoval
 COOLDOWN_SECONDS = 5
