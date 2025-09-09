@@ -336,7 +336,7 @@ async def setup_hook():
         "cogs.welcome_todo",
         "cogs.pozvanka",
         "cogs.send_image",
-        "cogs.keyword_helperInJail",
+        "cogs.keyword_helper",
         # "cogs.sort_categories",
     ]:
         try:
