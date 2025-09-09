@@ -8,7 +8,7 @@ TARGET_CHANNEL_ID = 1358876461825523863
 
 # klicova slova na ktera bot reaguje
 KEYWORDS = {"problém", "problem", "pomoc", "nejde", "nefunguje", "verify",
-            "/", "ver", "kod", "kód", "mail", "doš", "dos"}
+            "/", "ver", "věř", "kod", "kód", "mail", "doš", "dos"}
 
 # casova prodleva mezi odpovedmi aby bot nespamoval
 COOLDOWN_SECONDS = 5 * 60 * 60 # 5 hodin
