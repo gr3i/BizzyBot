@@ -20,8 +20,7 @@ content = textwrap.dedent("""
 **Nenapsal jsi lomítko! `/` Tam teprve vložís mail!**
 
 Zda ti to furt nejde, tak to zkusíme ještě jednou.
-
-Postup je fakt jednoduchý:
+Postup je fakt jednoduchý.
 
 ### ✅ Jak se ověřit
 
