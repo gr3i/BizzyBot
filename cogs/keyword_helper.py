@@ -7,16 +7,19 @@ from discord.ext import commands
 TARGET_CHANNEL_ID = 1358876461825523863
 
 # klicova slova na ktera bot reaguje
+# POZN.: "/" jsem odstranil, aby se to nespoustelo na URL apod.
 KEYWORDS = {"problém", "problem", "pomoc", "nejde", "nefunguje", "verify",
-            "/", "ver", "věř", "kod", "kód", "mail", "doš", "dos"}
+            "ver", "věř", "kod", "kód", "mail", "doš", "dos"}
 
 # casova prodleva mezi odpovedmi aby bot nespamoval
-COOLDOWN_SECONDS = 5 * 60 * 60 # 5 hodin
+COOLDOWN_SECONDS = 5 * 60 * 60  # 5 hodin
 
 # na koho nereagovat
-IGNORED_ROLE_IDS = {1358898283782602932, 1359508102222975087, 1370841996977246218, 1370842282084925541, 
-                    1370842977479692338, 1370843216898953307}     # napr. role MOD
-IGNORED_USER_IDS = {685958402442133515}      # konkretni uzivatel
+IGNORED_ROLE_IDS = {
+    1358898283782602932, 1359508102222975087, 1370841996977246218,
+    1370842282084925541, 1370842977479692338, 1370843216898953307
+}  # napr. role MOD
+IGNORED_USER_IDS = {685958402442133515}  # konkretni uzivatel
 
 content = textwrap.dedent("""
 ### Nejčastější problém?
@@ -45,7 +48,8 @@ Teprve když nic z tohoto nepomůže, napiš někomu z MOD týmu: MOD • Shadow
 class KeywordHelper(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self._last_trigger_ts: float = 0.0
+        # per-uzivatel cooldown casy (timestamp z time.monotonic)
+        self._last_by_user: dict[int, float] = {}
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -59,7 +63,6 @@ class KeywordHelper(commands.Cog):
                 return
 
             # ignoruj zpravy od uzivatelu s vyjmenovanymi ROLEMI
-            # (autor je Member -> ma .roles; DM uz jsme vyloucili)
             if any(role.id in IGNORED_ROLE_IDS for role in getattr(message.author, "roles", [])):
                 return
 
@@ -68,16 +71,24 @@ class KeywordHelper(commands.Cog):
             if message.channel.id != TARGET_CHANNEL_ID and parent_id != TARGET_CHANNEL_ID:
                 return
 
-            # cooldown proti spamu
-            now = time.time()
-            if now - self._last_trigger_ts < COOLDOWN_SECONDS:
-                return
-
             # kontrola zda text obsahuje nejake klicove slovo
             text = (message.content or "").lower()
-            if any(k in text for k in KEYWORDS):
-                await message.reply(content, mention_author=True)
-                self._last_trigger_ts = now
+            triggered = (
+                any(k in text for k in KEYWORDS)
+                or "/verify" in text
+                or "/verify_code" in text
+            )
+            if not triggered:
+                return
+
+            # cooldown proti spamu (per-uzivatel)
+            now = time.monotonic()
+            last = self._last_by_user.get(message.author.id, 0.0)
+            if now - last < COOLDOWN_SECONDS:
+                return
+            self._last_by_user[message.author.id] = now
+
+            await message.reply(content, mention_author=True)
 
         except discord.Forbidden:
             # bot nema prava posilat zpravy v kanalu
