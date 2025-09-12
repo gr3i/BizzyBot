@@ -1,9 +1,9 @@
-﻿Ahoj! Máme velkou radost, že jste se rozhodli se tu k nám přidat! Z vlastní zkušenosti ale víme, že Discord… může být pro nováčky trochu přehlcující. Proto vás na úvod zasvětíme do “Discordové kultury” a ukázat pár triků, jak platformu používat a jak si ji přizpůsobit.
+﻿Ahoj! Máme velkou radost, že jste se rozhodli se tu k nám přidat! Z vlastní zkušenosti ale víme, že Discord… může být pro nováčky trochu přehlcující. Proto vás na úvod seznámíme s “Discordovovou kulturou” a ukážeme pár triků, jak platformu používat a jak si ji přizpůsobit.
 
 **1) Proč zrovna Discord?**
 
 **•** Discord umožňuje přehledně rozdělit chat do více 
-specializovaných kanálů, takže má uživatel plnou kontrolu nad tím, co chce sledovat a kdy. Díky tomu může platforma sloužit efektivně hodně lidem aniž by důležité se ztrácely důležité informace. Kanály si můžete jednoduše skrýt kliknutím na **Procházet-kanály** (vlevo nahoře) 
+specializovaných kanálů, takže má uživatel plnou kontrolu nad tím, co chce sledovat a kdy. Díky tomu může platforma sloužit efektivně hodně lidem aniž by se informace ztrácely. Kanály si můžete jednoduše skrýt kliknutím na **Procházet-kanály** (vlevo nahoře) 
 
 **•** Lze na Discord přistupovat přes mobilní aplikaci, desktopovou aplikaci i jen přes webový prohlížeč 
 
@@ -15,10 +15,10 @@ specializovaných kanálů, takže má uživatel plnou kontrolu nad tím, co chc
 Discord nabízí mnoho skvělých funkcionalit, dělá ho to ale trochu komplexním. Jeho hlavní prvky jsou: 
 
 **Servery**
-Jedná se o skupinu/komunitu na Discordu. VUT FP je jedním z nich, ale najdete jich nespočet – slouží mimo jiné hráčům, kutilům, čtenářským klubům nebo studentům. Překlikávat mezi nimi můžete v levém sloupci.
+Jedná se o skupinu/komunitu na Discordu. VUT FP je jedním z nich, ale najdete jich nespočet – slouží mimo jiné hráčům, kutilům, čtenářským klubům nebo studentům. Překlikávat mezi nimi můžete vlevo v panelu.
 
 **Kanály**
-Kliknutím na server se obrazovka změní. V levém panelu se servery uvidíte kanály logicky seskupené do kategorií. V jednom z nich právě jste :KannaSip:  . Kanály začínají hashtagem. Nahoře v záhlaví uvidíte název, popisek (typ: kliknutím na něho se vám zobrazí celý :dogeSmile: ), vlákna, notifikace, připnuté příspěvky :pushpin: (příspěvky, které admin označil za důležité), seznam členů mající přístup do daného kanálu (kliknutím na ikonku :busts_in_silhouette: se zobrazí/skryje) a vyhledávání :mag_right: (doporučujeme používat, funguje moc pěkně). Úplně vpravo nahoře pak najdete oficiální nápovědu od Discordu.
+Kliknutím na server se obrazovka změní. Vlevo v panelu serveru uvidíte kanály logicky seskupené do kategorií. V jednom z nich právě jste :KannaSip:  . Kanály začínají hashtagem. Nahoře v záhlaví uvidíte název, popisek (typ: kliknutím na něho se vám zobrazí celý :dogeSmile: ), vlákna, notifikace, připnuté příspěvky :pushpin: (příspěvky, které admin označil za důležité), seznam členů mající přístup do daného kanálu (kliknutím na ikonku :busts_in_silhouette: se zobrazí/skryje) a vyhledávání :mag_right: (doporučujeme používat, funguje moc pěkně). Úplně vpravo nahoře pak najdete oficiální nápovědu od Discordu.
 
 Existuje několik druhů kanálů. Na našem serveru najdete především textové. Ve studijních kategoriích si můžete najít váš předmět a být v obraze, co zde vaši spolužáci řeší a nebo se rovnou zapojit do diskuze!
 
@@ -41,9 +41,9 @@ Slouží hlavně k tomu, abyste viděli pro vás aktuální místnosti a aby ost
 
 
 Pokud píšeš delší texty, je dobré je členit do odstavců. Stačí použít kombinaci Shift + Enter pro nový řádek, aniž by se zpráva hned odeslala.
-**5) Jak používat tajného botíka?**
+**5) Jak používat našeho bota?**
 
-**•** Našeho botíka prosíme používat pouze v místnostech #bot-spam :sadgePray: 
+**•** Našeho bota prosíme používat pouze v místnostech #bot-spam :sadgePray: 
 
 Vše se dá ovládat pomocí těchto nejdůležitějších příkazů:
 
