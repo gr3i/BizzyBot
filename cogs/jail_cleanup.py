@@ -75,7 +75,7 @@ class JailCleanup(commands.Cog):
     # slash prikaz pro manualni uklid
     @app_commands.command(
         name="cleanup_jail",
-        description="Smaže v jailu zprávy uživatele a botovy reply na něj (povolene role/uzivatele).",
+        description="Smaže v jailu zprávy uživatele a botovy reply na něj.",
     )
     @app_commands.describe(user="Uživatel, kterému vyčistit jail zprávy")
     async def cleanup_jail(self, interaction: discord.Interaction, user: discord.User):
