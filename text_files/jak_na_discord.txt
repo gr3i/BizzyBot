@@ -57,7 +57,6 @@ Vše se dá ovládat pomocí těchto nejdůležitějších příkazů:
 /hodnoceni pridat - Přidá hodnocení předmětu. (Postup je napsaný co a jak přímo v něm.)
 /hodnoceni odebrat - Odebere hodnocení předmětu. (Postup je napsaný co a jak přímo v něm.)
 /hodnoceni upravit - Upraví hodnocení předmětu. (Postup je napsaný co a jak přímo v něm.)
-
 /bot info - Zobrazí informace o botovi. (Nejdůležitější věc je zde pro vás ping/latency, kdy vidíte, jak rychle bot odpovídá.)
 /role - Zobrazí nejdůležitější role na serveru a jejich vysvětlení.
 
