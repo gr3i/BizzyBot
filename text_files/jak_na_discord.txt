@@ -47,11 +47,8 @@ Pokud píšeš delší texty, je dobré je členit do odstavců. Stačí použí
 
 Vše se dá ovládat pomocí těchto nejdůležitějších příkazů:
 
-/verify - Ověření mailu pro uživatele. Příklad: **Vstup:** /verify 123456@vutbr.cz **Výstup:** Poslání kódu na mail pomocí BizzyBota, pokud uživatel správně mail zadal.
-/verify_code - Ověření mailu pomocí kódu. Příklad: **Vstup:** /verify_code AD58XD **Výstup:** Přidání rolí VUT/HOST a Verified uživateli, pokud verifikace projde.
-
+/pozvanka - Do chatu pošle QR kód tohoto FP serveru a jeho invite link.
 /hello - Bot ti odpoví do chatu „Ahoj“. Používá se často pro kontrolu, jestli bot "žije". **Vstup:** /hello  Výstup jako bot: "Ahoj".
-
 /predmet pridat - Přidá uživateli předmět. **Vstup:** /predmet název předmětu  Výstup: Přidání role předmět a přístup do dané místnosti uživateli.
 /predmet odebrat - Odebere uživateli předmět. Stejný způsob jako u /predmet pridat.
 /obor pridat - Přidá uživateli roli oboru. **Vstup:** /obor název oboru Výstup: Přidání uživateli role oboru.
@@ -67,3 +64,4 @@ Vše se dá ovládat pomocí těchto nejdůležitějších příkazů:
 **•** Toto jsou nezbytné informace, které potřebuješ k bezproblémovému používání našeho discordu. **V případě jakýchkoliv dotazů, nejasností či jiných problémů se neboj obrátit na členy @Mod a my už ti rádi pomůžeme**
 
 Ať se ti tu líbí a užívej studia :ZeroTwo_heartlove:
+
