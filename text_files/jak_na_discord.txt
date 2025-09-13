@@ -1,0 +1,66 @@
+﻿Ahoj! Máme velkou radost, že jste se rozhodli se tu k nám přidat! Z vlastní zkušenosti ale víme, že Discord… může být pro nováčky trochu přehlcující. Proto vás na úvod seznámíme s “Discordovovou kulturou” a ukážeme pár triků, jak platformu používat a jak si ji přizpůsobit.
+
+**1) Proč zrovna Discord?**
+
+**•** Discord umožňuje přehledně rozdělit chat do více 
+specializovaných kanálů, takže má uživatel plnou kontrolu nad tím, co chce sledovat a kdy. Díky tomu může platforma sloužit efektivně hodně lidem aniž by se informace ztrácely. Kanály si můžete jednoduše skrýt kliknutím na **Procházet-kanály** (vlevo nahoře) 
+
+**•** Lze na Discord přistupovat přes mobilní aplikaci, desktopovou aplikaci i jen přes webový prohlížeč 
+
+**•** Umožňuje doprogramovat další funkcionality na míru potřebám členům konkrétního serveru – my třeba máme kanál #bot-spam kde si můžete skrz našeho bota přidat role oboru, recenze předmětů. Více najdete v #info 
+
+**•** Dají se přidávat vlastní emotikony!  :ZeroTwo_heartlove: :dogeSmile: :dogekek:
+**2) Discordový rychlokurz**
+
+Discord nabízí mnoho skvělých funkcionalit, dělá ho to ale trochu komplexním. Jeho hlavní prvky jsou: 
+
+**Servery**
+Jedná se o skupinu/komunitu na Discordu. VUT FP je jedním z nich, ale najdete jich nespočet – slouží mimo jiné hráčům, kutilům, čtenářským klubům nebo studentům. Překlikávat mezi nimi můžete vlevo v panelu.
+
+**Kanály**
+Kliknutím na server se obrazovka změní. Vlevo v panelu serveru uvidíte kanály logicky seskupené do kategorií. V jednom z nich právě jste :KannaSip:  . Kanály začínají hashtagem. Nahoře v záhlaví uvidíte název, popisek (typ: kliknutím na něho se vám zobrazí celý :dogeSmile: ), vlákna, notifikace, připnuté příspěvky :pushpin: (příspěvky, které admin označil za důležité), seznam členů mající přístup do daného kanálu (kliknutím na ikonku :busts_in_silhouette: se zobrazí/skryje) a vyhledávání :mag_right: (doporučujeme používat, funguje moc pěkně). Úplně vpravo nahoře pak najdete oficiální nápovědu od Discordu.
+
+Existuje několik druhů kanálů. Na našem serveru najdete především textové. Ve studijních kategoriích si můžete najít váš předmět a být v obraze, co zde vaši spolužáci řeší a nebo se rovnou zapojit do diskuze!
+
+**Role**
+Slouží hlavně k tomu, abyste viděli pro vás aktuální místnosti a aby ostatní poznali, v jakém jste ročníku. Pokud jste v prváku, poznají vás podle role FP-1BC, ve druháku podle role FP-2BC a ve třeťáku (nebo vyšším ročníku bakaláře) podle role FP-3+BC. Díky tomu snadno najdete své spolužáky a poznáte je i podle barvy jejich jména. Role si můžete vybrat v kanálu #vut-role.
+**3) Tipy a triky**
+
+**•** Discord je platforma postavená defaultně na anonymitě (na rozdíl od Facebooku). Je zcela na vás, pokud tu budete pod svým jménem a fotkou, respektujte soukromí ostatních a i když člena znáte jménem, obvykle se oslovujeme přezdívkami. V nastavení si můžete vaši přezdívku pro tento server (horní lišta se šipkou server -> upravit profil serveru).
+
+**•** V nastavení Discordu (ikonka nastavení vedle vašeho jména vlevo dole) si můžete také nastavit jazyk na češtinu nebo přepnout z tmavého režimu do světlého.
+**4) K čemu vůbec náš discord slouží?**
+
+**•** Domluv se se spolužáky na všem, co se týká školy – od řešení úkolů a projektů až po tipy k jednotlivým předmětům. Stačí najít správné vlákno/debatu a zeptat se v #help-center :mortar_board:
+
+**•** Sdílej nápady, články, zajímavé odkazy nebo vlastní projekty a získej zpětnou vazbu od ostatních studentů:thought_balloon:
+
+**•** Hledáš partu na studium, kafe, sport, deskovky nebo třeba cestování? Využij komunitu k domluvě na společných aktivitách:handshake: 
+
+**•** Máš v hlavě vlastní nápad na nějakou soutěž nebo komunitní akci? Dej vědět adminům – rádi ti pomůžou to rozjet:bulb:
+
+
+Pokud píšeš delší texty, je dobré je členit do odstavců. Stačí použít kombinaci Shift + Enter pro nový řádek, aniž by se zpráva hned odeslala.
+**5) Jak používat našeho bota?**
+
+**•** Našeho bota prosíme používat pouze v místnostech #bot-spam :sadgePray: 
+
+Vše se dá ovládat pomocí těchto nejdůležitějších příkazů:
+
+/pozvanka - Do chatu pošle QR kód tohoto FP serveru a jeho invite link.
+/hello - Bot ti odpoví do chatu „Ahoj“. Používá se často pro kontrolu, jestli bot "žije". **Vstup:** /hello  Výstup jako bot: "Ahoj".
+/predmet pridat - Přidá uživateli předmět. **Vstup:** /predmet název předmětu  Výstup: Přidání role předmět a přístup do dané místnosti uživateli.
+/predmet odebrat - Odebere uživateli předmět. Stejný způsob jako u /predmet pridat.
+/obor pridat - Přidá uživateli roli oboru. **Vstup:** /obor název oboru Výstup: Přidání uživateli role oboru.
+/obor odebrat - Odebere uživateli roli oboru. Stejný způsob jako u /obor pridat.
+/hodnoceni zobrazit - Zobrazí hodnocení předmětu, pokud existuje. (Postup je napsaný co a jak přímo v něm.)
+/hodnoceni pridat - Přidá hodnocení předmětu. (Postup je napsaný co a jak přímo v něm.)
+/hodnoceni odebrat - Odebere hodnocení předmětu. (Postup je napsaný co a jak přímo v něm.)
+/hodnoceni upravit - Upraví hodnocení předmětu. (Postup je napsaný co a jak přímo v něm.)
+/bot info - Zobrazí informace o botovi. (Nejdůležitější věc je zde pro vás ping/latency, kdy vidíte, jak rychle bot odpovídá.)
+/role - Zobrazí nejdůležitější role na serveru a jejich vysvětlení.
+
+**•** Toto jsou nezbytné informace, které potřebuješ k bezproblémovému používání našeho discordu. **V případě jakýchkoliv dotazů, nejasností či jiných problémů se neboj obrátit na členy @Mod a my už ti rádi pomůžeme**
+
+Ať se ti tu líbí a užívej studia :ZeroTwo_heartlove:
+
