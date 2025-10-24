@@ -17,6 +17,15 @@ from utils.codes import generate_verification_code
 # 123456@vut.cz, x123456@vut.cz, 123456@vutbr.cz, x123456@vutbr.cz
 VUT_PATTERN = re.compile(r"^(x?\d{6})@(vut\.cz|vutbr\.cz)$", re.IGNORECASE)
 
+# allowed VUT FIT formats only:
+VUT_FIT_PATTERN = re.compile(r"^x[a-z0-9]*\d{2}@vutbr\.cz", re.IGNORECASE)
+
+def is_vut_student_email(email: str) -> bool:
+    """Vrati True, pokud jde o VUT mail (klasicky 6-ciselny nebo x…00@vutbr.cz)."""
+    e = email.strip().lower()
+    return bool(VUT_PATTERN.match(e) or VUT_FIT_PATTERN.match(e))
+
+
 def extract_vut_code(email: str) -> str | None:
     """Return 6-digit code if email matches allowed formats, else None."""
     m = VUT_PATTERN.match(email.strip().lower())
@@ -195,7 +204,7 @@ class Verify(commands.Cog):
         await interaction.user.add_roles(verified_role)
 
         # VUT only for allowed formats; otherwise Host
-        if extract_vut_code(mail_value):
+        if is_vut_student_email(mail_value):
             specific_role_name = "VUT"
         else:
             specific_role_name = "Host"
