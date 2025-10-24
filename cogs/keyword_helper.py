@@ -41,7 +41,7 @@ Postup je fakt jednoduchý.
 * Pokud máš školní e-mail ve formátu podobný **xlogin00@vutbr.cz**, použij ten – dostaneš roli *Host*.
 * Pro roli *VUT* budeš muset kontaktovat někoho z mods.
 
-Teprve když nic z tohoto nepomůže, napiš někomu z MOD týmu: MOD • Shadow MOD • Shadow SubMOD.
+Teprve když nic z tohoto nepomůže, napiš někomu z Mods.
 """).strip()
 
 
