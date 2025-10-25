@@ -23,7 +23,7 @@ IGNORED_USER_IDS = {685958402442133515}  # konkretni uzivatel
 
 content = textwrap.dedent("""
 ### Nejčastější problém?
-**Nenapsal*a jsi lomítko! `/` Tam teprve vložíš mail!**
+**Nenapsal*a jsi lomítko! `/` Tam teprve vložíš údaje...**
 
 Zda ti to furt nejde, tak to zkusíme ještě jednou.
 Postup je fakt jednoduchý.
