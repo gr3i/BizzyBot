@@ -26,17 +26,17 @@ class Verify(commands.Cog):
     # @app_commands.guilds(discord.Object(id=123456789012345678))
     # změna signatury (mail povinný, ident volitelný)
     @app_commands.command(name="verify", description="Zadej svůj e-mail a (pokud jsi z VUT) i VUT ID/login.")
-    async def verify(self, interaction: discord.Interaction, mail: str, ident: str | None = None):
+    async def verify(self, interaction: discord.Interaction, mail: str, vut_id_login: str | None = None):
         await interaction.response.defer(ephemeral=True)
 
         user_id = interaction.user.id
         mail_norm = mail.strip().lower()
-        ident_norm = ident.strip().lower() if ident else None
+        ident_norm = vut_id_login.strip().lower() if vut_id_login else None
         verification_code = generate_verification_code() 
         
 
         with SessionLocal() as session:
-            # 0) already verified -> stop early
+            # 0) already verified, stop early
             existing_verified = (
                 session.query(Verification)
                 .filter(and_(Verification.user_id == user_id, Verification.verified == True))
@@ -77,7 +77,7 @@ class Verify(commands.Cog):
                 )
                 if dup:
                     await interaction.followup.send(
-                        "Tento identifikátor (ID/login) už je ověřen jiným uživatelem. Pokud jde o omyl, kontaktuj moderátory.",
+                        "Tento identifikátor ( VUT ID/login) už je ověřen jiným uživatelem. Pokud jde o omyl, kontaktuj moderátory.",
                         ephemeral=True
                     )
                     return
