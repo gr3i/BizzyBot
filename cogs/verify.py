@@ -237,9 +237,9 @@ class Verify(commands.Cog):
                         # Podle "pozice" z API urcim, jestli je student nebo zamestnanec
                         pozice = vztahy[0].get("pozice") if vztahy else None
                         if pozice and pozice.lower() == "student":
-                            specific_role_name = "VUT"
-                        else:
                             specific_role_name = "VUT Staff"
+                        else:
+                            specific_role_name = "VUT"
             except Exception as e:
                 # Pokud API selze, necham Host, ale vypisu do logu
                 print(f"[VUT API] Chyba při ověřování role: {e}")
