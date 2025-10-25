@@ -44,14 +44,15 @@ class Verify(commands.Cog):
 
     # If I will want instant per-guild availability, uncomment and set your guild ID:
     # @app_commands.guilds(discord.Object(id=123456789012345678))
-    @app_commands.command(name="verify", description="Zadej svůj mail pro ověření.")
-    async def verify(self, interaction: discord.Interaction, mail: str):
-
-        await interaction.response.defer(ephemeral=True) # ack do 3s, at neexpiruje interaction token
+    # změna signatury (mail povinný, ident volitelný)
+    @app_commands.command(name="verify", description="Zadej svůj e-mail a (pokud jsi z VUT) i VUT ID/login.")
+    async def verify(self, interaction: discord.Interaction, mail: str, ident: str | None = None):
+        await interaction.response.defer(ephemeral=True)
 
         user_id = interaction.user.id
-        mail_norm = mail.strip().lower() 
-        verification_code = generate_verification_code()
+        mail_norm = mail.strip().lower()
+        ident_norm = ident.strip().lower() if ident else None
+        verification_code = generate_verification_code() 
         
 
         with SessionLocal() as session:
@@ -125,6 +126,8 @@ class Verify(commands.Cog):
                         ephemeral=True
                     )
                     return
+            
+            stored_value = f"{mail_norm}||{ident_norm}" if ident_norm else mail_norm
 
             # 4) create new verification attempt
             v = Verification(
@@ -200,6 +203,12 @@ class Verify(commands.Cog):
             v.verified = True
             session.commit()
 
+            # rozbal MAIL a IDENT (zpetne kompatibilni se starsimi zaznamy)
+            parts = stored_value.split("||", 1)
+            mail_value = parts[0].strip().lower()
+            ident_value = parts[1].strip().lower() if len(parts) == 2 else None
+            
+
         # assign roles after session is closed
         guild = interaction.guild
 
@@ -213,18 +222,17 @@ class Verify(commands.Cog):
         # jinak rovnou Host.
         specific_role_name = "Host"  # default
 
-        # Zkusit overit pres VUT API, pokud z e-mailu umim ziskat login/ID
-        user_id_for_api = self._login_or_number_from_email(mail_value)
-        if user_id_for_api:
+        # pokud mame identifikator, over pres VUT API a porovnej, zda mail patri mezi "emaily"
+        if ident_value:
             try:
-                details = await self.bot.vut_api.get_user_details(user_id_for_api)
+                details = await self.bot.vut_api.get_user_details(ident_value)
                 if details:
-                    emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
-                    if mail_value.strip().lower() in emails_api:
-                        specific_role_name = "VUT"
+                emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
+                    if mail_value in emails_api:
+                    specific_role_name = "VUT"
             except Exception:
-                # kdyz API spadne / rate limit, necham Host
-                pass
+                # kdyz API spadne nebo limit, nepokazime verifikaci – nechame Host
+                pass 
        
         specific_role = discord.utils.get(guild.roles, name=specific_role_name)
         if not specific_role:
