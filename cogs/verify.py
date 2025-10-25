@@ -15,31 +15,11 @@ from utils.codes import generate_verification_code
 
 
 
-def extract_vut_code(email: str) -> str | None:
-    """Return 6-digit code if email matches allowed formats, else None."""
-    m = VUT_PATTERN.match(email.strip().lower())
-    if not m:
-        return None
-    return m.group(1)[-6:]  # last 6 digits
 
 
 class Verify(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
-    
-    def _login_or_number_from_email(self, email: str) -> str | None:
-        """
-        Vrati VUT login (napr. xlogin00) nebo 6-ciferne cislo z e-mailu.
-        Ignoruje domenu (funguje i pro stud.fit.vut.cz apod.).
-        """
-        e = email.strip().lower()
-        local, _, _ = e.partition("@")
-        if re.fullmatch(r"\d{6}", local):
-            return local
-        if re.fullmatch(r"x[a-z0-9]*\d{2}", local):
-            return local
-        return None
-    
+        self.bot = bot 
     
 
     # If I will want instant per-guild availability, uncomment and set your guild ID:
@@ -81,58 +61,35 @@ class Verify(commands.Cog):
                 and_(Verification.verified == False, Verification.created_at <= cutoff)
             ).delete(synchronize_session=False)
 
-            # 3a) allowed VUT formats -> block duplicates by 6-digit code across 4 variants
-            code6 = extract_vut_code(mail_norm)
-            if code6:
-                group_emails = [
-                    f"{code6}@vut.cz",
-                    f"x{code6}@vut.cz",
-                    f"{code6}@vutbr.cz",
-                    f"x{code6}@vutbr.cz",
-                ]
+            # 3) blokace duplicit, kdyz je ident, nesmi byt overeny jinym uzivatelem
+            if ident_norm:
                 dup = (
                     session.query(Verification)
                     .filter(
                         and_(
                             Verification.verified == True,
                             Verification.user_id != user_id,
-                            Verification.mail.in_(group_emails),
+                            # bud nekdo drive ulozil mail||ident, nebo jen ident (pro pripad starsich zaznamu)
+                            (Verification.mail == ident_norm) | (Verification.mail.like(f"%||{ident_norm}"))
                         )
                     )
                     .first()
                 )
                 if dup:
                     await interaction.followup.send(
-                        "Tento VUT kód (6 číslic) už je použit jiným uživatelem. Kontaktuj moderátory, pokud jde o omyl.",
+                        "Tento identifikátor (ID/login) už je ověřen jiným uživatelem. Pokud jde o omyl, kontaktuj moderátory.",
                         ephemeral=True
                     )
                     return
-            else:
-                # 3b) non-VUT formats -> exact email must not be verified by someone else
-                existing = (
-                    session.query(Verification)
-                    .filter(
-                        and_(
-                            Verification.mail == mail_norm,
-                            Verification.verified == True,
-                            Verification.user_id != user_id,
-                        )
-                    )
-                    .first()
-                )
-                if existing:
-                    await interaction.followup.send(
-                        "Tento e-mail je již použit jiným uživatelem a nelze ho znovu ověřit.",
-                        ephemeral=True
-                    )
-                    return
-            
+           
+
+
             stored_value = f"{mail_norm}||{ident_norm}" if ident_norm else mail_norm
 
             # 4) create new verification attempt
             v = Verification(
                 user_id=user_id,
-                mail=mail_norm,
+                mail=stored_value,
                 verification_code=verification_code,
                 verified=False
             )
@@ -146,7 +103,7 @@ class Verify(commands.Cog):
                 timeout=15
             )
             await interaction.followup.send(
-                f"Zadal jsi mail {mail}. Ověřovací kód byl odeslán na tvůj mail. (zkontroluj si SPAM)",
+                f"Ověřovací kód byl odeslán na adresu **{mail_norm}**. (Zkontroluj i složku SPAM)",
                 ephemeral=True
             )
         except asyncio.TimeoutError:
@@ -203,10 +160,13 @@ class Verify(commands.Cog):
             v.verified = True
             session.commit()
 
-            # rozbal MAIL a IDENT (zpetne kompatibilni se starsimi zaznamy)
+            stored_value = v.mail  # v DB je "mail||ident" nebo jen "mail"
+
+            # rozbal MAIL a IDENT (zpětně kompatibilní se staršími záznamy)
             parts = stored_value.split("||", 1)
             mail_value = parts[0].strip().lower()
             ident_value = parts[1].strip().lower() if len(parts) == 2 else None
+                
             
 
         # assign roles after session is closed
@@ -227,9 +187,9 @@ class Verify(commands.Cog):
             try:
                 details = await self.bot.vut_api.get_user_details(ident_value)
                 if details:
-                emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
+                    emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
                     if mail_value in emails_api:
-                    specific_role_name = "VUT"
+                        specific_role_name = "VUT"
             except Exception:
                 # kdyz API spadne nebo limit, nepokazime verifikaci – nechame Host
                 pass 
