@@ -12,7 +12,6 @@ from db.session import SessionLocal
 from db.models import Verification
 from utils.mailer import send_verification_mail
 from utils.codes import generate_verification_code
-from services.vut_api import InvalidApiKey, RateLimited
 
 
 # allowed VUT formats only:
@@ -62,52 +61,9 @@ class Verify(commands.Cog):
         await interaction.response.defer(ephemeral=True) # ack do 3s, at neexpiruje interaction token
 
         user_id = interaction.user.id
-
-        # Overeni e-mailu ve VUT API
-        user_id_for_api = self._login_or_number_from_email(mail)
-        if not user_id_for_api:
-            await interaction.followup.send(
-                "Tento e-mail nevypadá jako platná VUT adresa (např. 123456@vut.cz nebo xlogin00@vutbr.cz).",
-                ephemeral=True
-            )
-            return
-
-        try:
-            details = await self.bot.vut_api.get_user_details(user_id_for_api)
-            # 👇 DEBUG výpis odpovědi z VUT API
-            import json
-            print(f"[VUT API] dotaz: {user_id_for_api}")
-            print(f"[VUT API] status: OK, odpověď:")
-            print(json.dumps(details, indent=2, ensure_ascii=False))
-            
-        except InvalidApiKey:
-            await interaction.followup.send(
-                "Interní chyba: neplatný VUT API klíč. Kontaktuj administrátora.",
-                ephemeral=True
-            )
-            return
-        except RateLimited:
-            await interaction.followup.send(
-                "VUT API je momentálně přetížené. Zkus to prosím za pár minut.",
-                ephemeral=True
-            )
-            return
-        except Exception as e:
-            await interaction.followup.send(
-                f"Chyba při komunikaci s VUT API: {e}",
-                ephemeral=True
-            )
-            return
-
-        if details is None:
-            await interaction.followup.send(
-                "Tento uživatel nebyl ve VUT systému nalezen. Zkontroluj e-mail nebo login.",
-                ephemeral=True
-            )
-            return
-        
+        mail_norm = mail.strip().lower() 
         verification_code = generate_verification_code()
-        mail_norm = mail.strip().lower()
+        
 
         with SessionLocal() as session:
             # 0) already verified -> stop early
@@ -264,10 +220,24 @@ class Verify(commands.Cog):
         await interaction.user.add_roles(verified_role)
 
         # VUT only for allowed formats; otherwise Host
+        # Rozhodnuti o roli: pokud je to VUT-format, zkusim potvrdit pres VUT API,
+        # jinak rovnou Host.
+        specific_role_name = "Host"  # default
+
         if is_vut_student_email(mail_value):
-            specific_role_name = "VUT"
-        else:
-            specific_role_name = "Host"
+            # zkus overit, ze mail skutecne patri k uctu ve VUT API
+            try:
+                # preved e-mail na login/cislo (jen pro VUT formaty)
+                user_id_for_api = self._login_or_number_from_email(mail_value)
+                if user_id_for_api:
+                    details = await self.bot.vut_api.get_user_details(user_id_for_api)
+                    if details:
+                        emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
+                        if mail_value.strip().lower() in emails_api:
+                            specific_role_name = "VUT"
+            except Exception:
+                # kdyz se API nepovede (rate limit, vypadek…), neshodi se verifikace — necham Host
+                pass 
 
         specific_role = discord.utils.get(guild.roles, name=specific_role_name)
         if not specific_role:
