@@ -1,5 +1,4 @@
 # cogs/verify.py
-import re
 from datetime import datetime, timedelta
 import asyncio
 
@@ -24,69 +23,62 @@ class Verify(commands.Cog):
 
     # If I will want instant per-guild availability, uncomment and set your guild ID:
     # @app_commands.guilds(discord.Object(id=123456789012345678))
-    # změna signatury (mail povinný, ident volitelný)
-    @app_commands.command(name="verify", description="Zadej svůj e-mail a (pokud jsi z VUT) i VUT ID/login.")
-    async def verify(self, interaction: discord.Interaction, mail: str, vut_id_login: str | None = None):
+
+    @app_commands.command(name="verify", description="Zadej své VUT ID (6 číslic) nebo login (např. xlogin00).")
+    @app_commands.describe(id_login="VUT ID nebo login (např. 256465 nebo xlogin00)")
+    async def verify(self, interaction: discord.Interaction, id_login: str):
         await interaction.response.defer(ephemeral=True)
 
         user_id = interaction.user.id
-        mail_norm = mail.strip().lower()
-        ident_norm = vut_id_login.strip().lower() if vut_id_login else None
-        verification_code = generate_verification_code() 
-        
+        ident_norm = id_login.strip().lower()
+        verification_code = generate_verification_code()
+
+        # 1) zavolej VUT API
+        try:
+            details = await self.bot.vut_api.get_user_details(ident_norm)
+        except Exception as e:
+            await interaction.followup.send(f"Chyba při komunikaci s VUT API: {e}", ephemeral=True)
+            return
+
+        if not details:
+            await interaction.followup.send("Tento identifikátor (ID/login) nebyl ve VUT systému nalezen.", ephemeral=True)
+            return
+
+        emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
+        if not emails_api:
+            await interaction.followup.send("K tomuto VUT účtu nejsou v API uvedené žádné e-maily.", ephemeral=True)
+            return
+
+        # beru prvni e-mail z API
+        target_email = emails_api[0]
 
         with SessionLocal() as session:
-            # 0) already verified, stop early
-            existing_verified = (
+            # 2) kdyz uz je tento ident overen jinym uzivatelem, tak stop
+            dup = (
                 session.query(Verification)
-                .filter(and_(Verification.user_id == user_id, Verification.verified == True))
-                .order_by(Verification.id.desc())
+                .filter(
+                    and_(
+                        Verification.verified == True,
+                        Verification.user_id != user_id,
+                        (Verification.mail == ident_norm) | (Verification.mail.like(f"%||{ident_norm}")),
+                    )
+                )
                 .first()
             )
-            if existing_verified:
+            if dup:
                 await interaction.followup.send(
-                    "Už jsi ověřen. Pokud potřebuješ změnu, kontaktuj moderátory.",
+                    "Tento identifikátor (ID/login) už je ověřen jiným uživatelem.",
                     ephemeral=True
                 )
                 return
 
-            # 1) delete this user's old unverified attempts
+            # zahod stare neoverene pokusy tehoz uzivatele
             session.query(Verification).filter(
                 and_(Verification.user_id == user_id, Verification.verified == False)
             ).delete(synchronize_session=False)
 
-            # 2) delete global unverified attempts older than 10 minutes
-            cutoff = datetime.utcnow() - timedelta(minutes=10)
-            session.query(Verification).filter(
-                and_(Verification.verified == False, Verification.created_at <= cutoff)
-            ).delete(synchronize_session=False)
-
-            # 3) blokace duplicit, kdyz je ident, nesmi byt overeny jinym uzivatelem
-            if ident_norm:
-                dup = (
-                    session.query(Verification)
-                    .filter(
-                        and_(
-                            Verification.verified == True,
-                            Verification.user_id != user_id,
-                            # bud nekdo drive ulozil mail||ident, nebo jen ident (pro pripad starsich zaznamu)
-                            (Verification.mail == ident_norm) | (Verification.mail.like(f"%||{ident_norm}"))
-                        )
-                    )
-                    .first()
-                )
-                if dup:
-                    await interaction.followup.send(
-                        "Tento identifikátor ( VUT ID/login) už je ověřen jiným uživatelem. Pokud jde o omyl, kontaktuj moderátory.",
-                        ephemeral=True
-                    )
-                    return
-           
-
-
-            stored_value = f"{mail_norm}||{ident_norm}" if ident_norm else mail_norm
-
-            # 4) create new verification attempt
+            # vytvor pokus a uloz KOMBINACI "mail||ident"
+            stored_value = f"{target_email}||{ident_norm}"
             v = Verification(
                 user_id=user_id,
                 mail=stored_value,
@@ -96,32 +88,86 @@ class Verify(commands.Cog):
             session.add(v)
             session.commit()
 
-        # 5) send mail (outside session), sync SMTP spustime mimo event loop + timeout
+        # 3) posli kod na target_email
+        try:
+            await asyncio.wait_for(
+                asyncio.to_thread(send_verification_mail, target_email, verification_code),
+                timeout=15
+            )
+            masked = target_email[:3] + "…" + target_email.split("@")[-1]
+            await interaction.followup.send(
+                f"Ověřovací kód byl odeslán na **{masked}**. (Zkontroluj SPAM.)",
+                ephemeral=True
+            )
+        except asyncio.TimeoutError:
+            await interaction.followup.send("Odesílání e-mailu trvalo příliš dlouho. Zkus to prosím znovu.", ephemeral=True)
+        except OSError as e:
+            await interaction.followup.send(f"Nelze se připojit k poštovnímu serveru ({e}). Zkus to později.", ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(f"Došlo k chybě při odesílání mailu: {e}", ephemeral=True)
+    
+    @app_commands.command(name="verify_host", description="Ověření e-mailem pro hosty (mimo VUT).")
+    @app_commands.describe(mail="E-mail, kam poslat ověřovací kód.")
+    async def verify_host(self, interaction: discord.Interaction, mail: str):
+        await interaction.response.defer(ephemeral=True)
+
+        user_id = interaction.user.id
+        mail_norm = mail.strip().lower()
+        verification_code = generate_verification_code()
+
+        with SessionLocal() as session:
+            # blokuj duplicitni e-mail overeny jinym uzivatelem
+            dup = (
+                session.query(Verification)
+                .filter(
+                    and_(
+                        Verification.verified == True,
+                        Verification.user_id != user_id,
+                        (Verification.mail == mail_norm) | (Verification.mail.like(f"{mail_norm}||%")),
+                    )
+                )
+                .first()
+            )
+            if dup:
+                await interaction.followup.send(
+                    "Tento e-mail je již použit jiným ověřeným uživatelem.",
+                    ephemeral=True
+                )
+                return
+
+            # zahod stare neoverene pokusy tehoz uzivatele
+            session.query(Verification).filter(
+                and_(Verification.user_id == user_id, Verification.verified == False)
+            ).delete(synchronize_session=False)
+
+            # uloz jen mail (bez ident), pozdeji se z toho pozna, ze je to HOST
+            v = Verification(
+                user_id=user_id,
+                mail=mail_norm,
+                verification_code=verification_code,
+                verified=False
+            )
+            session.add(v)
+            session.commit()
+
+        # posli kod
         try:
             await asyncio.wait_for(
                 asyncio.to_thread(send_verification_mail, mail_norm, verification_code),
                 timeout=15
             )
+            masked = mail_norm[:3] + "…" + mail_norm.split("@")[-1]
             await interaction.followup.send(
-                f"Ověřovací kód byl odeslán na adresu **{mail_norm}**. (Zkontroluj i složku SPAM)",
+                f"Ověřovací kód byl odeslán na **{masked}**. (Zkontroluj SPAM.)",
                 ephemeral=True
             )
         except asyncio.TimeoutError:
-            await interaction.followup.send(
-                "Odesílání e-mailu trvalo příliš dlouho. Zkus to prosím znovu.",
-                ephemeral=True
-            )
+            await interaction.followup.send("Odesílání e-mailu trvalo příliš dlouho. Zkus to prosím znovu.", ephemeral=True)
         except OSError as e:
-            # typicky: [Errno 101] Network unreachable / blokovany SMTP port
-            await interaction.followup.send(
-                f"Nelze se připojit k poštovnímu serveru ({e}). Zkus to později.",
-                ephemeral=True
-            )
+            await interaction.followup.send(f"Nelze se připojit k poštovnímu serveru ({e}). Zkus to později.", ephemeral=True)
         except Exception as e:
-            await interaction.followup.send(
-                f"Došlo k chybě při odesílání mailu: {e}",
-                ephemeral=True
-            ) 
+            await interaction.followup.send(f"Došlo k chybě při odesílání mailu: {e}", ephemeral=True)
+        
 
     # If I want instant per-guild availability, uncomment and set your guild ID:
     # @app_commands.guilds(discord.Object(id=123456789012345678))
@@ -162,7 +208,7 @@ class Verify(commands.Cog):
 
             stored_value = v.mail  # v DB je "mail||ident" nebo jen "mail"
 
-            # rozbal MAIL a IDENT (zpětně kompatibilní se staršími záznamy)
+            # rozbal MAIL a IDENT (zpetne kompatibilni se starsimi zaznamy)
             parts = stored_value.split("||", 1)
             mail_value = parts[0].strip().lower()
             ident_value = parts[1].strip().lower() if len(parts) == 2 else None
@@ -184,16 +230,16 @@ class Verify(commands.Cog):
 
         # pokud mame identifikator, over pres VUT API a porovnej, zda mail patri mezi "emaily"
         if ident_value:
-            try:
-                details = await self.bot.vut_api.get_user_details(ident_value)
-                if details:
-                    emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
-                    if mail_value in emails_api:
-                        specific_role_name = "VUT"
-            except Exception:
-                # kdyz API spadne nebo limit, nepokazime verifikaci – nechame Host
-                pass 
-       
+        try:
+            details = await self.bot.vut_api.get_user_details(ident_value)
+            if details:
+                emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
+                if mail_value in emails_api:
+                    specific_role_name = "VUT"
+        except Exception:
+            # kdyz API spadne nebo limit, nepokazime verifikaci – nechame Host
+            pass
+               
         specific_role = discord.utils.get(guild.roles, name=specific_role_name)
         if not specific_role:
             specific_role = await guild.create_role(name=specific_role_name)
