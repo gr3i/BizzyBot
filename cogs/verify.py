@@ -24,7 +24,7 @@ class Verify(commands.Cog):
     # If I will want instant per-guild availability, uncomment and set your guild ID:
     # @app_commands.guilds(discord.Object(id=123456789012345678))
 
-    @app_commands.command(name="verify", description="Zadej své VUT ID (6 číslic) nebo login (např. xlogin00).")
+    @app_commands.command(name="verify_vut", description="Zadej své VUT ID (6 číslic) nebo login (např. xlogin00).")
     @app_commands.describe(id_login="VUT ID nebo login (např. 256465 nebo xlogin00)")
     async def verify(self, interaction: discord.Interaction, id_login: str):
         await interaction.response.defer(ephemeral=True)
