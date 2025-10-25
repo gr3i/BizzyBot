@@ -223,23 +223,21 @@ class Verify(commands.Cog):
             verified_role = await guild.create_role(name="Verified")
         await interaction.user.add_roles(verified_role)
 
-        # VUT only for allowed formats; otherwise Host
-        # Rozhodnuti o roli: pokud je to VUT-format, zkusim potvrdit pres VUT API,
-        # jinak rovnou Host.
+        # --- rozhodnutí o roli ---
         specific_role_name = "Host"  # default
 
-        # pokud mame identifikator, over pres VUT API a porovnej, zda mail patri mezi "emaily"
+        # pokud máme identifikátor, ověř přes VUT API a porovnej, zda mail patří mezi "emaily"
         if ident_value:
-        try:
-            details = await self.bot.vut_api.get_user_details(ident_value)
-            if details:
-                emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
-                if mail_value in emails_api:
-                    specific_role_name = "VUT"
-        except Exception:
-            # kdyz API spadne nebo limit, nepokazime verifikaci – nechame Host
-            pass
-               
+            try:
+                details = await self.bot.vut_api.get_user_details(ident_value)
+                if details:
+                    emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
+                    if mail_value in emails_api:
+                        specific_role_name = "VUT"
+            except Exception:
+                # když API spadne nebo limit, nepokazíme verifikaci – necháme Host
+                pass
+
         specific_role = discord.utils.get(guild.roles, name=specific_role_name)
         if not specific_role:
             specific_role = await guild.create_role(name=specific_role_name)
@@ -251,7 +249,9 @@ class Verify(commands.Cog):
         )
 
 
+
 async def setup(bot):
     await bot.add_cog(Verify(bot))
+
 
 
