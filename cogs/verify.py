@@ -96,7 +96,7 @@ class Verify(commands.Cog):
             )
             masked = target_email[:3] + "…" + target_email.split("@")[-1]
             await interaction.followup.send(
-                f"Ověřovací kód byl odeslán na **{masked}**. (Zkontroluj SPAM.)",
+                f"Ověřovací kód byl odeslán na **{masked}**. (Zkontroluj i složku SPAM.)",
                 ephemeral=True
             )
         except asyncio.TimeoutError:
