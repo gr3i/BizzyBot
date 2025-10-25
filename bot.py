@@ -10,6 +10,10 @@ from db.session import SessionLocal
 from db.models import Verification
 from utils.subject_management import predmet
 
+# kvuli VUT API 
+from config import Config
+from services.vut_api import VutApiClient
+
 # nacteni tokenu a databaze
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -18,6 +22,7 @@ GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 # cesta k souboru pro ukladani ID zprav
 REACTION_IDS_FILE = "utils/reaction_ids.json"
 
+config = Config()
 
 # nastaveni discord intents
 intents = discord.Intents.default()
@@ -29,6 +34,9 @@ intents.message_content = True
 
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+
+
 
 
 # check pro overeni, ze prikaz zadava pouze vlastnik
@@ -322,6 +330,9 @@ async def strip_error(ctx, error):
 @bot.event
 async def setup_hook():
     print("[setup_hook] start")
+
+    bot.vut_api = VutApiClient(api_key=config.vut_api_key, owner_id=config.owner_id)
+    await bot.vut_api.start() 
 
     guild = discord.Object(id=GUILD_ID)
 
