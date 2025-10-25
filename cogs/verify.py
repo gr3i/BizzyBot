@@ -14,18 +14,6 @@ from utils.mailer import send_verification_mail
 from utils.codes import generate_verification_code
 
 
-# allowed VUT formats only:
-# 123456@vut.cz, x123456@vut.cz, 123456@vutbr.cz, x123456@vutbr.cz
-VUT_PATTERN = re.compile(r"^(x?\d{6})@(vut\.cz|vutbr\.cz)$", re.IGNORECASE)
-
-# allowed VUT FIT formats only:
-VUT_FIT_PATTERN = re.compile(r"^x[a-z0-9]*\d{2}@vutbr\.cz", re.IGNORECASE)
-
-def is_vut_student_email(email: str) -> bool:
-    """Vrati True, pokud jde o VUT mail (klasicky 6-ciselny nebo x…00@vutbr.cz)."""
-    e = email.strip().lower()
-    return bool(VUT_PATTERN.match(e) or VUT_FIT_PATTERN.match(e))
-
 
 def extract_vut_code(email: str) -> str | None:
     """Return 6-digit code if email matches allowed formats, else None."""
@@ -40,17 +28,18 @@ class Verify(commands.Cog):
         self.bot = bot
     
     def _login_or_number_from_email(self, email: str) -> str | None:
-        """Vrati login nebo 6mistne cislo z VUT mailu."""
+        """
+        Vrati VUT login (napr. xlogin00) nebo 6-ciferne cislo z e-mailu.
+        Ignoruje domenu (funguje i pro stud.fit.vut.cz apod.).
+        """
         e = email.strip().lower()
-        # 123456@vut.cz nebo 123456@vutbr.cz
-        m = re.match(r"^(?P<num>\d{6})@(?:vut\.cz|vutbr\.cz)$", e)
-        if m:
-            return m.group("num")
-        # xlogin00@vutbr.cz (FIT)
-        m = re.match(r"^(?P<login>x[a-z0-9]*\d{2})@vutbr\.cz$", e)
-        if m:
-            return m.group("login")
+        local, _, _ = e.partition("@")
+        if re.fullmatch(r"\d{6}", local):
+            return local
+        if re.fullmatch(r"x[a-z0-9]*\d{2}", local):
+            return local
         return None
+    
     
 
     # If I will want instant per-guild availability, uncomment and set your guild ID:
@@ -224,21 +213,19 @@ class Verify(commands.Cog):
         # jinak rovnou Host.
         specific_role_name = "Host"  # default
 
-        if is_vut_student_email(mail_value):
-            # zkus overit, ze mail skutecne patri k uctu ve VUT API
+        # Zkusit overit pres VUT API, pokud z e-mailu umim ziskat login/ID
+        user_id_for_api = self._login_or_number_from_email(mail_value)
+        if user_id_for_api:
             try:
-                # preved e-mail na login/cislo (jen pro VUT formaty)
-                user_id_for_api = self._login_or_number_from_email(mail_value)
-                if user_id_for_api:
-                    details = await self.bot.vut_api.get_user_details(user_id_for_api)
-                    if details:
-                        emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
-                        if mail_value.strip().lower() in emails_api:
-                            specific_role_name = "VUT"
+                details = await self.bot.vut_api.get_user_details(user_id_for_api)
+                if details:
+                    emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
+                    if mail_value.strip().lower() in emails_api:
+                        specific_role_name = "VUT"
             except Exception:
-                # kdyz se API nepovede (rate limit, vypadek…), neshodi se verifikace — necham Host
-                pass 
-
+                # kdyz API spadne / rate limit, necham Host
+                pass
+       
         specific_role = discord.utils.get(guild.roles, name=specific_role_name)
         if not specific_role:
             specific_role = await guild.create_role(name=specific_role_name)
