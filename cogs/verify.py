@@ -1,6 +1,7 @@
 # cogs/verify.py
 from datetime import datetime, timedelta
 import asyncio
+import os
 
 import discord
 from discord import app_commands
@@ -19,12 +20,19 @@ from utils.codes import generate_verification_code
 class Verify(commands.Cog):
     def __init__(self, bot):
         self.bot = bot 
-    
+
 
     # If I will want instant per-guild availability, uncomment and set your guild ID:
     # @app_commands.guilds(discord.Object(id=123456789012345678))
 
-    @app_commands.command(name="verify_vut", description="Zadej své VUT ID (6 číslic) nebo login (např. xlogin00).")
+
+    verify = app_commands.Group(
+        name="verify"
+        description="Ověření uživatele"
+    )
+
+    @app_commands.command(name="vut", description="Zadej své VUT ID (6 číslic) nebo login (např. xlogin00).")
+    #@app_commands.guild_only()
     @app_commands.describe(id_login="VUT ID nebo login (např. 256465 nebo xlogin00)")
     async def verify(self, interaction: discord.Interaction, id_login: str):
         await interaction.response.defer(ephemeral=True)
@@ -106,7 +114,8 @@ class Verify(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"Došlo k chybě při odesílání mailu: {e}", ephemeral=True)
     
-    @app_commands.command(name="verify_host", description="Ověření e-mailem pro hosty (mimo VUT).")
+    @app_commands.command(name="host", description="Ověření e-mailem pro hosty (mimo VUT).")
+    #@app_commands.guild_only()
     @app_commands.describe(mail="E-mail, kam poslat ověřovací kód.")
     async def verify_host(self, interaction: discord.Interaction, mail: str):
         await interaction.response.defer(ephemeral=True)
@@ -171,7 +180,8 @@ class Verify(commands.Cog):
 
     # If I want instant per-guild availability, uncomment and set your guild ID:
     # @app_commands.guilds(discord.Object(id=123456789012345678))
-    @app_commands.command(name="verify_code", description="Zadej ověřovací kód.")
+    @app_commands.command(name="code", description="Zadej ověřovací kód.")
+    #@app_commands.guild_only()
     async def verify_code(self, interaction: discord.Interaction, code: str):
 
         await interaction.response.defer(ephemeral=True) 
@@ -260,5 +270,13 @@ class Verify(commands.Cog):
 async def setup(bot):
     await bot.add_cog(Verify(bot))
 
-
+    # lokalni/guild-only registrace (pokud to tak chces mit stejne jako u reviews)
+    GUILD_ID = int(os.getenv("GUILD_ID", "0"))  # pouzij stejny pattern jako v reviews.py
+    if GUILD_ID:
+        guild = discord.Object(id=GUILD_ID)
+        bot.tree.add_command(Verify.verify_group, guild=guild)
+        print(f"[verify] group 'verify' registered for guild {GUILD_ID}")
+    else:
+        bot.tree.add_command(Verify.verify_group)
+        print("[verify] group 'verify' registered (global)")
 
