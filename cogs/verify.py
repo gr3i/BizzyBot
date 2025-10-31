@@ -33,7 +33,7 @@ class Verify(commands.Cog):
 
     @verify.command(name="vut", description="Zadej své VUT ID (6 číslic) nebo login (např. xlogin00).")
     #@app_commands.guild_only()
-    @app_commands.describe(id_login="VUT ID nebo login (např. 256465 nebo xlogin00)")
+    @app_commands.describe(id_login="VUT ID nebo login (např. 123456 nebo xlogin00)")
     async def verify_vut(self, interaction: discord.Interaction, id_login: str):
         await interaction.response.defer(ephemeral=True)
 
