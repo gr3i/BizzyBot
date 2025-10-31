@@ -27,14 +27,14 @@ class Verify(commands.Cog):
 
 
     verify = app_commands.Group(
-        name="verify"
+        name="verify",
         description="Ověření uživatele"
     )
 
-    @app_commands.command(name="vut", description="Zadej své VUT ID (6 číslic) nebo login (např. xlogin00).")
+    @verify.command(name="vut", description="Zadej své VUT ID (6 číslic) nebo login (např. xlogin00).")
     #@app_commands.guild_only()
     @app_commands.describe(id_login="VUT ID nebo login (např. 256465 nebo xlogin00)")
-    async def verify(self, interaction: discord.Interaction, id_login: str):
+    async def verify_vut(self, interaction: discord.Interaction, id_login: str):
         await interaction.response.defer(ephemeral=True)
 
         user_id = interaction.user.id
@@ -114,7 +114,7 @@ class Verify(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"Došlo k chybě při odesílání mailu: {e}", ephemeral=True)
     
-    @app_commands.command(name="host", description="Ověření e-mailem pro hosty (mimo VUT).")
+    @verify.command(name="host", description="Ověření e-mailem pro hosty (mimo VUT).")
     #@app_commands.guild_only()
     @app_commands.describe(mail="E-mail, kam poslat ověřovací kód.")
     async def verify_host(self, interaction: discord.Interaction, mail: str):
@@ -180,7 +180,7 @@ class Verify(commands.Cog):
 
     # If I want instant per-guild availability, uncomment and set your guild ID:
     # @app_commands.guilds(discord.Object(id=123456789012345678))
-    @app_commands.command(name="code", description="Zadej ověřovací kód.")
+    @verify.command(name="code", description="Zadej ověřovací kód.")
     #@app_commands.guild_only()
     async def verify_code(self, interaction: discord.Interaction, code: str):
 
@@ -274,9 +274,9 @@ async def setup(bot):
     GUILD_ID = int(os.getenv("GUILD_ID", "0"))  # pouzij stejny pattern jako v reviews.py
     if GUILD_ID:
         guild = discord.Object(id=GUILD_ID)
-        bot.tree.add_command(Verify.verify_group, guild=guild)
+        bot.tree.add_command(Verify.verify, guild=guild)
         print(f"[verify] group 'verify' registered for guild {GUILD_ID}")
     else:
-        bot.tree.add_command(Verify.verify_group)
+        bot.tree.add_command(Verify.verify)
         print("[verify] group 'verify' registered (global)")
 
