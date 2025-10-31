@@ -212,7 +212,6 @@ class Verify(commands.Cog):
                 return
 
             # cache mail before closing session
-            mail_value = v.mail
             v.verified = True
             session.commit()
 
@@ -233,7 +232,7 @@ class Verify(commands.Cog):
             verified_role = await guild.create_role(name="Verified")
         await interaction.user.add_roles(verified_role)
 
-        # rozhodnuti o roli
+        # rozhodnuti o roli podle typ_studia 
         specific_role_name = "Host"  # default
 
         if ident_value:
@@ -243,13 +242,21 @@ class Verify(commands.Cog):
                     emails_api = [e.strip().lower() for e in (details.get("emaily") or [])]
                     vztahy = details.get("vztahy") or []
 
-                    if mail_value in emails_api:
-                        # Podle "pozice" z API urcim, jestli je student nebo zamestnanec
-                        pozice = vztahy[0].get("pozice") if vztahy else None
-                        if pozice and pozice.lower() == "student":
-                            specific_role_name = "VUT"
+                    if mail_value in emails_api and vztahy:
+                        typy_studia = set()
+
+                        for vztah in vztahy:
+                            typ_studia_info = vztah.get("typ_studia") or {}
+                            zkratka_typu = (typ_studia_info.get("zkratka") or "").strip().upper()
+                            if zkratka_typu:
+                                typy_studia.add(zkratka_typu)
+
+                        # povolene typy pro roli "VUT"
+                        if len(typy_studia) > 0 and typy_studia.issubset({"B", "N"}):
+                            specific_role_name = "VUT" # student bakalarskeho nebo navazujici magistersky 
                         else:
-                            specific_role_name = "VUT Staff"
+                            specific_role_name = "VUT Staff" # doktorand / zamestnanec atd.
+
             except Exception as e:
                 # Pokud API selze, necham Host, ale vypisu do logu
                 print(f"[VUT API] Chyba při ověřování role: {e}")
