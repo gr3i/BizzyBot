@@ -100,7 +100,7 @@ docker compose up --build -d
 | Command                   | Description                          |
 | ------------------------- | ------------------------------------ |
 | `/verify <email>`         | Start verification                   |
-| `/verify_code <code>`     | Finish verification                  |
+| `/verify code <code>`     | Finish verification                  |
 | `/obor`                   | Set your major                       |
 | `/predmet ...`            | Manage your subjects                 |
 | `/hodnoceni ...`          | Manage reviews                       |
