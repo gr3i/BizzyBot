@@ -34,7 +34,7 @@ class Verify(commands.Cog):
     @verify.command(name="vut", description="Zadej své VUT ID (6 číslic) nebo login (např. xlogin00).")
     #@app_commands.guild_only()
     @app_commands.describe(id_login="VUT ID nebo login (např. 256465 nebo xlogin00)")
-    async def verify(self, interaction: discord.Interaction, id_login: str):
+    async def verify_vut(self, interaction: discord.Interaction, id_login: str):
         await interaction.response.defer(ephemeral=True)
 
         user_id = interaction.user.id
@@ -274,9 +274,9 @@ async def setup(bot):
     GUILD_ID = int(os.getenv("GUILD_ID", "0"))  # pouzij stejny pattern jako v reviews.py
     if GUILD_ID:
         guild = discord.Object(id=GUILD_ID)
-        bot.tree.add_command(Verify.verify_group, guild=guild)
+        bot.tree.add_command(Verify.verify, guild=guild)
         print(f"[verify] group 'verify' registered for guild {GUILD_ID}")
     else:
-        bot.tree.add_command(Verify.verify_group)
+        bot.tree.add_command(Verify.verify)
         print("[verify] group 'verify' registered (global)")
 
