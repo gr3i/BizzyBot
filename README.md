@@ -99,7 +99,8 @@ docker compose up --build -d
 
 | Command                   | Description                          |
 | ------------------------- | ------------------------------------ |
-| `/verify <email>`         | Start verification                   |
+| `/verify vut`             | Start verification as VUT user       |
+| `/verify host`            | Start verification as host           |
 | `/verify code <code>`     | Finish verification                  |
 | `/obor`                   | Set your major                       |
 | `/predmet ...`            | Manage your subjects                 |
