@@ -253,9 +253,9 @@ class Verify(commands.Cog):
 
                         # povolene typy pro roli "VUT"
                         if len(typy_studia) > 0 and typy_studia.issubset({"B", "N"}):
-                            specific_role_name = "VUT Staff" # student bakalarskeho nebo navazujici magistersky 
+                            specific_role_name = "VUT" # student bakalarskeho nebo navazujici magistersky 
                         else:
-                            specific_role_name = "VUT" # doktorand / zamestnanec atd.
+                            specific_role_name = "VUT Staff" # doktorand / zamestnanec atd.
 
             except Exception as e:
                 # Pokud API selze, necham Host, ale vypisu do logu
