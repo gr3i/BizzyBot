@@ -255,9 +255,9 @@ class Verify(commands.Cog):
                         if len(typy_studia) == 0:
                             # fallback, kdyby nemel zadne typy_studia, tak necham puvodni default Host
                             pass
-                        elif "B" in typy_studia:
-                            specific_role_name = "Doktorand"
-                        elif typy_studia.issubset({"D", "N", "C4"}):
+                        elif "D" in typy_studia:
+                                specific_role_name = "Doktorand"
+                        elif typy_studia.issubset({"B", "N", "C4"}):
                             specific_role_name = "VUT"  # B - bakalar, N - navazujici magistersky,
                                                         # C4 - celozivotni vzdelavani kratkodoby kurz
                         else:
