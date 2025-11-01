@@ -68,7 +68,7 @@ class Verify(commands.Cog):
                     and_(
                         Verification.verified == True,
                         Verification.user_id != user_id,
-                        (Verification.mail == ident_norm) | (Verification.mail.like(f"%||{ident_norm}")),
+                        Verification.mail.endswith(f"||{ident_norm}"),
                     )
                 )
                 .first()
@@ -251,12 +251,17 @@ class Verify(commands.Cog):
                             if zkratka_typu:
                                 typy_studia.add(zkratka_typu)
 
-                        # povolene typy pro roli "VUT"
-                        if len(typy_studia) > 0 and typy_studia.issubset({"B", "N"}):
-                            specific_role_name = "VUT" # student bakalarskeho nebo navazujici magistersky 
+                        # rozhodnuti o roli podle typu studia
+                        if len(typy_studia) == 0:
+                            # fallback, kdyby nemel zadne typy_studia, tak necham puvodni default Host
+                            pass
+                        elif "B" in typy_studia:
+                            specific_role_name = "Doktorand"
+                        elif typy_studia.issubset({"D", "N", "C4"}):
+                            specific_role_name = "VUT"  # B - bakalar, N - navazujici magistersky,
+                                                        # C4 - celozivotni vzdelavani kratkodoby kurz
                         else:
-                            specific_role_name = "VUT Staff" # doktorand / zamestnanec atd.
-
+                            specific_role_name = "VUT Staff"  # zamestnanec atd. 
             except Exception as e:
                 # Pokud API selze, necham Host, ale vypisu do logu
                 print(f"[VUT API] Chyba při ověřování role: {e}")
