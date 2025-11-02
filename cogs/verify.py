@@ -230,10 +230,11 @@ class Verify(commands.Cog):
         verified_role = discord.utils.get(guild.roles, name="Verified")
         if not verified_role:
             verified_role = await guild.create_role(name="Verified")
-        await interaction.user.add_roles(verified_role)
+        if verified_role not in interaction.user.roles:
+            await interaction.user.add_roles(verified_role)
 
         # rozhodnuti o roli podle typ_studia 
-        specific_role_name = "Host"  # default
+        specific_role_name = None
 
         if ident_value:
             try:
@@ -252,10 +253,7 @@ class Verify(commands.Cog):
                                 typy_studia.add(zkratka_typu)
 
                         # rozhodnuti o roli podle typu studia
-                        if len(typy_studia) == 0:
-                            # fallback, kdyby nemel zadne typy_studia, tak necham puvodni default Host
-                            pass
-                        elif "D" in typy_studia:
+                        if "D" in typy_studia:
                                 specific_role_name = "Doktorand"
                         elif typy_studia.issubset({"B", "N", "C4"}):
                             specific_role_name = "VUT"  # B - bakalar, N - navazujici magistersky,
@@ -266,11 +264,15 @@ class Verify(commands.Cog):
                 # Pokud API selze, necham Host, ale vypisu do logu
                 print(f"[VUT API] Chyba při ověřování role: {e}")
                 pass
+        if specific_role_name is None:
+            specific_role_name = "Host"
          
         specific_role = discord.utils.get(guild.roles, name=specific_role_name)
         if not specific_role:
             specific_role = await guild.create_role(name=specific_role_name)
-        await interaction.user.add_roles(specific_role)
+
+        if specific_role not in interaction.user.roles:
+            await interaction.user.add_roles(specific_role)
 
         await interaction.followup.send(
             f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{specific_role_name}'.",
