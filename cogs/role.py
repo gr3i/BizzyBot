@@ -29,8 +29,8 @@ class RoleInfo(commands.Cog):
         else:
             # posilame seznam roli a jejich popisku
             role_text = "\n".join(role_info)
-            role_text += "\n Kdo kam vidí, se dozvíte zde: <#1422505714332602459>" 
-            await interaction.response.send_message("\n".join(role_info), ephemeral=False)
+            role_text += "\n\nKdo kam vidí, se dozvíte zde: <#1422505714332602459>" 
+            await interaction.response.send_message(role_text, ephemeral=False)
 
 # funkce pro nacteni cogu
 async def setup(bot):
