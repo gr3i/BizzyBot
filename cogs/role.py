@@ -14,8 +14,7 @@ class RoleInfo(commands.Cog):
             ("**Submod**", "Druhá nejvyšší role na serveru, podřízená pouze Modům. Pomáhá při správě serveru a má značná oprávnění."),
             ("**Helper**", "Pomáhá uživatelům serveru s dotazy, problémy nebo informacemi. Je to role pro pomocníky, kteří usnadňují chod komunity."),
             ("**Bot**", "Speciální role pro bota, který zajišťuje správu a chod serveru."),
-            ("**Teacher**", "Role pro učitele/vyučující. Pro přidání role 'Učitel' napište někomu z Modů."), 
-            ("", "Kdo kam vidí, se dozvíte zde: https://discord.com/channels/1357455204391321712/1422505714332602459"), 
+            ("**Teacher**", "Role pro učitele/vyučující. Pro přidání role 'Učitel' napište někomu z Modů."),  
         ]
         
         # seznam pro ulozeni roli s popisky
@@ -29,6 +28,8 @@ class RoleInfo(commands.Cog):
             await interaction.response.send_message("Tento server nemá žádné role s popisky.")
         else:
             # posilame seznam roli a jejich popisku
+            role_text = "\n".join(role_info)
+            role_text += "\n Kdo kam vidí, se dozvíte zde: <#1422505714332602459>" 
             await interaction.response.send_message("\n".join(role_info), ephemeral=False)
 
 # funkce pro nacteni cogu
