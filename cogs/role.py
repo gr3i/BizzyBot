@@ -14,8 +14,8 @@ class RoleInfo(commands.Cog):
             ("**Submod**", "Druhá nejvyšší role na serveru, podřízená pouze Modům. Pomáhá při správě serveru a má značná oprávnění."),
             ("**Helper**", "Pomáhá uživatelům serveru s dotazy, problémy nebo informacemi. Je to role pro pomocníky, kteří usnadňují chod komunity."),
             ("**Bot**", "Speciální role pro bota, který zajišťuje správu a chod serveru."),
-("**Teacher**", "Role pro učitele. Buďte si vědomi, že učitelé vidí do stejných místností jako běžní studenti. Pro přidání role 'Učitel' napište někomu z Modů."), 
-
+            ("**Teacher**", "Role pro učitele/vyučující. Pro přidání role 'Učitel' napište někomu z Modů."), 
+            ("Kdo kam vidí, se dozvíte zde: https://discord.com/channels/1357455204391321712/1422505714332602459"), 
         ]
         
         # seznam pro ulozeni roli s popisky
