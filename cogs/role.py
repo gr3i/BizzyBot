@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord import app_commands, Interaction
+from discord import app_commands, Interaction, Embed
 
 class RoleInfo(commands.Cog):
     def __init__(self, bot):
@@ -17,20 +17,25 @@ class RoleInfo(commands.Cog):
             ("**Teacher**", "Role pro učitele/vyučující. Pro přidání role 'Učitel' napište někomu z Modů."),  
         ]
         
-        # seznam pro ulozeni roli s popisky
-        role_info = []
-
+        #vytvoreni embedu
+        embed = Embed(
+            title="Přehled hlavních rolí na serveru",
+            description="Níže najdete popis všech hlavních rolí:",
+            color=0x2ecc71
+        ) 
+ 
+        # pridani poli pro kazdou roli
         for role_name, role_description in example_roles:
-            role_info.append(f"{role_name}: {role_description}")
+            embed.add_field(name=role_name, value=role_description, inline=False)
 
-        # pokud nejsou zadne role k zobrazeni
-        if not role_info:
-            await interaction.response.send_message("Tento server nemá žádné role s popisky.")
-        else:
-            # posilame seznam roli a jejich popisku
-            role_text = "\n".join(role_info)
-            role_text += "\n\nKdo kam vidí, se dozvíte zde: https://discord.com/channels/1357455204391321712/1422505714332602459/1435567370969288704"
-            await interaction.response.send_message(role_text, ephemeral=False)
+        embed.add_field(
+            name="Kdo kam vidí",
+            value="[Klikni sem pro zobrazení přehledu](https://discord.com/channels/1357455204391321712/1422505714332602459/1435567370969288704)",
+            inline=False
+        ) 
+
+        # odeslani embedu
+        await interaction.response.send_message(embed=embed, ephemeral=False) 
 
 # funkce pro nacteni cogu
 async def setup(bot):

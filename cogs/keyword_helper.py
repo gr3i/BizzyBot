@@ -30,16 +30,16 @@ Zda ti to furt nejde, tak to zkusíme ještě jednou.
 Postup je fakt jednoduchý.
 
 ### ✅ Jak se ověřit
-1. Napiš lomítko **`/`** a najdi `/verify_vut`.
+1. Napiš lomítko **`/`** a najdi `/verify vut`.
 2. Tam zadej svoje VUT ID (To je to 6-místné číslo, např.654321) nebo VUT login (např.xlogin00).
 3. Otevři Outlook → najdi e-mail s kódem (často ve **spamu**).
-4. Napiš znovu lomítko **`/`** a najdi `/verify_code`, kde zadáš kód z mailu.
+4. Napiš znovu lomítko **`/`** a najdi `/verify code`, kde zadáš kód z mailu.
 5. Po tomto získáš přístup na server.
 
 ---
 
 ## ℹ️ Stále se ti nedaří verifikovat na server a máš VUT mail?
-* Pokud máš školní e-mail ve formátu podobný **123456@vut.cz** nebo **xlogin00@vutbr.cz**, tak ho zadej do příkazu `/verify_host`  – dostaneš roli *Host*.
+* Pokud máš školní e-mail ve formátu podobný **123456@vut.cz** nebo **xlogin00@vutbr.cz**, tak ho zadej do příkazu `/verify host`  – dostaneš roli *Host*.
 * Pro roli *VUT* budeš muset kontaktovat někoho z mods.
 
 Teprve když nic z tohoto nepomůže, napiš někomu z Mods.
