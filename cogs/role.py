@@ -29,7 +29,7 @@ class RoleInfo(commands.Cog):
         else:
             # posilame seznam roli a jejich popisku
             role_text = "\n".join(role_info)
-            role_text += "\n\nKdo kam vidí, se dozvíte zde: <#1422505714332602459>" 
+            role_text += "\n\nKdo kam vidí, se dozvíte zde: https://discord.com/channels/1357455204391321712/1422505714332602459/1435567370969288704"
             await interaction.response.send_message(role_text, ephemeral=False)
 
 # funkce pro nacteni cogu
