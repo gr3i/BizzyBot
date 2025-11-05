@@ -15,7 +15,7 @@ class RoleInfo(commands.Cog):
             ("**Helper**", "Pomáhá uživatelům serveru s dotazy, problémy nebo informacemi. Je to role pro pomocníky, kteří usnadňují chod komunity."),
             ("**Bot**", "Speciální role pro bota, který zajišťuje správu a chod serveru."),
             ("**Teacher**", "Role pro učitele/vyučující. Pro přidání role 'Učitel' napište někomu z Modů."), 
-            ("Kdo kam vidí,", "se dozvíte zde: https://discord.com/channels/1357455204391321712/1422505714332602459"), 
+            ("", "Kdo kam vidí, se dozvíte zde: https://discord.com/channels/1357455204391321712/1422505714332602459"), 
         ]
         
         # seznam pro ulozeni roli s popisky
