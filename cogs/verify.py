@@ -212,15 +212,15 @@ class Verify(commands.Cog):
                 return
 
             # cache mail before closing session
-            v.verified = True
-            session.commit()
+
+            ver_id = v.id 
 
             stored_value = v.mail  # v DB je "mail||ident" nebo jen "mail"
 
-            # rozbal MAIL a IDENT (zpetne kompatibilni se starsimi zaznamy)
-            parts = stored_value.split("||", 1)
-            mail_value = parts[0].strip().lower()
-            ident_value = parts[1].strip().lower() if len(parts) == 2 else None
+        # rozbal MAIL a IDENT (zpetne kompatibilni se starsimi zaznamy)
+        parts = stored_value.split("||", 1)
+        mail_value = parts[0].strip().lower()
+        ident_value = parts[1].strip().lower() if len(parts) == 2 else None
                 
             
 
@@ -295,7 +295,13 @@ class Verify(commands.Cog):
 
         if current_best_role is not None:
             if current_best_priority >= new_role_priority:
-                
+               
+                with SessionLocal() as session:
+                    rec = session.get(Verification, ver_id)
+                    if rec and not rec.verified:
+                        session.delete(rec)
+                        session.commit()
+
                 await interaction.followup.send(
                     f"Ověření bylo úspěšné. Tvá role zůstává '{current_best_role.name}' (vyšší nebo stejná úroveň důvěry)",
                     ephemeral=True
@@ -303,6 +309,8 @@ class Verify(commands.Cog):
                 return
             else:
                 await interaction.user.remove_roles(*current_trust_roles)
+
+       
          
         specific_role = discord.utils.get(guild.roles, name=new_role_name)
         if not specific_role:
@@ -310,6 +318,12 @@ class Verify(commands.Cog):
 
         if specific_role not in interaction.user.roles:
             await interaction.user.add_roles(specific_role)
+
+        with SessionLocal() as session:
+            rec = session.get(Verification, ver_id)
+            if rec:
+                rec.verified = True 
+                session.commit()
 
         await interaction.followup.send(
             f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{new_role_name}'.",
