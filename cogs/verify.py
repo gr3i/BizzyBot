@@ -224,15 +224,6 @@ class Verify(commands.Cog):
                 
             
 
-        # assign roles after session is closed
-        guild = interaction.guild
-
-        verified_role = discord.utils.get(guild.roles, name="Verified")
-        if not verified_role:
-            verified_role = await guild.create_role(name="Verified")
-        if verified_role not in interaction.user.roles:
-            await interaction.user.add_roles(verified_role)
-
         # rozhodnuti o roli podle typ_studia 
         specific_role_name = None
 
@@ -285,8 +276,7 @@ class Verify(commands.Cog):
         if verified_role not in interaction.user.roles:
             await interaction.user.add_roles(verified_role)
 
-        # 2. Zjisti existujici identitni role uzivatele 
-        user_roles_by_name = {r.name: r for r in interaction.user.roles}
+        # 2. Zjisti existujici identitni role uzivatele  
         current_trust_roles = [
             r for r in interaction.user.roles if r.name in trust_roles_priority
         ]
@@ -307,22 +297,22 @@ class Verify(commands.Cog):
             if current_best_priority >= new_role_priority:
                 
                 await interaction.followup.send(
-                    f"Ověření bylo úspěšné. Tva role zůstavá '{current_best_role}' (vyšší nebo stejná úroveň důvěry)"
+                    f"Ověření bylo úspěšné. Tvá role zůstává '{current_best_role.name}' (vyšší nebo stejná úroveň důvěry)",
                     ephemeral=True
                 )
                 return
             else:
                 await interaction.user.remove_roles(*current_trust_roles)
          
-        specific_role = discord.utils.get(guild.roles, name=specific_role_name)
+        specific_role = discord.utils.get(guild.roles, name=new_role_name)
         if not specific_role:
-            specific_role = await guild.create_role(name=specific_role_name)
+            specific_role = await guild.create_role(name=new_role_name)
 
         if specific_role not in interaction.user.roles:
             await interaction.user.add_roles(specific_role)
 
         await interaction.followup.send(
-            f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{specific_role_name}'.",
+            f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{new_role_name}'.",
             ephemeral=True
         )
 
