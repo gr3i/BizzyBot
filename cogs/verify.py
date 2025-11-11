@@ -322,7 +322,18 @@ class Verify(commands.Cog):
         with SessionLocal() as session:
             rec = session.get(Verification, ver_id)
             if rec:
-                rec.verified = True 
+                rec.verified = True
+
+                # smazeme vsechny ostatni zaznamy tohoto uzivatele 
+                (
+                    session.query(Verification)
+                    .filter(
+                        Verification.user_id == user_id,
+                        Verification.id != ver_id
+                    )
+                    .delete(synchronize_session=False)
+                )
+
                 session.commit()
 
         await interaction.followup.send(
