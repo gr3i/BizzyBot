@@ -266,6 +266,53 @@ class Verify(commands.Cog):
                 pass
         if specific_role_name is None:
             specific_role_name = "Host"
+
+        # definice priorit identitnich roli 
+        trust_roles_priority = {
+            "Host": 0,
+            "VUT": 1,
+            "VUT Staff": 2,
+            "Doktorand": 3,
+        }
+
+        guild = interaction.guild
+
+        # 1. Verified role
+        verified_role = discord.utils.get(guild.roles, name="Verified")
+        if not verified_role:
+            verified_role = await guild.create_role(name="Verified")
+
+        if verified_role not in interaction.user.roles:
+            await interaction.user.add_roles(verified_role)
+
+        # 2. Zjisti existujici identitni role uzivatele 
+        user_roles_by_name = {r.name: r for r in interaction.user.roles}
+        current_trust_roles = [
+            r for r in interaction.user.roles if r.name in trust_roles_priority
+        ]
+
+        # spocitej aktualni max prioritu
+        current_best_role = None
+        current_best_priority = -1
+        for r in current_trust_roles:
+            prio = trust_roles_priority[r.name]
+            if prio > current_best_priority:
+                current_best_priority = prio 
+                current_best_role = r 
+
+        new_role_name = specific_role_name
+        new_role_priority = trust_roles_priority[new_role_name]
+
+        if current_best_role is not None:
+            if current_best_priority >= new_role_priority:
+                
+                await interaction.followup.send(
+                    f"Ověření bylo úspěšné. Tva role zůstavá '{current_best_role}' (vyšší nebo stejná úroveň důvěry)"
+                    ephemeral=True
+                )
+                return
+            else:
+                await interaction.user.remove_roles(*current_trust_roles)
          
         specific_role = discord.utils.get(guild.roles, name=specific_role_name)
         if not specific_role:
