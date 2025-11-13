@@ -82,9 +82,9 @@ vut_roles_list = [
 if os.path.exists(REACTION_IDS_FILE):
     with open(REACTION_IDS_FILE, "r") as f:
         reaction_message_ids = json.load(f)
-        print(f"📌 Načteno {len(reaction_message_ids)} zpráv s reakcemi.")
+        print(f"Načteno {len(reaction_message_ids)} zpráv s reakcemi.")
 else:
-    print("📌 Soubor s ID zpráv nenalezen.")
+    print("Soubor s ID zpráv nenalezen.")
 
 
 @bot.command()
@@ -105,9 +105,9 @@ async def vut_roles(ctx):
     try:
         with open(REACTION_IDS_FILE, "w") as f:
             json.dump(reaction_message_ids, f)
-        print("💾 VUT role zpráva uložena.")
+        print("VUT role zpráva uložena.")
     except Exception as e:
-        print(f"❌ Chyba při ukládání ID zpráv: {e}")
+        print(f"Chyba při ukládání ID zpráv: {e}")
 
 # osetreni chyby pro pripad, ze prikaz pouzije uzivatel bez prav
 @vut_roles.error
@@ -197,13 +197,13 @@ async def on_raw_reaction_add(payload):
         role = guild.get_role(role_id)
         if role:
             await member.add_roles(role)
-            print(f"✅ Přidána role {role.name} uživateli {member.name}")
+            print(f"Přidána role {role.name} uživateli {member.name}")
 
             # posli DM zpravu uzivateli
             try:
                 await member.send(f"✅ Byla ti přidělena role: {role.name}")
             except discord.Forbidden:
-                print(f"❗ Nelze poslat DM uživateli {member.name}")
+                print(f"Nelze poslat DM uživateli {member.name}")
 
 # reagovani na odebrani reakce
 @bot.event
@@ -248,13 +248,13 @@ async def on_raw_reaction_remove(payload):
         role = guild.get_role(role_id)
         if role:
             await member.remove_roles(role)
-            print(f"❌ Odebrána role {role.name} uživateli {member.name}")
+            print(f"Odebrána role {role.name} uživateli {member.name}")
 
             # posli DM zpravu uzivateli
             try:
                 await member.send(f"❌ Byla ti odebrána role: {role.name}")
             except discord.Forbidden:
-                print(f"❗ Nelze poslat DM uživateli {member.name}")
+                print(f"Nelze poslat DM uživateli {member.name}")
 
 @bot.command()
 @commands.check(is_owner)  # only owner or allowed role
@@ -353,9 +353,9 @@ async def setup_hook():
     ]:
         try:
             await bot.load_extension(ext)
-            print(f"✅ Cog '{ext}' načten")
+            print(f"Cog '{ext}' načten")
         except Exception as e:
-            print(f"❌ Chyba při načítání '{ext}': {e}")
+            print(f"Chyba při načítání '{ext}': {e}")
 
     # 2) /predmet pridej primo do tehle guildy (okamzite viditelne)
     bot.tree.add_command(predmet, guild=guild)
@@ -371,7 +371,7 @@ async def setup_hook():
 
 @bot.event
 async def on_ready():
-    print(f"✅ Bot prihlasen jako {bot.user} (ID: {bot.user.id})")
+    print(f"Bot prihlasen jako {bot.user} (ID: {bot.user.id})")
 
 bot.run(TOKEN)
 
