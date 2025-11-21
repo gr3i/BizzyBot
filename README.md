@@ -12,6 +12,7 @@ It handles user verification via email, assigns roles based on user input or ema
 ## Features
 
 * **Email Verification** 
+
   Users must verify their identity using a university email. Only **one user per email address** is allowed. 
 
 * **Automatic Role Assignment**
