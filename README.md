@@ -9,24 +9,24 @@ It handles user verification via email, assigns roles based on user input or ema
 
 ---
 
-## 📌 Features
+## Features
 
-* 🔐 **Email Verification** 
+* **Email Verification** 
   Users must verify their identity using a university email. Only **one user per email address** is allowed. 
 
-* 🎓 **Automatic Role Assignment**
+* **Automatic Role Assignment**
   Upon successful verification, users are granted:
 
   * A general `Verified` role.
   * A specific role based on their email domain (`VUT` for university emails, `Host` for others).
 
-* 📘 **Subject and Faculty Role Selection**
+* **Subject and Faculty Role Selection**
   Users can select their **subjects** and **faculty affiliation** using reaction-based messages and slash commands.
 
-* ✅ **TODO Onboarding** 
+* **TODO Onboarding** 
   Right after verification and gaining the VUT role, bot sends a **TODO checklist** via DM to help students navigate the server. 
 
-* 🛠️ **Owner-Only Commands**
+* **Owner-Only Commands**
   Admins can manage the bot and users via several restricted commands:
 
   * Send announcements as the bot
@@ -35,7 +35,7 @@ It handles user verification via email, assigns roles based on user input or ema
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 BizzyBot/
@@ -55,7 +55,7 @@ BizzyBot/
 
 ---
 
-## ⚙️ Requirements & Technologies
+## Requirements & Technologies
 
 - Python **3.11+**
 - [discord.py 2.x](https://discordpy.readthedocs.io/)
@@ -79,7 +79,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🚀 Running the Bot
+## Running the Bot
 
 ### Local
 ```bash
@@ -93,7 +93,7 @@ docker compose up --build -d
 
 ---
 
-## 📚 Commands Overview
+## Commands Overview
 
 ### Slash Commands
 
@@ -119,22 +119,22 @@ docker compose up --build -d
 
 ---
 
-## 🛡️ Security
+## Security
 
-* ✅ One email → one user (unique verification). 
-* ✅ Owner-only commands restricted by **ID** or **privileged role**. 
-* ✅ Reviews can only be deleted/edited by **author**, **mods**, or **owner**. 
-* ✅ TODO DM is sent only once per session (to prevent spam). 
+* One email → one user (unique verification). 
+* Owner-only commands restricted by **ID** or **privileged role**. 
+* Reviews can only be deleted/edited by **author**, **mods**, or **owner**. 
+* TODO DM is sent only once per session (to prevent spam). 
 
 ---
 
-## 📩 Contact
+## Contact
 
 For inquiries, suggestions, or bug reports, please contact the [gr3i](https://github.com/gr3i) on GitHub or open an issue on GitHub.
 
 ---
 
-## 📚 IB
+## IB
 
 [Rubbergod Bot (BUT FIT Discord)](https://github.com/vutfitdiscord/rubbergod/tree/main). 
 
