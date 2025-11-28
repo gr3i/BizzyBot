@@ -27,7 +27,7 @@ class Room(commands.Cog):
         # odpoved (ephemeral=True = vidi jen ten, kdo zadal prikaz)
         await interaction.response.send_message(
             f"Otevírám mapu pro místnost **{room_code.upper()}**:\n{url}",
-            ephemeral=True
+            ephemeral=False
         )
 
 async def setup(bot):
