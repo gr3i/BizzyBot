@@ -349,6 +349,7 @@ async def setup_hook():
         "cogs.send_image",
         "cogs.keyword_helper",
         "cogs.jail_cleanup",
+        "cogs.room",
         # "cogs.sort_categories",
     ]:
         try:
