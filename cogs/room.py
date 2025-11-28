@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import app_commands, Interaction
 
-BASE_URL = "https://gr3i.github.io/room-map"
+BASE_URL = "https://gr3i.github.io/room.html"
 
 class Room(commands.Cog):
     def __init__(self, bot):
@@ -11,9 +11,11 @@ class Room(commands.Cog):
         name="room",
         description="Ukáže místnost na mapě."
     )
+
     @app_commands.describe(
         code="Zadej zkratku místnosti, např. P384 nebo E337"
     )
+
     async def room(self, interaction: Interaction, code: str):
 
         # vsechno na mala pismena
