@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import app_commands, Interaction
 
-BASE_URL = "https://gr3i.github.io/room.html"
+BASE_URL = "https://gr3i.github.io/room"
 
 class Room(commands.Cog):
     def __init__(self, bot):
