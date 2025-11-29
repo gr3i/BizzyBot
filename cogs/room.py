@@ -50,7 +50,7 @@ class Room(commands.Cog):
         description="Ukáže místnost na mapě."
     )
     @app_commands.describe(
-        code="Zadej zkratku místnosti, např. P384 nebo E337"
+        code="Zadej zkratku místnosti, např. P384 nebo P287"
     )
     async def room(self, interaction: Interaction, code: str):
 
