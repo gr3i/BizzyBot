@@ -17,7 +17,7 @@ TODO_LINES = [
     "✅ Když budeš potřebovat, tak pomocí `/predmet` si můžeš přidat předmět.",
     "✅ Pokud všechno tohle uděláš, dostaneš přístup do nových místností.",
     "✅ Potřebuješ-li podrobnější popis, jak co udělat (#info).",
-    "✅ V #bot-spam si vyzkoušej např. příkaz /room pro vyhledání místnosti na FP",
+    "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP",
 ]
 
 
