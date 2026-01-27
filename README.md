@@ -1,4 +1,4 @@
-# BUT FP Discord Bot
+# BUT FBM Discord Bot
 
 [License: MIT](https://opensource.org/licenses/MIT)
 
