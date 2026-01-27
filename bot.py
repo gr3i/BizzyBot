@@ -350,6 +350,7 @@ async def setup_hook():
         "cogs.keyword_helper",
         "cogs.jail_cleanup",
         "cogs.room",
+        "cogs.on_raw_reaction_add",
         # "cogs.sort_categories",
     ]:
         try:
