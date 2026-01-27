@@ -18,7 +18,7 @@ HOST_TODO_LINES = [
     "✅ Příkaz použij klidně v místnosti #general. Zprávu uvidíš jen ty...",
     "✅ Dostaneš roli FP/VUT nebo Vyucujici/Zamestnanec",
     "✅ Po ověření získáš přístup do dalších kanálů.",
-    "✅ Pokud máš dotaz, napiš do general/offtopic/help-room nebo moderátorům.",
+    "✅ Pokud máš dotaz, napiš do general/offtopic/help-room.",
 ]
 
 
