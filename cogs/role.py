@@ -1,5 +1,6 @@
 from discord.ext import commands
 from discord import app_commands, Interaction, Embed
+ALLOWED_CHANNEL_ID = 1358908501031915621
 
 class RoleInfo(commands.Cog):
     def __init__(self, bot):
@@ -7,6 +8,15 @@ class RoleInfo(commands.Cog):
 
     @app_commands.command(name="role", description="Vypíše hlavní role na serveru a jejich popisky")
     async def role(self, interaction: Interaction):
+
+        # povol pouze v jednom kanalu
+        if interaction.channel_id != ALLOWED_CHANNEL_ID:
+            await interaction.response.send_message(
+                "Tento prikaz lze pouzit jen v urcenem kanalu.",
+                ephemeral=True
+            )
+            return
+
         # priklad roli a jejich popisku
         example_roles = [
             ("**Mod**", "Má nejvyšší oprávnění po ownerovi a odpovídá za správu serveru."),
