@@ -340,7 +340,7 @@ class Reviews(commands.Cog):
         if interaction.channel_id == ALLOWED_CHANNEL_ID:
             return True
         await interaction.response.send_message(
-            "Tento prikaz lze pouzit jen v kanalu bot-spam.",
+            "Tento příkaz lze použít jen v kanálu bot-spam.",
             ephemeral=True
         )
         return False
