@@ -13,7 +13,11 @@ from db.models import Verification
 from utils.mailer import send_verification_mail
 from utils.codes import generate_verification_code
 
-
+# role IDs
+ROLE_HOST_ID = 1358905374500982995 
+ROLE_VUT_ID = 1358911329737642014 
+ROLE_VUT_STAFF_ID = 1431724268160549096
+ROLE_DOKTORAND_ID = 1433984072266285097
 
 
 
@@ -225,7 +229,7 @@ class Verify(commands.Cog):
             
 
         # rozhodnuti o roli podle typ_studia 
-        specific_role_name = None
+        specific_role_id = None
 
         if ident_value:
             try:
@@ -245,25 +249,25 @@ class Verify(commands.Cog):
 
                         # rozhodnuti o roli podle typu studia
                         if "D" in typy_studia:
-                                specific_role_name = "Doktorand"
+                                specific_role_id = ROLE_DOKTORAND_ID
                         elif typy_studia.issubset({"B", "N", "C4"}):
-                            specific_role_name = "VUT"  # B - bakalar, N - navazujici magistersky,
+                            specific_role_id = ROLE_VUT_ID # B - bakalar, N - navazujici magistersky,
                                                         # C4 - celozivotni vzdelavani kratkodoby kurz
                         else:
-                            specific_role_name = "VUT Staff"  # zamestnanec atd. 
+                            specific_role_id = ROLE_VUT_STAFF_ID  # zamestnanec atd. 
             except Exception as e:
                 # Pokud API selze, necham Host, ale vypisu do logu
                 print(f"[VUT API] Chyba při ověřování role: {e}")
                 pass
-        if specific_role_name is None:
-            specific_role_name = "Host"
+        if specific_role_id is None:
+            specific_role_id = ROLE_HOST_ID
 
         # definice priorit identitnich roli 
         trust_roles_priority = {
-            "Host": 0,
-            "VUT": 1,
-            "VUT Staff": 2,
-            "Doktorand": 3,
+            ROLE_HOST_ID: 0,
+            ROLE_VUT_ID: 1,
+            ROLE_VUT_STAFF_ID: 2,
+            ROLE_DOKTORAND_ID: 3,
         }
 
         guild = interaction.guild
@@ -278,20 +282,20 @@ class Verify(commands.Cog):
 
         # 2. Zjisti existujici identitni role uzivatele  
         current_trust_roles = [
-            r for r in interaction.user.roles if r.name in trust_roles_priority
+            r for r in interaction.user.roles if r.id in trust_roles_priority
         ]
 
         # spocitej aktualni max prioritu
         current_best_role = None
         current_best_priority = -1
         for r in current_trust_roles:
-            prio = trust_roles_priority[r.name]
+            prio = trust_roles_priority[r.id]
             if prio > current_best_priority:
                 current_best_priority = prio 
                 current_best_role = r 
 
-        new_role_name = specific_role_name
-        new_role_priority = trust_roles_priority[new_role_name]
+        
+        new_role_priority = trust_roles_priority[specific_role_id]
 
         if current_best_role is not None:
             if current_best_priority >= new_role_priority:
@@ -312,12 +316,17 @@ class Verify(commands.Cog):
 
        
          
-        specific_role = discord.utils.get(guild.roles, name=new_role_name)
-        if not specific_role:
-            specific_role = await guild.create_role(name=new_role_name)
-
-        if specific_role not in interaction.user.roles:
+        specific_role = guild.get_role(specific_role_id)
+        if specific_role is None:
+            await interaction.followup.send(
+                "Chyba: cilova role na serveru neexistuje (spatne ROLE_ID nebo role byla smazana).",
+                ephemeral=True
+            )
+            return
+            
+        if specific_role and specific_role not in interaction.user.roles:
             await interaction.user.add_roles(specific_role)
+        
 
         with SessionLocal() as session:
             rec = session.get(Verification, ver_id)
@@ -336,8 +345,10 @@ class Verify(commands.Cog):
 
                 session.commit()
 
+        role_name = specific_role.name if specific_role else "neznamou roli"
+
         await interaction.followup.send(
-            f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{new_role_name}'.",
+            f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{role_name}'.",
             ephemeral=True
         )
 
@@ -355,4 +366,5 @@ async def setup(bot):
     else:
         bot.tree.add_command(Verify.verify)
         print("[verify] group 'verify' registered (global)")
+
 
