@@ -18,6 +18,7 @@ from db.models import Review, Reaction
 MOD_ROLE_IDS = [1358898283782602932]
 OWNER_IDS = [685958402442133515]
 ALLOWED_ROLE_ID = 1358911329737642014
+ALLOWED_CHANNEL_ID = 1358908501031915621
 
 MAX_REVIEW_LENGTH = 3900
 
@@ -334,6 +335,17 @@ class Reviews(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    async def _in_allowed_channel(self, interaction: discord.Interaction) -> bool:
+        # povol pouze v jednom kanalu
+        if interaction.channel_id == ALLOWED_CHANNEL_ID:
+            return True
+        await interaction.response.send_message(
+            "Tento prikaz lze pouzit jen v kanalu bot-spam.",
+            ephemeral=True
+        )
+        return False
+
+
     async def _has_allowed_role(self, interaction: discord.Interaction) -> bool:
         if not isinstance(interaction.user, discord.Member):
             await interaction.response.send_message("Tento příkaz lze použít jen na serveru.", ephemeral=True)
@@ -353,6 +365,9 @@ class Reviews(commands.Cog):
     @app_commands.describe(predmet="Název předmětu", znamka="Známka A-F", recenze="Text recenze")
     @app_commands.autocomplete(predmet=predmet_autocomplete)
     async def pridat_hodnoceni(self, interaction: discord.Interaction, predmet: str, znamka: str, recenze: str):
+        if not await self._in_allowed_channel(interaction):
+            return 
+
         if not await self._has_allowed_role(interaction):
             return
 
@@ -383,6 +398,9 @@ class Reviews(commands.Cog):
     @app_commands.describe(predmet="Název předmětu")
     @app_commands.autocomplete(predmet=predmet_autocomplete)
     async def zobraz_hodnoceni(self, interaction: discord.Interaction, predmet: str):
+        if not await  self._in_allowed_channel(interaction):
+            return
+
         if not await self._has_allowed_role(interaction):
             return
 
@@ -417,6 +435,9 @@ class Reviews(commands.Cog):
     @app_commands.describe(id_hodnoceni="ID hodnocení", znamka="Nová známka", recenze="Nová recenze")
     @app_commands.autocomplete(id_hodnoceni=id_autocomplete)
     async def edit_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int, znamka: str, recenze: str):
+        if not await self._in_allowed_channel(interaction):
+            return
+
         if not await self._has_allowed_role(interaction):
             return
 
@@ -446,6 +467,9 @@ class Reviews(commands.Cog):
     @app_commands.describe(id_hodnoceni="ID hodnocení")
     @app_commands.autocomplete(id_hodnoceni=id_autocomplete)
     async def smazat_hodnoceni(self, interaction: discord.Interaction, id_hodnoceni: int):
+        if not await self._in_allowed_channel(interaction):
+            return 
+
         if not await self._has_allowed_role(interaction):
             return
 
