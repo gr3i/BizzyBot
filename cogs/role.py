@@ -12,7 +12,7 @@ class RoleInfo(commands.Cog):
         # povol pouze v jednom kanalu
         if interaction.channel_id != ALLOWED_CHANNEL_ID:
             await interaction.response.send_message(
-                "Tento prikaz lze pouzit jen v urcenem kanalu.",
+                "Tento příkaz lze použít jen v kanálu bot-spam.",
                 ephemeral=True
             )
             return
