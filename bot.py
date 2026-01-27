@@ -351,6 +351,7 @@ async def setup_hook():
         "cogs.jail_cleanup",
         "cogs.room",
         "cogs.on_raw_reaction_add",
+        "cogs.bookmark_dm",
         # "cogs.sort_categories",
     ]:
         try:
