@@ -10,30 +10,35 @@ Nikdo nemá rád negativitu. **Chovej se k ostatním tak, jak bys chtěl, aby se
 **2. Buď v klidu s textem i hlasem**
 Věnuj pozornost tomu, co a jak píšeš. **Nezapojuj se do každé debaty, pokud nemáš co hodnotného přidat.**
 
-**3. Nepropaguj cizí servery nebo produkty**
+**3. Je zakázáno jakkoliv falešně vystupovat jako vyučující nebo jiní studenti fakulty**
+
+**4. Nepropaguj cizí servery nebo produkty**
 Tohle **není tržiště.** Pokud chceš sdílet něco užitečného, **nejdřív se zeptej mod týmu.**
 
-**4. Udržuj kanály čisté a tematické**
-Každý kanál má svůj účel. Pokud chceš něco pro všechny, použij **#general** nebo **#offtopic**. Chceš sdílet koťátka? **#the-zoo** je tvoje místo.
+**5. Udržuj kanály čisté a tematické**
+Každý kanál má svůj účel. Pokud chceš něco pro všechny, použij **<#1358888500845346866>** nebo **<#1358913164493852682>**. Chceš sdílet koťátka? **<#1359235481384124689>** je tvoje místo.
 
-**5. Nikdo není nad pravidly**
+**6. Nikdo není nad pravidly**
 Pokud porušíš pravidla, můžeš dostat **upozornění** nebo **ban**. Modi pravidla uplatňují pro všechny.
 
-**6. Chovej se odpovědně!**
+**7. Chovej se odpovědně!**
 Pokud máš problém nebo vidíš někoho, kdo porušuje pravidla, dej nám vědět. **Jsme tu, abychom si pomáhali.**
 
-**7. Nikdo za nic neručí**
+**8. Nikdo za nic neručí**
 Pokud vám někdo poradí špatně nebo od někoho opíšete nesprávné informace či materiály, **nikdo za to neručí** - je to vaše odpovědnost.
 
-**8. Zákaz obtěžování a nevyžádaného kontaktování členů**
+**9. Zákaz obtěžování a nevyžádaného kontaktování členů**
 Je zakázáno:
 
 * **kontaktovat členy serveru v soukromých zprávách s nabídkami produktů, kurzů, projektů, financí či podobných věcí**,
 * **oslovovat členy mimo Discord (např. přes jiné sociální sítě, telefon, osobně), pokud si o to výslovně neřekli**,
 * **jakkoliv obtěžovat členy opakovanými nebo nevyžádanými zprávami**
   Jakékoli podobné obtěžování může vést k okamžitému banu.
+  
+**10. Zákaz nabídek práce a prodeje** 
+Na tomto školním serveru je přísně zakázáno nabízet práci, služby, kurzy, produkty, výživové doplňky ani jakékoliv jiné zboží. Tento prostor neslouží k obchodním aktivitám. Prosíme, respektujte to.
 
-**9. Discord TOS a Community Guidelines**
+**11. Discord TOS a Community Guidelines**
 Kromě pravidel tohoto serveru dodržujte také **Discord Terms of Service** a **Discord Community Guidelines**.
 
 ---
@@ -56,22 +61,24 @@ Nobody likes negativity. **Treat others the way you want to be treated.** No ins
 **2. Be mindful in text and voice channels**
 Pay attention to what and how you write. **Don’t jump into every discussion if you have nothing valuable to add.**
 
-**3. Do not advertise other servers or products**
+**3. It’s against the rules to pretend to be a teacher or another student.**
+
+**4. Do not advertise other servers or products**
 This is **not a marketplace.** If you want to share something useful, **ask the mod team first.**
 
-**4. Keep channels clean and on-topic**
-Each channel has its purpose. If you want to post something for everyone, use **#general** or **#offtopic**. Want to share cat pictures? **#the-zoo** is your place.
+**5. Keep channels clean and on-topic**
+Each channel has its purpose. If you want to post something for everyone, use **<#1358888500845346866>** or **<#1358913164493852682>**. Want to share cat pictures? **<#1359235481384124689>** is your place.
 
-**5. No one is above the rules**
+**6. No one is above the rules**
 If you break the rules, you may receive a **warning** or a **ban**. Moderators apply the rules equally to everyone.
 
-**6. Be responsible!**
+**7. Be responsible!**
 If you have a problem or see someone breaking the rules, let us know. **We’re here to help each other.**
 
-**7. No one is liable for anything**
+**8. No one is liable for anything**
 If someone gives you wrong advice or you copy incorrect materials, **no one is responsible for that** - it is your own responsibility.
 
-**8. No harassment or unsolicited contact**
+**9. No harassment or unsolicited contact**
 It is forbidden to:
 
 * **contact server members in private messages with offers of products, courses, projects, financial services, or similar things**,
@@ -80,7 +87,10 @@ It is forbidden to:
 
 Any such behavior may result in an immediate ban.
 
-**9. Discord TOS and Community Guidelines**
+**10. No job offers or selling**
+On this school server, it is strictly forbidden to offer jobs, services, courses, products, supplements, or any other items for sale. This space is not meant for commercial activities. Please respect this rule.
+
+**11. Discord TOS and Community Guidelines**
 In addition to the rules of this server, you must follow **Discord’s Terms of Service** and **Discord Community Guidelines**.
 
 ---
