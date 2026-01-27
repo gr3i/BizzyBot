@@ -13,7 +13,6 @@ OWNER_IDS: Set[int] = {685958402442133515}      # kdo muze volat /todo_reset
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))      # pro per-guild registraci slash prikazu
 
 HOST_TODO_LINES = [
-    "Zatím máš roli **Host**.",
     "✅ V budoucnu, pokud budeš studovat nebo pracovat na VUT, použij `/verify vut`.", 
     "✅ Příkaz použij klidně v místnosti #general. Zprávu uvidíš jen ty...",
     "✅ Dostaneš roli FP/VUT nebo Vyucujici/Zamestnanec",
@@ -91,10 +90,10 @@ class WelcomeTodo(commands.Cog):
                 lines = TODO_LINES
 
             elif kind == "host":
-                title = "👋 Vítej na serveru VUT FP"
+                title = "🎉 Vítej na serveru VUT FP!"
                 description = (
-                    "Zatím máš roli **Host**. "
-                    "Tady je pár informací, co můžeš udělat dál:"
+                    "Super, ověření proběhlo a máš roli **Host**.\n"
+                    "Tady je rychlý TODO list, ať máš vše po ruce:" 
                 )
                 lines = HOST_TODO_LINES
 
