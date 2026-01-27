@@ -13,7 +13,7 @@ async def on_raw_reaction_add(payload):
 
     for reaction in message.reactions:
         if str(reaction.emoji) == "📌":
-            if reaction.count >= 5:
+            if reaction.count >= 1:
                 await message.pin(reason="5× 📌 reakce")
                 break
 
