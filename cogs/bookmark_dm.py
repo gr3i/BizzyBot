@@ -53,7 +53,7 @@ class BookmarkDM(commands.Cog):
             icon_url=getattr(message.author.display_avatar, "url", None),
         )
         embed.add_field(
-            name="Odkaz na zpravu",
+            name="Odkaz na zprávu <:huggers:1379563250307563550>",
             value=jump_url,
             inline=False
         )
