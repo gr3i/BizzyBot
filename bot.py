@@ -339,7 +339,7 @@ async def setup_hook():
     for ext in [
         "cogs.hello",
         "cogs.botInfo",
-        "cogs.verify",
+        #"cogs.verify",
         "cogs.role",
         "cogs.reviews",
         "utils.vyber_oboru",
