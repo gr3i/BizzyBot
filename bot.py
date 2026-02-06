@@ -342,7 +342,7 @@ async def setup_hook():
         "cogs.verify",
         "cogs.role",
         "cogs.reviews",
-        #"utils.vyber_oboru",
+        "utils.vyber_oboru",
         "utils.nastav_prava",
         "cogs.welcome_todo",
         "cogs.pozvanka",
