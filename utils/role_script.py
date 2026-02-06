@@ -27,14 +27,14 @@ class RoleAndChannelCreator(commands.Cog):
             with open("utils/subjects.txt", "r", encoding="utf-8") as f:
                 subject_names = [line.strip() for line in f if line.strip()]
         except FileNotFoundError:
-            await ctx.send("❌ Soubor subjects.txt nebyl nalezen.")
+            await ctx.send("Soubor subjects.txt nebyl nalezen.")
             return
         
         for name in subject_names:
             role = discord.utils.get(ctx.guild.roles, name=name)
             if not role:
                 role = await ctx.guild.create_role(name=name)
-                await ctx.send(f"✅ Vytvořena role '{name}' s ID {role.id}.")
+                await ctx.send(f"Vytvořena role '{name}' s ID {role.id}.")
             else:
                 await ctx.send(f"Role '{name}' už existuje s ID {role.id}.")
             
@@ -53,7 +53,7 @@ class RoleAndChannelCreator(commands.Cog):
             channel = discord.utils.get(ctx.guild.text_channels, name=channel_name)
             if not channel:
                 channel = await ctx.guild.create_text_channel(name=channel_name, overwrites=overwrites)
-                await ctx.send(f"✅ Vytvořen kanál '{channel.name}' s ID {channel.id}.")
+                await ctx.send(f"Vytvořen kanál '{channel.name}' s ID {channel.id}.")
             else:
                 await ctx.send(f"Kanál '{channel.name}' už existuje s ID {channel.id}.")
             
@@ -61,7 +61,7 @@ class RoleAndChannelCreator(commands.Cog):
         
         with open("utils/created_roles.json", "w", encoding="utf-8") as f:
             json.dump(created_items, f, ensure_ascii=False, indent=4)
-        await ctx.send("💾 Role ID byla uložena do souboru created_roles.json.")
+        await ctx.send("Role ID byla uložena do souboru created_roles.json.")
 
 async def setup(bot):
     await bot.add_cog(RoleAndChannelCreator(bot))
