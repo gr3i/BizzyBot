@@ -242,8 +242,7 @@ class Verify(commands.Cog):
         mail_value = parts[0].strip().lower()
         ident_value = parts[1].strip().lower() if len(parts) == 2 else None
 
-        specific_role_id = None
-        should_add_fp_role = False  # NEW
+      
 
         if ident_value:
             try:
@@ -290,6 +289,7 @@ class Verify(commands.Cog):
         trust_roles_priority = {
             ROLE_HOST_ID: 0,
             ROLE_VUT_ID: 1,
+            ROLE_FP_ID: 1,
             ROLE_VUT_STAFF_ID: 2,
             ROLE_DOKTORAND_ID: 3,
         }
@@ -322,15 +322,6 @@ class Verify(commands.Cog):
                     if rec and not rec.verified:
                         session.delete(rec)
                         session.commit()
-
-                # NEW: even if we keep existing trust role, we still can add FP role if needed
-                if should_add_fp_role:
-                    fp_role = guild.get_role(ROLE_FP_ID)
-                    if fp_role and fp_role not in interaction.user.roles:
-                        try:
-                            await interaction.user.add_roles(fp_role, reason="Auto FP role (from VUT API)")
-                        except discord.Forbidden:
-                            pass
 
                 await interaction.followup.send(
                     f"Ověření bylo úspěšné. Tvá role zůstává '{current_best_role.name}' (vyšší nebo stejná úroveň důvěry)",
@@ -367,10 +358,10 @@ class Verify(commands.Cog):
                 session.commit()
 
         role_name = specific_role.name if specific_role else "neznamou roli"
-        extra = " + FP" if should_add_fp_role else ""
+        
 
         await interaction.followup.send(
-            f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{role_name}'{extra}.",
+            f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{role_name}'.",
             ephemeral=True
         )
 
