@@ -270,14 +270,15 @@ class Verify(commands.Cog):
                         # Decide identity role
                         if "D" in typy_studia:
                             specific_role_id = ROLE_DOKTORAND_ID
+
                         elif typy_studia.issubset({"B", "N", "C4"}):
-                            specific_role_id = ROLE_VUT_ID
+                            if "FP" in fakulty:
+                                specific_role_id = ROLE_FP_ID      # FP replaces VUT
+                            else:
+                                specific_role_id = ROLE_VUT_ID
+
                         else:
                             specific_role_id = ROLE_VUT_STAFF_ID
-
-                        # NEW: if any relationship is FP, add FP role later
-                        if "FP" in fakulty:
-                            should_add_fp_role = True
 
             except Exception as e:
                 print(f"[VUT API] Chyba při ověřování role: {e}")
@@ -350,15 +351,6 @@ class Verify(commands.Cog):
         if specific_role not in interaction.user.roles:
             await interaction.user.add_roles(specific_role)
 
-        # NEW: Add FP role if applicable
-        if should_add_fp_role:
-            fp_role = guild.get_role(ROLE_FP_ID)
-            if fp_role and fp_role not in interaction.user.roles:
-                try:
-                    await interaction.user.add_roles(fp_role, reason="Auto FP role (from VUT API)")
-                except discord.Forbidden:
-                    # silently ignore
-                    pass
 
         with SessionLocal() as session:
             rec = session.get(Verification, ver_id)
@@ -394,4 +386,5 @@ async def setup(bot):
     else:
         bot.tree.add_command(Verify.verify)
         print("[verify] group 'verify' registered (global)")
+
 
