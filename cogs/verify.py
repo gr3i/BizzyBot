@@ -14,21 +14,18 @@ from utils.mailer import send_verification_mail
 from utils.codes import generate_verification_code
 
 # role IDs
-ROLE_HOST_ID = 1358905374500982995 
-ROLE_VUT_ID = 1358911329737642014 
+ROLE_HOST_ID = 1358905374500982995
+ROLE_VUT_ID = 1358911329737642014
 ROLE_VUT_STAFF_ID = 1431724268160549096
 ROLE_DOKTORAND_ID = 1433984072266285097
 
+# NEW: FP role ID
+ROLE_FP_ID = 1466036385017233636
 
 
 class Verify(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot 
-
-
-    # If I will want instant per-guild availability, uncomment and set your guild ID:
-    # @app_commands.guilds(discord.Object(id=123456789012345678))
-
+        self.bot = bot
 
     verify = app_commands.Group(
         name="verify",
@@ -36,7 +33,6 @@ class Verify(commands.Cog):
     )
 
     @verify.command(name="vut", description="Zadej své VUT ID (6 číslic) nebo login (např. xlogin00).")
-    #@app_commands.guild_only()
     @app_commands.describe(id_login="VUT ID nebo login (např. 123456 nebo xlogin00)")
     async def verify_vut(self, interaction: discord.Interaction, id_login: str):
         await interaction.response.defer(ephemeral=True)
@@ -117,9 +113,8 @@ class Verify(commands.Cog):
             await interaction.followup.send(f"Nelze se připojit k poštovnímu serveru ({e}). Zkus to později.", ephemeral=True)
         except Exception as e:
             await interaction.followup.send(f"Došlo k chybě při odesílání mailu: {e}", ephemeral=True)
-    
+
     @verify.command(name="host", description="Ověření e-mailem pro hosty (mimo VUT).")
-    #@app_commands.guild_only()
     @app_commands.describe(mail="E-mail, kam poslat ověřovací kód.")
     async def verify_host(self, interaction: discord.Interaction, mail: str):
         await interaction.response.defer(ephemeral=True)
@@ -180,15 +175,10 @@ class Verify(commands.Cog):
             await interaction.followup.send(f"Nelze se připojit k poštovnímu serveru ({e}). Zkus to později.", ephemeral=True)
         except Exception as e:
             await interaction.followup.send(f"Došlo k chybě při odesílání mailu: {e}", ephemeral=True)
-        
 
-    # If I want instant per-guild availability, uncomment and set your guild ID:
-    # @app_commands.guilds(discord.Object(id=123456789012345678))
     @verify.command(name="code", description="Zadej ověřovací kód.")
-    #@app_commands.guild_only()
     async def verify_code(self, interaction: discord.Interaction, code: str):
-
-        await interaction.response.defer(ephemeral=True) 
+        await interaction.response.defer(ephemeral=True)
 
         user_id = interaction.user.id
 
@@ -215,20 +205,15 @@ class Verify(commands.Cog):
                 await interaction.followup.send("Chybný kód. Zkus to znovu.", ephemeral=True)
                 return
 
-            # cache mail before closing session
-
-            ver_id = v.id 
-
+            ver_id = v.id
             stored_value = v.mail  # v DB je "mail||ident" nebo jen "mail"
 
         # rozbal MAIL a IDENT (zpetne kompatibilni se starsimi zaznamy)
         parts = stored_value.split("||", 1)
         mail_value = parts[0].strip().lower()
         ident_value = parts[1].strip().lower() if len(parts) == 2 else None
-                
-            
 
-        # rozhodnuti o roli podle typ_studia 
+        # rozhodnuti o roli podle typ_studia
         specific_role_id = None
 
         if ident_value:
@@ -241,28 +226,37 @@ class Verify(commands.Cog):
                     if mail_value in emails_api and vztahy:
                         typy_studia = set()
 
+                        # NEW: zjisti, jestli ma aspon jeden vztah na fakulte FP
+                        is_fp = False
+
                         for vztah in vztahy:
                             typ_studia_info = vztah.get("typ_studia") or {}
                             zkratka_typu = (typ_studia_info.get("zkratka") or "").strip().upper()
                             if zkratka_typu:
                                 typy_studia.add(zkratka_typu)
 
+                            fakulta_info = vztah.get("fakulta") or {}
+                            fak_zkratka = (fakulta_info.get("zkratka") or "").strip().upper()
+                            if fak_zkratka == "FP":
+                                is_fp = True
+
                         # rozhodnuti o roli podle typu studia
                         if "D" in typy_studia:
-                                specific_role_id = ROLE_DOKTORAND_ID
+                            specific_role_id = ROLE_DOKTORAND_ID
                         elif typy_studia.issubset({"B", "N", "C4"}):
-                            specific_role_id = ROLE_VUT_ID # B - bakalar, N - navazujici magistersky,
-                                                        # C4 - celozivotni vzdelavani kratkodoby kurz
+                            # NEW: pokud je to VUT student a ma vztah na FP -> dej roli FP
+                            specific_role_id = ROLE_FP_ID if is_fp else ROLE_VUT_ID
                         else:
-                            specific_role_id = ROLE_VUT_STAFF_ID  # zamestnanec atd. 
+                            specific_role_id = ROLE_VUT_STAFF_ID  # zamestnanec atd.
             except Exception as e:
                 # Pokud API selze, necham Host, ale vypisu do logu
                 print(f"[VUT API] Chyba při ověřování role: {e}")
                 pass
+
         if specific_role_id is None:
             specific_role_id = ROLE_HOST_ID
 
-        # definice priorit identitnich roli 
+        # definice priorit identitnich roli
         trust_roles_priority = {
             ROLE_HOST_ID: 0,
             ROLE_VUT_ID: 1,
@@ -280,26 +274,28 @@ class Verify(commands.Cog):
         if verified_role not in interaction.user.roles:
             await interaction.user.add_roles(verified_role)
 
-        # 2. Zjisti existujici identitni role uzivatele  
+        # 2. Zjisti existujici identitni role uzivatele
         current_trust_roles = [
             r for r in interaction.user.roles if r.id in trust_roles_priority
         ]
 
-        # spocitej aktualni max prioritu
+        # spocitam aktualni max prioritu
         current_best_role = None
         current_best_priority = -1
         for r in current_trust_roles:
             prio = trust_roles_priority[r.id]
             if prio > current_best_priority:
-                current_best_priority = prio 
-                current_best_role = r 
+                current_best_priority = prio
+                current_best_role = r
 
-        
-        new_role_priority = trust_roles_priority[specific_role_id]
+        # pokud vychazi ROLE_FP_ID, neni v trust_roles_priority takze pro porovnani pouziji prioritu VUT (1)
+        if specific_role_id == ROLE_FP_ID:
+            new_role_priority = trust_roles_priority[ROLE_VUT_ID]
+        else:
+            new_role_priority = trust_roles_priority[specific_role_id]
 
         if current_best_role is not None:
             if current_best_priority >= new_role_priority:
-               
                 with SessionLocal() as session:
                     rec = session.get(Verification, ver_id)
                     if rec and not rec.verified:
@@ -314,8 +310,6 @@ class Verify(commands.Cog):
             else:
                 await interaction.user.remove_roles(*current_trust_roles)
 
-       
-         
         specific_role = guild.get_role(specific_role_id)
         if specific_role is None:
             await interaction.followup.send(
@@ -323,17 +317,16 @@ class Verify(commands.Cog):
                 ephemeral=True
             )
             return
-            
+
         if specific_role and specific_role not in interaction.user.roles:
             await interaction.user.add_roles(specific_role)
-        
 
         with SessionLocal() as session:
             rec = session.get(Verification, ver_id)
             if rec:
                 rec.verified = True
 
-                # smazeme vsechny ostatni zaznamy tohoto uzivatele 
+                # smazu vsechny ostatni zaznamy tohoto uzivatele
                 (
                     session.query(Verification)
                     .filter(
@@ -353,12 +346,11 @@ class Verify(commands.Cog):
         )
 
 
-
 async def setup(bot):
     await bot.add_cog(Verify(bot))
 
-    # lokalni/guild-only registrace (pokud to tak chces mit stejne jako u reviews)
-    GUILD_ID = int(os.getenv("GUILD_ID", "0"))  # pouzij stejny pattern jako v reviews.py
+    # lokalni/guild-only registrace
+    GUILD_ID = int(os.getenv("GUILD_ID", "0"))
     if GUILD_ID:
         guild = discord.Object(id=GUILD_ID)
         bot.tree.add_command(Verify.verify, guild=guild)
@@ -366,5 +358,4 @@ async def setup(bot):
     else:
         bot.tree.add_command(Verify.verify)
         print("[verify] group 'verify' registered (global)")
-
 

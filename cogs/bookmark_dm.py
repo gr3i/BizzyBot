@@ -66,7 +66,7 @@ class BookmarkDM(commands.Cog):
                 embed.set_image(url=first.url)
             else:
                 embed.add_field(
-                    name="Priloha",
+                    name="Příloha",
                     value=first.url,
                     inline=False
                 )
