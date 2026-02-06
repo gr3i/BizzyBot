@@ -22,7 +22,7 @@ class VutApiClient:
     async def start(self):
         headers = {
             "Authorization": f"Bearer {self._api_key}",
-            "Author": self._owner_id,  # jak máš i v ukázce
+            "Author": self._owner_id,
         }
         timeout = aiohttp.ClientTimeout(total=10)
         self.session = aiohttp.ClientSession(headers=headers, timeout=timeout)
