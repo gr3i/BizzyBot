@@ -59,6 +59,13 @@ Vše se dá ovládat pomocí těchto nejdůležitějších příkazů:
 /hodnoceni upravit - Upraví hodnocení předmětu. (Postup je napsaný co a jak přímo v něm.)
 /bot info - Zobrazí informace o botovi. (Nejdůležitější věc je zde pro vás ping/latency, kdy vidíte, jak rychle bot odpovídá.)
 /role - Zobrazí nejdůležitější role na serveru a jejich vysvětlení.
+/room - Zadáš číslo místnosti na FP (třeba P123) a bot ti pošle mapu s označeným místem.
+
+**6) Další vychytávky <:koteseni:1361038813719302175>**
+
+🔖 <- Pokud dáš reakci `bookmark` (🔖 ) na nějakou zprávu. Bot ti pošle do soukromé zprávy odkaz na tuhle zprávu. Hodí se to používat, pokud někdo pošle např. nějaký vysvětlení látky, co tě zajímá a ty si ho chceš uložit na později. 
+
+📌 <- Pokud pět lidí použije reakci `pushpin` (📌) na nějakou zprávu. Zpráva se připne do pinů, které se nachází vpravo nahoře. 
 
 **•** Toto jsou nezbytné informace, které potřebuješ k bezproblémovému používání našeho discordu. **V případě jakýchkoliv dotazů, nejasností či jiných problémů se neboj obrátit na členy <@&1358898283782602932> a my už ti rádi pomůžeme**
 
