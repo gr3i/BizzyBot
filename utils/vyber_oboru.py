@@ -18,7 +18,7 @@ FP_ROLE_ID = 1466036385017233636
 # check: jen uzivatel s VUT roli
 def has_fp_role():
     async def predicate(interaction: discord.Interaction):
-        role = interaction.guild.get_role(VUT_ROLE_ID)
+        role = interaction.guild.get_role(FP_ROLE_ID)
         if role and role in interaction.user.roles:
             return True
         raise app_commands.CheckFailure("Tento příkaz může použít pouze uživatel s rolí FP.")
