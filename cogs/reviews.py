@@ -413,7 +413,7 @@ class Reviews(commands.Cog):
             )
 
         if not rows:
-            await interaction.response.send_message("Žádná hodnocení.", ephemeral=False)
+            await interaction.response.send_message("Žádná hodnocení u {predmet}.", ephemeral=False)
             return
 
         reviews = [{

@@ -38,7 +38,7 @@ FP_TODO_LINES = [
     "✅ Do [předmět]-public vidí i vyučující.",
     "✅ Do [předmět]-private pouze studenti, co studují bakaláře nebo magistra.",
     "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
-    "✅ Kdyby jsi chtěl*a někoho pozvat, můžeš použít příkaz `/pozvanka`, kde je QR kód",
+    "✅ Kdyby jsi chtěl*a někoho pozvat, můžeš použít příkaz `/pozvanka`, kde je QR kód.",
 ]
 
 TEACH_TODO_LINES = [
