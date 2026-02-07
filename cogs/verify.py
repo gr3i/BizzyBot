@@ -1,4 +1,3 @@
-# cogs/verify.py
 from datetime import datetime, timedelta
 import asyncio
 import os
@@ -13,14 +12,77 @@ from db.models import Verification
 from utils.mailer import send_verification_mail
 from utils.codes import generate_verification_code
 
-# role IDs
+
+# ROLE IDs
 ROLE_HOST_ID = 1358905374500982995
 ROLE_VUT_ID = 1358911329737642014
 ROLE_VUT_STAFF_ID = 1431724268160549096
 ROLE_DOKTORAND_ID = 1433984072266285097
-
-# NEW: FP role
 ROLE_FP_ID = 1466036385017233636
+
+# FP year roles (based on rok_studia + typ_studia.zkratka)
+FP_B_1 = 1469298142959898840
+FP_B_2 = 1469298381200293963
+FP_B_3P = 1469298468399878145
+
+FP_N_1 = 1469298670066204702
+FP_N_2P = 1469298920562757785
+
+FP_YEAR_ROLE_IDS = {FP_B_1, FP_B_2, FP_B_3P, FP_N_1, FP_N_2P}
+
+
+# HELPERS 
+def extract_fp_study_info(details: dict):
+    """
+    Returns (rok_studia, typ_studia_zkratka) from vztahy for FP Student.
+    If multiple matches, picks highest rok_studia.
+    """
+    vztahy = details.get("vztahy") or []
+    candidates = []
+
+    for vztah in vztahy:
+        fak = ((vztah.get("fakulta") or {}).get("zkratka") or "").strip().upper()
+        pozice = (vztah.get("pozice") or "").strip().lower()
+        if fak != "FP" or pozice != "student":
+            continue
+
+        rok = vztah.get("rok_studia")
+        typ = ((vztah.get("typ_studia") or {}).get("zkratka") or "").strip().upper()
+
+        if isinstance(rok, int) and typ:
+            candidates.append((rok, typ))
+
+    if not candidates:
+        return None, None
+
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    return candidates[0]
+
+
+def pick_fp_year_role_id(rok: int, typ: str):
+    """
+    Mapping requested:
+      - 1 + B -> FP_B_1
+      - 2 + B -> FP_B_2
+      - >=3 + B -> FP_B_3P
+      - 1 + N -> FP_N_1
+      - >=2 + N -> FP_N_2P
+    """
+    typ = (typ or "").strip().upper()
+
+    if typ == "B":
+        if rok <= 1:
+            return FP_B_1
+        if rok == 2:
+            return FP_B_2
+        return FP_B_3P
+
+    if typ == "N":
+        if rok <= 1:
+            return FP_N_1
+        return FP_N_2P
+
+    return None
 
 
 class Verify(commands.Cog):
@@ -63,18 +125,16 @@ class Verify(commands.Cog):
             )
             return
 
-        # PATCH: preferuj studentsky email (@stud.*), jinak fallback na prvni
+        # preferuj studentsky email (@stud.*), jinak fallback na prvni
         target_email = None
         for e in emails_api:
             if "@stud." in e:
                 target_email = e
                 break
-
         if target_email is None:
             target_email = emails_api[0]
 
         print(f"[VERIFY] Sending verification mail to: {target_email}")
-
 
         with SessionLocal() as session:
             # 2) if ident already verified by someone else -> stop
@@ -101,7 +161,7 @@ class Verify(commands.Cog):
                 and_(Verification.user_id == user_id, Verification.verified == False)
             ).delete(synchronize_session=False)
 
-            # store "mail||ident"
+            # store "mail||ident" (no extra data)
             stored_value = f"{target_email}||{ident_norm}"
             v = Verification(
                 user_id=user_id,
@@ -211,6 +271,7 @@ class Verify(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         user_id = interaction.user.id
+        specific_role_id = None
 
         with SessionLocal() as session:
             v = (
@@ -242,7 +303,8 @@ class Verify(commands.Cog):
         mail_value = parts[0].strip().lower()
         ident_value = parts[1].strip().lower() if len(parts) == 2 else None
 
-      
+        # runtime only
+        fp_year_role_id = None
 
         if ident_value:
             try:
@@ -272,7 +334,12 @@ class Verify(commands.Cog):
 
                         elif typy_studia.issubset({"B", "N", "C4"}):
                             if "FP" in fakulty:
-                                specific_role_id = ROLE_FP_ID      # FP replaces VUT
+                                specific_role_id = ROLE_FP_ID
+
+                                rok, typ = extract_fp_study_info(details)
+                                if rok is not None and typ is not None:
+                                    fp_year_role_id = pick_fp_year_role_id(rok, typ)
+
                             else:
                                 specific_role_id = ROLE_VUT_ID
 
@@ -281,7 +348,6 @@ class Verify(commands.Cog):
 
             except Exception as e:
                 print(f"[VUT API] Chyba při ověřování role: {e}")
-                pass
 
         if specific_role_id is None:
             specific_role_id = ROLE_HOST_ID
@@ -324,7 +390,7 @@ class Verify(commands.Cog):
                         session.commit()
 
                 await interaction.followup.send(
-                    f"Ověření bylo úspěšné. Tvá role zůstává '{current_best_role.name}' (vyšší nebo stejná úroveň důvěry)",
+                    f"Ověření bylo úspěšné. Tvá role zůstává '{current_best_role.name}' (vyšší nebo stejná úroveň důvěry).",
                     ephemeral=True
                 )
                 return
@@ -334,7 +400,7 @@ class Verify(commands.Cog):
         specific_role = guild.get_role(specific_role_id)
         if specific_role is None:
             await interaction.followup.send(
-                "Chyba: cilova role na serveru neexistuje (spatne ROLE_ID nebo role byla smazana).",
+                "Chyba: cílová role na serveru neexistuje (špatné ROLE_ID nebo role byla smazána).",
                 ephemeral=True
             )
             return
@@ -342,6 +408,17 @@ class Verify(commands.Cog):
         if specific_role not in interaction.user.roles:
             await interaction.user.add_roles(specific_role)
 
+        # Add FP year role (runtime decision only)
+        if specific_role_id == ROLE_FP_ID and fp_year_role_id:
+            year_role = guild.get_role(fp_year_role_id)
+            if year_role:
+                # remove other FP year roles so user has only one
+                to_remove = [r for r in interaction.user.roles if r.id in FP_YEAR_ROLE_IDS and r.id != fp_year_role_id]
+                if to_remove:
+                    await interaction.user.remove_roles(*to_remove)
+
+                if year_role not in interaction.user.roles:
+                    await interaction.user.add_roles(year_role)
 
         with SessionLocal() as session:
             rec = session.get(Verification, ver_id)
@@ -358,10 +435,14 @@ class Verify(commands.Cog):
                 session.commit()
 
         role_name = specific_role.name if specific_role else "neznamou roli"
-        
+        extra = ""
+        if specific_role_id == ROLE_FP_ID and fp_year_role_id:
+            yr = guild.get_role(fp_year_role_id)
+            if yr:
+                extra = f" a také '{yr.name}'"
 
         await interaction.followup.send(
-            f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{role_name}'.",
+            f"Ověření bylo úspěšné! Byly ti přidělené role 'Verified' a '{role_name}'{extra}.",
             ephemeral=True
         )
 
@@ -377,5 +458,3 @@ async def setup(bot):
     else:
         bot.tree.add_command(Verify.verify)
         print("[verify] group 'verify' registered (global)")
-
-
