@@ -9,6 +9,7 @@ from discord.ext import commands
 # --------- KONFIG ---------
 VUT_ROLE_ID = 1358911329737642014               # ID role VUT
 HOST_ROLE_ID = 1358905374500982995
+FP_ROLE_ID = 1466036385017233636               # ID role FP
 OWNER_IDS: Set[int] = {685958402442133515}      # kdo muze volat /todo_reset
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))      # pro per-guild registraci slash prikazu
 
@@ -17,16 +18,23 @@ HOST_TODO_LINES = [
     "✅ Příkaz použij klidně v místnosti #general. Zprávu uvidíš jen ty...",
     "✅ Dostaneš roli FP/VUT nebo Vyucujici/Zamestnanec",
     "✅ Po ověření získáš přístup do dalších kanálů.",
-    "✅ Pokud máš dotaz, napiš do general/offtopic/help-room.",
+    "✅ Pokud máš dotaz, napiš do general/offtopic/poradna.",
 ]
 
 
-TODO_LINES = [
-    "✅ Nastav si VUT roli podle fakulty (#vut-role).",
-    "✅ Pokud jsi z FP, nastav si obor, který studuješ (napiš `/` a vyber `obor`).",
-    "✅ Když budeš potřebovat, tak pomocí `/predmet` si můžeš přidat předmět.",
-    "✅ Pokud všechno tohle uděláš, dostaneš přístup do nových místností.",
-    "✅ Potřebuješ-li podrobnější popis, jak co udělat (#info).",
+VUT_TODO_LINES = [
+    "✅ Pokud máš dotaz, napiš do general/offtopic/poradna.",
+    "✅ Do [předmět]-public vidí i vyučující.",
+    "✅ Do [předmět]-private pouze studenti, co studují bakaláře nebo magistra.",
+    "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
+]
+
+FP_TODO_LINES = [
+    "✅ Nastav si obor, který studuješ (napiš `/` a vyber `obor`). "
+    "✅ Příkaz použij klidně v místnosti #general. Zprávu uvidíš jen ty...",
+    "✅ Pokud tohle uděláš, dostaneš přístup do nových místností.",
+    "✅ Do [předmět]-public vidí i vyučující.",
+    "✅ Do [předmět]-private pouze studenti, co studují bakaláře nebo magistra.",
     "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
 ]
 
@@ -65,6 +73,7 @@ class WelcomeTodo(commands.Cog):
             if user:
                 self._sent_users.discard(f"{user.id}:vut")
                 self._sent_users.discard(f"{user.id}:host")
+                self._sent_users.discard(f"{user.id}:fp")
                 msg = f"Resetnuto pro {user.mention}."
             else:
                 self._sent_users.clear()
@@ -96,7 +105,13 @@ class WelcomeTodo(commands.Cog):
                     "Tady je rychlý TODO list, ať máš vše po ruce:" 
                 )
                 lines = HOST_TODO_LINES
-
+            elif kind == "fp":
+                title = "🎉 Vítej na serveru VUT FP!"
+                description = (
+                    "Super, ověření proběhlo a máš roli **FP**.\n"
+                    "Tady je rychlý TODO list, ať máš vše po ruce:" 
+                )
+                lines = FP_TODO_LINES
             else:
                 return
 
@@ -137,6 +152,10 @@ class WelcomeTodo(commands.Cog):
         # HOST role
         if (HOST_ROLE_ID not in before_roles) and (HOST_ROLE_ID in after_roles):
             await self._send_todo_once(after, "host")
+
+        # FP role
+        if (FP_ROLE_ID not in before_roles) and (FP_ROLE_ID in after_roles):
+            await self._send_todo_once(after, "fp")
 
 
 async def setup(bot: commands.Bot):
