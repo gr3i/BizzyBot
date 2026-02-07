@@ -69,6 +69,7 @@ class VyberOboruSimple(commands.Cog):
         await interaction.response.send_message(
             f"Přidána role **{role.name}** ({popis})", ephemeral=True
         )
+    
 
     @has_fp_role()
     @obor.command(name="odebrat", description="Odebere ti roli zvoleného oboru")
@@ -97,6 +98,19 @@ class VyberOboruSimple(commands.Cog):
         await interaction.response.send_message(
             f"Odebrána role **{role.name}** ({popis})", ephemeral=True
         )
+    
+    @app_commands.error
+    async def on_app_command_error(
+        self,
+        interaction: discord.Interaction,
+        error: app_commands.AppCommandError
+    ):
+        if isinstance(error, app_commands.CheckFailure):
+            await interaction.response.send_message(
+                "Pro přidání nebo odebrání oboru potřebuješ mít roli **FP**.",
+                ephemeral=True
+            )
+
 
 
 async def setup(bot: commands.Bot):
