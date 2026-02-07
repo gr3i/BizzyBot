@@ -178,6 +178,7 @@ async def setup_hook():
         "cogs.room",
         "cogs.on_raw_reaction_add",
         "cogs.bookmark_dm",
+        "cogs.role_spolku",
     ]:
         try:
             await bot.load_extension(ext)
