@@ -8,8 +8,9 @@ from discord.ext import commands
 
 # --------- KONFIG ---------
 VUT_ROLE_ID = 1358911329737642014               # ID role VUT
-HOST_ROLE_ID = 1358905374500982995
-FP_ROLE_ID = 1466036385017233636               # ID role FP
+HOST_ROLE_ID = 1358905374500982995              # ID role Host
+FP_ROLE_ID = 1466036385017233636                # ID role FP
+TEACH_ROLE_ID = 1431724268160549096             # ID role Vyucujici/Zamestnanec
 OWNER_IDS: Set[int] = {685958402442133515}      # kdo muze volat /todo_reset
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))      # pro per-guild registraci slash prikazu
 
@@ -27,6 +28,7 @@ VUT_TODO_LINES = [
     "✅ Do [předmět]-public vidí i vyučující.",
     "✅ Do [předmět]-private pouze studenti, co studují bakaláře nebo magistra.",
     "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
+    "✅ Kdyby jsi chtěl*a někoho pozvat, můžeš použít příkaz `/pozvanka`, kde je QR kód",
 ]
 
 FP_TODO_LINES = [
@@ -36,6 +38,18 @@ FP_TODO_LINES = [
     "✅ Do [předmět]-public vidí i vyučující.",
     "✅ Do [předmět]-private pouze studenti, co studují bakaláře nebo magistra.",
     "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
+    "✅ Kdyby jsi chtěl*a někoho pozvat, můžeš použít příkaz `/pozvanka`, kde je QR kód",
+]
+
+TEACH_TODO_LINES = [
+    "✅ Vaši předmětovou místnost najdete v přehledu kanálů podle názvu předmětu.",
+    "✅ Pokud jste poradce nebo máte na VUT jinou roli, napište prosím někomu z Mod týmu – nastavíme Vám odpovídající oprávnění.",
+    "✅ Kanál [předmět]-public je společný pro studenty i vyučující.",
+    "✅ Kanál [předmět]-private je určen pouze studentům daného bakalářského / magisterského studia.",
+    "✅ Zda a jak budete se studenty komunikovat mimo výuku ve svém volném čase, je zcela na Vás.",
+    "✅ Discord můžete využít ke sdílení materiálů, diskusi k tématům nebo sběru zpětné vazby.",
+    "✅ Byl zde také návrh, že se dá Discord použít k tvorbě studijních materiálů spolu se studenty. Můžete to zkusit!",
+    "✅ Server je neoficiální a vzniká komunitně – budeme rádi za podněty ke zlepšení.",
 ]
 
 
@@ -45,42 +59,7 @@ class WelcomeTodo(commands.Cog):
         # runtime cache, aby se TODO neposilal vickrat behem jednoho behu bota
         self._sent_users: Set[str] = set()
 
-    # slash: /todo_reset
-    # per-guild registrace (rychla) - pokud mam GUILD_ID
-    if GUILD_ID:
-        @app_commands.command(name="todo_reset", description="Resetuje TODO DM cache (owner only).")
-        @app_commands.describe(user="Komu znovu povolit DM; nech prázdné pro reset všech")
-        @app_commands.guilds(discord.Object(id=GUILD_ID))
-        async def todo_reset(self, interaction: discord.Interaction, user: Optional[discord.User] = None):
-            if interaction.user.id not in OWNER_IDS:
-                await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
-                return
-            if user:
-                self._sent_users.discard(user.id)
-                msg = f"Resetnuto pro {user.mention}."
-            else:
-                self._sent_users.clear()
-                msg = "Cache vyprázdněna pro všechny."
-            await interaction.response.send_message(msg, ephemeral=True)
-    else:
-        # fallback: globalni registrace (pomalejsi propagace)
-        @app_commands.command(name="todo_reset", description="Resetuje TODO DM cache (owner only).")
-        @app_commands.describe(user="Komu znovu povolit DM; nech prázdné pro reset všech")
-        async def todo_reset(self, interaction: discord.Interaction, user: Optional[discord.User] = None):
-            if interaction.user.id not in OWNER_IDS:
-                await interaction.response.send_message("Nemáš oprávnění.", ephemeral=True)
-                return
-            if user:
-                self._sent_users.discard(f"{user.id}:vut")
-                self._sent_users.discard(f"{user.id}:host")
-                self._sent_users.discard(f"{user.id}:fp")
-                msg = f"Resetnuto pro {user.mention}."
-            else:
-                self._sent_users.clear()
-                msg = "Cache vyprázdněna pro všechny."
-            await interaction.response.send_message(msg, ephemeral=True)
-
-        # kdyz nekdo nove dostane roli VUT, posli TODO do DM
+    # kdyz nekdo nove dostane roli VUT/FP/[Vyucujici/Zamestnanec], posli TODO do DM
     async def _send_todo_once(self, member: discord.Member, kind: str):
         key = f"{member.id}:{kind}"
         if key in self._sent_users:
@@ -96,7 +75,7 @@ class WelcomeTodo(commands.Cog):
                     "Super, ověření proběhlo a máš roli **VUT**.\n"
                     "Tady je rychlý TODO list, ať máš vše po ruce:"
                 )
-                lines = TODO_LINES
+                lines = VUT_TODO_LINES
 
             elif kind == "host":
                 title = "🎉 Vítej na serveru VUT FP!"
@@ -112,6 +91,13 @@ class WelcomeTodo(commands.Cog):
                     "Tady je rychlý TODO list, ať máš vše po ruce:" 
                 )
                 lines = FP_TODO_LINES
+            elif kind == "teach":
+                title = "🎉 Vítejte na serveru VUT FP!"
+                description = (
+                    "Super, ověření proběhlo a máte roli **Vyucujici/Zamestnanec**.\n"
+                    "Tady je rychlý TODO list, ať máte vše po ruce:" 
+                )
+                lines = TEACH_TODO_LINES
             else:
                 return
 
@@ -156,6 +142,10 @@ class WelcomeTodo(commands.Cog):
         # FP role
         if (FP_ROLE_ID not in before_roles) and (FP_ROLE_ID in after_roles):
             await self._send_todo_once(after, "fp")
+
+        # TEACH role
+        if (TEACH_ROLE_ID not in before_roles) and (TEACH_ROLE_ID in after_roles):
+            await self._send_todo_once(after, "teach")
 
 
 async def setup(bot: commands.Bot):
