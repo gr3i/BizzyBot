@@ -44,13 +44,14 @@ class VyberOboruSimple(commands.Cog):
 
     async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CheckFailure):
-            if not interaction.response.is_done():
-                await interaction.response.send_message(
-                    "Pro přidání nebo odebrání oboru potřebuješ mít roli **FP**.",
-                    ephemeral=True
-                )
+            msg = "Pro přidání nebo odebrání oboru potřebuješ mít roli **FP**."
+            if interaction.response.is_done():
+                await interaction.followup.send(msg, ephemeral=True)
+            else:
+                await interaction.response.send_message(msg, ephemeral=True)
             return
         raise error
+
 
     @has_fp_role()
     @obor.command(name="pridat", description="Přidá ti roli zvoleného oboru")
