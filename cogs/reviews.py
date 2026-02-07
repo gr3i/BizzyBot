@@ -413,7 +413,7 @@ class Reviews(commands.Cog):
             )
 
         if not rows:
-            await interaction.response.send_message(f"Pro předmět **{predmet}** zatím nejsou žádná hodnocení. Můžeš být první a nějakou napsat. <:koteseni:1469720804546576394>", ephemeral=False)
+            await interaction.response.send_message(f"Pro předmět **{predmet}** zatím nejsou žádná hodnocení. Můžeš být první a nějakou napsat. :koteseni: ", ephemeral=False)
             return
 
         reviews = [{
