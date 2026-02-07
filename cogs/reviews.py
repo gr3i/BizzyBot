@@ -17,7 +17,7 @@ from db.models import Review, Reaction
 # konfigurace
 MOD_ROLE_IDS = [1358898283782602932]
 OWNER_IDS = [685958402442133515]
-ALLOWED_ROLE_IDS = {1358911329737642014, 1466036385017233636}
+ALLOWED_ROLE_IDS = {1358911329737642014, 1466036385017233636} 
 ALLOWED_CHANNEL_ID = 1358908501031915621
 
 MAX_REVIEW_LENGTH = 3900
@@ -350,7 +350,7 @@ class Reviews(commands.Cog):
         if not isinstance(interaction.user, discord.Member):
             await interaction.response.send_message("Tento příkaz lze použít jen na serveru.", ephemeral=True)
             return False
-        if any(role.id == ALLOWED_ROLE_IDS for role in interaction.user.roles):
+        if any(role.id in ALLOWED_ROLE_IDS for role in interaction.user.roles):
             return True
         await interaction.response.send_message("Nemáš oprávnění použít tento příkaz.", ephemeral=True)
         return False
