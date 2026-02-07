@@ -18,11 +18,11 @@ FP_ROLE_ID = 1466036385017233636
 # check: jen uzivatel s VUT roli
 def has_fp_role():
     async def predicate(interaction: discord.Interaction):
-        role = interaction.guild.get_role(FP_ROLE_ID)
-        if role and role in interaction.user.roles:
+        if any(role.id == FP_ROLE_ID for role in interaction.user.roles):
             return True
-        raise app_commands.CheckFailure("Tento příkaz může použít pouze uživatel s rolí FP.")
+        raise app_commands.CheckFailure
     return app_commands.check(predicate)
+
 
 
 async def obor_autocomplete(interaction: discord.Interaction, current: str):
@@ -41,6 +41,16 @@ class VyberOboruSimple(commands.Cog):
         name="obor",
         description="Výběr studijního oboru"
     )
+
+    async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.CheckFailure):
+            if not interaction.response.is_done():
+                await interaction.response.send_message(
+                    "Pro přidání nebo odebrání oboru potřebuješ mít roli **FP**.",
+                    ephemeral=True
+                )
+            return
+        raise error
 
     @has_fp_role()
     @obor.command(name="pridat", description="Přidá ti roli zvoleného oboru")
