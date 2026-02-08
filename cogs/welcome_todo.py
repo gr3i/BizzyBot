@@ -28,6 +28,7 @@ VUT_TODO_LINES = [
     "✅ Do [předmět]-public vidí i vyučující.",
     "✅ Do [předmět]-private pouze studenti, co studují bakaláře nebo magistra.",
     "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
+    "✅ Pokud jsi z FP, ale máš roli VUT, kontaktuj někoho z modů.",
     "✅ Kdyby jsi chtěl*a někoho pozvat, můžeš použít příkaz `/pozvanka`, kde je QR kód.",
 ]
 
