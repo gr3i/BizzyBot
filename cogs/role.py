@@ -40,7 +40,7 @@ class RoleInfo(commands.Cog):
 
         embed.add_field(
             name="Kdo kam vidí",
-            value="[Klikni sem pro zobrazení přehledu](https://discord.com/channels/1357455204391321712/1422505714332602459/1435567370969288704)",
+            value="[Klikni sem pro zobrazení přehledu](https://discord.com/channels/1357455204391321712/1422505714332602459/1473025241084330271)",
             inline=False
         ) 
 
