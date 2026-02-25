@@ -24,7 +24,6 @@ IGNORED_USER_IDS = {685958402442133515}  # konkretni uzivatel
 content = textwrap.dedent("""
 ### Nejčastější problém?
 **Nenapsal*a jsi lomítko! `/` Tam teprve vložíš údaje...**
-Link na cringe staré video, jak napsat lomítko: https://discord.com/channels/1357455204391321712/1407119813146443778/1434342560951963779
 
 Dále se podívej na Outlook do spamu, ne do Gmailu.
 
