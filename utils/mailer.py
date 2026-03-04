@@ -1,8 +1,9 @@
 import os
 import ssl
 import smtplib
+import time
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from email.utils import formatdate, make_msgid
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,58 +16,75 @@ print("PASS LENGTH:", len(sender_password) if sender_password else "None", flush
 
 
 def send_verification_mail(to_mail, verification_code):
+    subject = "Overeni Discord serveru studentu VUT FP"
 
-    subject = "Ověření Discord serveru studentů VUT FP"
+    body = f"""Dobry den,
 
-    body = f"""Dobrý den,
+dekujeme za snahu o overeni na Discord serveru studentu VUT Fakulty podnikatelske.
 
-děkujeme za snahu o ověření na Discord serveru studentů VUT Fakulty podnikatelské.
+==============================
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Váš ověřovací kód:
+Vas overovaci kod:
 
 {verification_code}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+==============================
 
-Pro dokončení ověření jej zadejte na Discordu pomocí příkazu:
+Pro dokonceni overeni jej zadejte na Discordu pomoci prikazu:
 
 /verify code {verification_code}
 
-Tento kód je jednorázový a slouží pouze pro ověření vašeho účtu.
+Tento kod je jednorazovy a slouzi pouze pro overeni vaseho uctu.
 
-Pokud jste o ověření nežádali, můžete tuto zprávu bezpečně ignorovat.
+Pokud jste o overeni nezadali, muzete tuto zpravu bezpecne ignorovat.
 
-S pozdravem  
-BizzyBot 🤖  
-Discord server studentů VUT FP
+S pozdravem
+BizzyBot
+Discord server studentu VUT FP
 """
 
-    message = MIMEMultipart()
-    message["From"] = f"BizzyBot – VUT FP <{sender_mail}>"
-    message["To"] = to_mail
-    message["Subject"] = subject
-
-    message.attach(MIMEText(body, "plain", "utf-8"))
+    # Plain text message (less chance of SMTP/provider weirdness...)
+    msg = MIMEText(body, "plain", "utf-8")
+    msg["From"] = f"BizzyBot VUT FP <{sender_mail}>"
+    msg["To"] = to_mail
+    msg["Subject"] = subject
+    msg["Date"] = formatdate(localtime=True)
+    msg["Message-ID"] = make_msgid(domain="seznam.cz")
+    msg["Reply-To"] = sender_mail
 
     context = ssl.create_default_context()
 
-    try:
-        with smtplib.SMTP("smtp.seznam.cz", 587) as server:
-            server.ehlo()
-            server.starttls(context=context)
-            server.ehlo()
+    # Retry because 451 is often transient
+    max_attempts = 4
+    for attempt in range(1, max_attempts + 1):
+        try:
+            with smtplib.SMTP("smtp.seznam.cz", 587, timeout=25) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
 
-            server.login(sender_mail, sender_password)
+                server.login(sender_mail, sender_password)
 
-            server.sendmail(
-                sender_mail,
-                to_mail,
-                message.as_string()
-            )
+                server.sendmail(sender_mail, [to_mail], msg.as_string())
 
-        print(f"[MAIL SENT] -> {to_mail}", flush=True)
+            print(f"[MAIL SENT] -> {to_mail}", flush=True)
+            return
 
-    except Exception as e:
-        print(f"[MAIL ERROR] {e}", flush=True)
+        except smtplib.SMTPResponseException as e:
+            # e.smtp_code, e.smtp_error
+            print(f"[MAIL ERROR] attempt={attempt} code={e.smtp_code} err={e.smtp_error}", flush=True)
+
+            # 451 = temporary, wait and retry
+            if e.smtp_code == 451 and attempt < max_attempts:
+                time.sleep(2 * attempt)  # 2s, 4s, 6s...
+                continue
+
+            # Other SMTP errors or last attempt
+            raise
+
+        except Exception as e:
+            print(f"[MAIL ERROR] attempt={attempt} ex={e}", flush=True)
+            if attempt < max_attempts:
+                time.sleep(2 * attempt)
+                continue
+            raise
