@@ -1,7 +1,8 @@
-import smtplib, ssl
+import os
+import ssl
+import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,33 +15,36 @@ print("PASS LENGTH:", len(sender_password) if sender_password else "None", flush
 
 
 def send_verification_mail(to_mail, verification_code):
-    subject = f"Ověřovací kód: {verification_code} | Discord server studentů VUT"
+
+    subject = "Ověření Discord serveru studentů VUT FP"
 
     body = f"""Dobrý den,
 
-děkujeme za snahu o ověření na Discord serveru studentů VUT FP.
+děkujeme za snahu o ověření na Discord serveru studentů VUT Fakulty podnikatelské.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Váš ověřovací kód:
 
 {verification_code}
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 Pro dokončení ověření jej zadejte na Discordu pomocí příkazu:
+
 /verify code {verification_code}
 
-Kód je jednorázový a slouží pouze pro ověření vašeho účtu.
+Tento kód je jednorázový a slouží pouze pro ověření vašeho účtu.
 
 Pokud jste o ověření nežádali, můžete tuto zprávu bezpečně ignorovat.
 
-Přejeme hezký den  
-BizzyBot   
+S pozdravem  
+BizzyBot 🤖  
 Discord server studentů VUT FP
 """
 
-    # vytvoreni emailu
     message = MIMEMultipart()
-    message["From"] = sender_mail
-    message["Sender"] = sender_mail
-    message["Reply-To"] = sender_mail
+    message["From"] = f"BizzyBot – VUT FP <{sender_mail}>"
     message["To"] = to_mail
     message["Subject"] = subject
 
@@ -49,7 +53,7 @@ Discord server studentů VUT FP
     context = ssl.create_default_context()
 
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        with smtplib.SMTP("smtp.seznam.cz", 587) as server:
             server.ehlo()
             server.starttls(context=context)
             server.ehlo()
@@ -62,8 +66,7 @@ Discord server studentů VUT FP
                 message.as_string()
             )
 
-            print(f"[MAIL SENT] -> {to_mail}", flush=True)
+        print(f"[MAIL SENT] -> {to_mail}", flush=True)
 
     except Exception as e:
         print(f"[MAIL ERROR] {e}", flush=True)
-
