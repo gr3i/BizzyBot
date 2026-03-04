@@ -5,64 +5,28 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-
 sender_mail = os.getenv("SENDER_MAIL")
 sender_password = os.getenv("SENDER_PASSWORD")
 
-print("MAIL:", sender_mail, flush=True)
-print("PASS LENGTH:", len(sender_password) if sender_password else "None", flush=True)
-
+print("MAIL:", sender_mail)
+print("PASS LENGTH:", len(sender_password) if sender_password else "None")
 
 def send_verification_mail(to_mail, verification_code):
-    subject = f"Ověřovací kód: {verification_code} | Discord server studentů VUT"
+    subject = "Ověřovací kód pro Discord bota"
+    body = f"Tento kód použij pro ověření na serveru pomocí příkazu /verify code {verification_code}"
 
-    body = f"""Dobrý den,
-
-děkujeme za snahu o ověření na Discord serveru studentů VUT FP.
-
-Váš ověřovací kód:
-
-{verification_code}
-
-Pro dokončení ověření jej zadejte na Discordu pomocí příkazu:
-/verify code {verification_code}
-
-Kód je jednorázový a slouží pouze pro ověření vašeho účtu.
-
-Pokud jste o ověření nežádali, můžete tuto zprávu bezpečně ignorovat.
-
-Přejeme hezký den  
-BizzyBot   
-Discord server studentů VUT FP
-"""
-
-    # vytvoreni emailu
     message = MIMEMultipart()
-    message["From"] = sender_mail
-    message["Sender"] = sender_mail
-    message["Reply-To"] = sender_mail
-    message["To"] = to_mail
-    message["Subject"] = subject
-
-    message.attach(MIMEText(body, "plain", "utf-8"))
+    message['From'] = sender_mail
+    message['To'] = to_mail
+    message['Subject'] = subject
+    message.attach(MIMEText(body, 'plain'))
 
     context = ssl.create_default_context()
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.ehlo()                                                   # pozdrav
+        server.starttls(context=context)                                # prepnuti na TLS
+        server.ehlo()                                                   # znovu pozdrav pro TLS
+        server.login(sender_mail, sender_password)
+        server.sendmail(sender_mail, to_mail, message.as_string()) 
 
-    try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.ehlo()
-            server.starttls(context=context)
-            server.ehlo()
 
-            server.login(sender_mail, sender_password)
-
-            server.sendmail(
-                sender_mail,
-                to_mail,
-                message.as_string()
-            )
-
-            print(f"[MAIL SENT] -> {to_mail}", flush=True)
-
-    except Exception as e:
-        print(f"[MAIL ERROR] {e}", flush=True)
