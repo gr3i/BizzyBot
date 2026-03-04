@@ -13,19 +13,7 @@ print("PASS LENGTH:", len(sender_password) if sender_password else "None")
 
 def send_verification_mail(to_mail, verification_code):
     subject = "Ověřovací kód pro Discord bota"
-   body = f"""
-        Dobrý den,
-
-        toto je ověřovací kód pro Discord server studentů VUT.
-
-        Ověřovací kód:
-        {verification_code}
-
-        Pokud jste o ověření nežádali, tuto zprávu ignorujte.
-
-        —
-        BizzyBot
-        """ 
+    body = f"Tento kód použij pro ověření na serveru pomocí příkazu /verify code {verification_code}"
 
     message = MIMEMultipart()
     message['From'] = sender_mail
@@ -40,4 +28,5 @@ def send_verification_mail(to_mail, verification_code):
         server.ehlo()                                                   # znovu pozdrav pro TLS
         server.login(sender_mail, sender_password)
         server.sendmail(sender_mail, to_mail, message.as_string()) 
+
 
