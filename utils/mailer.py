@@ -8,6 +8,9 @@ load_dotenv()
 sender_mail = os.getenv("SENDER_MAIL")
 sender_password = os.getenv("SENDER_PASSWORD")
 
+print("MAIL:", sender_mail)
+print("PASS LENGTH:", len(sender_password) if sender_password else "None")
+
 def send_verification_mail(to_mail, verification_code):
     subject = "Ověřovací kód pro Discord bota"
     body = f"Tento kód použij pro ověření na serveru pomocí příkazu /verify code {verification_code}"
