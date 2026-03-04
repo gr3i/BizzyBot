@@ -13,7 +13,19 @@ print("PASS LENGTH:", len(sender_password) if sender_password else "None")
 
 def send_verification_mail(to_mail, verification_code):
     subject = "Ověřovací kód pro Discord bota"
-    body = f"Tento kód použij pro ověření na serveru pomocí příkazu /verify code {verification_code}"
+   body = f"""
+        Dobrý den,
+
+        toto je ověřovací kód pro Discord server studentů VUT.
+
+        Ověřovací kód:
+        {verification_code}
+
+        Pokud jste o ověření nežádali, tuto zprávu ignorujte.
+
+        —
+        BizzyBot
+        """ 
 
     message = MIMEMultipart()
     message['From'] = sender_mail
