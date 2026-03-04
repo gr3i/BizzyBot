@@ -11,9 +11,6 @@ load_dotenv()
 sender_mail = os.getenv("SENDER_MAIL")
 sender_password = os.getenv("SENDER_PASSWORD")
 
-print("MAIL:", sender_mail, flush=True)
-print("PASS LENGTH:", len(sender_password) if sender_password else "None", flush=True)
-
 
 def send_verification_mail(to_mail, verification_code):
     subject = "Overeni na Discord serveru studentu VUT FP"
