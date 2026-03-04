@@ -14,11 +14,11 @@ print("PASS LENGTH:", len(sender_password) if sender_password else "None", flush
 
 
 def send_verification_mail(to_mail, verification_code):
-    subject = f"Ověřovací kód: {verification_code} | Discord server studentů VUT"
+    subject = f"Ověřovací kód: {verification_code} | Discord server studentů VUT FP"
 
     body = f"""Dobrý den,
 
-toto je ověřovací kód pro ověření na Discord serveru studentů VUT.
+toto je ověřovací kód pro ověření na Discord serveru studentů VUT FP.
 
 Váš ověřovací kód:
 {verification_code}
@@ -30,7 +30,7 @@ Pokud jste o ověření nežádali, tuto zprávu můžete ignorovat.
 
 S pozdravem,
 BizzyBot
-Discord server studentů VUT
+Discord server studentů VUT FP
 """
 
     # vytvoreni emailu
