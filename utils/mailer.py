@@ -18,9 +18,8 @@ print("PASS LENGTH:", len(sender_password) if sender_password else "None", flush
 def send_verification_mail(to_mail, verification_code):
     subject = "Overeni Discord serveru studentu VUT FP"
 
-    body = f"""Dobry den,
-
-dekujeme za snahu o overeni na Discord serveru studentu VUT Fakulty podnikatelske.
+    body = f"""
+Dekujeme za snahu o overeni na Discord serveru studentu VUT Fakulty podnikatelske.
 
 ==============================
 
