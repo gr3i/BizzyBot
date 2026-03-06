@@ -8,7 +8,7 @@ It handles user verification via email, assigns roles based on user input or ema
 
 ## Link
 
-**[https://discord.gg/8Gxm6MhSbj](https://discord.gg/8Gxm6MhSbj)**
+**[https://discord.gg/TnDwKvSPHG](https://discord.gg/TnDwKvSPHG)**
 
 ---
 
