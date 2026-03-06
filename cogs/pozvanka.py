@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 
 QR_CODE_IMAGE = os.getenv("QR_CODE_IMAGE")
-INVITE_LINK   = "https://discord.gg/8Gxm6MhSbj"
+INVITE_LINK   = "https://discord.gg/TnDwKvSPHG"
 
 class QRCode(commands.Cog):
     def __init__(self, bot: commands.Bot):
