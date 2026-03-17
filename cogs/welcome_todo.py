@@ -100,7 +100,7 @@ class WelcomeTodo(commands.Cog):
                     "Tady je rychlý TODO list, ať máte vše po ruce:" 
                 )
                 lines = TEACH_TODO_LINES
-            elif kind == "doktorand"
+            elif kind == "doktorand":
                 title = "🎉 Vítejte na serveru VUT FP!"
                 description = (
                     "Super, ověření proběhlo a máte roli **Doktorand**.\n"
