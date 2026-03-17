@@ -11,6 +11,7 @@ VUT_ROLE_ID = 1358911329737642014               # ID role VUT
 HOST_ROLE_ID = 1358905374500982995              # ID role Host
 FP_ROLE_ID = 1466036385017233636                # ID role FP
 TEACH_ROLE_ID = 1431724268160549096             # ID role Vyucujici/Zamestnanec
+DOKTORAND_ID = 1433984072266285097              # ID role Doktoranda 
 OWNER_IDS: Set[int] = {685958402442133515}      # kdo muze volat /todo_reset
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))      # pro per-guild registraci slash prikazu
 
@@ -146,6 +147,10 @@ class WelcomeTodo(commands.Cog):
 
         # TEACH role
         if (TEACH_ROLE_ID not in before_roles) and (TEACH_ROLE_ID in after_roles):
+            await self._send_todo_once(after, "teach")
+
+        # Doktorand role 
+        if (DOKTORAND_ID not in before_roles) and (DOKTORAND_ID in after_roles):
             await self._send_todo_once(after, "teach")
 
 
