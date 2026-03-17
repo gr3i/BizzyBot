@@ -100,6 +100,13 @@ class WelcomeTodo(commands.Cog):
                     "Tady je rychlý TODO list, ať máte vše po ruce:" 
                 )
                 lines = TEACH_TODO_LINES
+            elif kind == "doktorand"
+                title = "🎉 Vítejte na serveru VUT FP!"
+                description = (
+                    "Super, ověření proběhlo a máte roli **Doktorand**.\n"
+                    "Tady je rychlý TODO list, ať máte vše po ruce:" 
+                )
+                lines = TEACH_TODO_LINES 
             else:
                 return
 
@@ -151,7 +158,7 @@ class WelcomeTodo(commands.Cog):
 
         # Doktorand role 
         if (DOKTORAND_ID not in before_roles) and (DOKTORAND_ID in after_roles):
-            await self._send_todo_once(after, "teach")
+            await self._send_todo_once(after, "doktorand")
 
 
 async def setup(bot: commands.Bot):
