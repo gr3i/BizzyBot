@@ -121,7 +121,7 @@ class WelcomeTodo(commands.Cog):
                 inline=False
             )
             embed.set_footer(
-                text="Nebojte se psát do chatu a reagovat na ostatní. Když bude server aktivní, pomůže to všem — a zároveň tím nejvíc oceníte práci lidí, co ho tvořili.\nKdykoliv napiš moderátorům, když si nebudeš vědět rady."
+                text="Nebojte se psát do chatu a reagovat na ostatní. Když bude server aktivní, pomůže to všem — a zároveň tím nejvíc oceníte práci lidí, co ho tvořili.\n\nKdykoliv napiš moderátorům, když si nebudeš vědět rady."
             )
 
             await dm.send(embed=embed)
