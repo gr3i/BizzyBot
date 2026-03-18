@@ -121,7 +121,7 @@ class WelcomeTodo(commands.Cog):
                 inline=False
             )
             embed.set_footer(
-                text="Nebojte se psát do chatů a reagovat na ostatní. Tenhle server jsme nedělali proto, aby tu byl mrtvý chat, ale aby to byl prostor, co studentům reálně pomůže a zároveň tím nejvíc oceníte práci lidí, co ho tvořili.\n\nKdykoliv napiš moderátorům, když si nebudeš vědět rady."
+                text="Tenhle server vznikl proto, aby studentům FP reálně pomáhal, a je za ním stovky hodin práce. Byla by škoda, kdyby zůstal jen jako další mrtvý server bez života. Nebojte se proto být aktivní, psát své dotazy a odpovídat ostatním — právě vaše aktivita mu dá skutečný smysl.\n\nKdykoliv napiš moderátorům, když si nebudeš vědět rady."
             )
 
             await dm.send(embed=embed)
