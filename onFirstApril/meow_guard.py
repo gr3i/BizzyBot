@@ -9,7 +9,7 @@ ALLOWED_WORDS = ("mňau", "mnau", "meow")
 
 # prazdny set == hlida vsude
 # dam ID kanalu, bude hlidat jen tam
-TARGET_CHANNEL_IDS = set(1487121536686096564)
+TARGET_CHANNEL_IDS = set{1487121536686096564}
 
 WARNING_DELETE_AFTER = 8
 
