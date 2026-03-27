@@ -4,8 +4,7 @@ from discord.ext import commands
 
 ALLOWED_WORDS = ("mňau", "mnau", "meow")
 TARGET_CHANNEL_IDS = {
-    1487121536686096564,
-    # sem muzes pridat dalsi channel ID
+    1487121536686096564, 
 }
 
 REACTION_EMOJI = "<:koteseni:1361038813719302175>"

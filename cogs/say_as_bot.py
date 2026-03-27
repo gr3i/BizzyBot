@@ -5,12 +5,10 @@ from discord.ext import commands
 
 ALLOWED_ROLE_IDS = {
     1358898283782602932,
-    # sem muzes pridat dalsi role ID
 }
 
 ALLOWED_USER_IDS = {
-    685958402442133515,
-    # sem muzes pridat dalsi user ID
+    685958402442133515, 
 }
 
 
