@@ -29,10 +29,10 @@ class SayAsBot(commands.Cog):
 
         return False
 
-    @app_commands.command(name="say", description="Posle zpravu jako bot.")
+    @app_commands.command(name="say", description="Pošle zprávu jako bot.")
     @app_commands.describe(
-        text="Text, ktery ma bot poslat",
-        channel="Kanal, kam se ma zprava poslat"
+        text="Text, který má bot poslat",
+        channel="Kanál, kam se má zpráva poslat"
     )
     async def say(
         self,
@@ -42,7 +42,7 @@ class SayAsBot(commands.Cog):
     ):
         if not self.is_allowed(interaction):
             await interaction.response.send_message(
-                "Na tenhle command nemas opravneni.",
+                "Na tenhle command nemáš oprávnění.",
                 ephemeral=True
             )
             return
@@ -51,7 +51,7 @@ class SayAsBot(commands.Cog):
 
         if target_channel is None:
             await interaction.response.send_message(
-                "Nepodarilo se najit cilovy kanal.",
+                "Nepodařilo se najít cílový kanál.",
                 ephemeral=True
             )
             return
@@ -61,12 +61,12 @@ class SayAsBot(commands.Cog):
         try:
             await target_channel.send(text)
             await interaction.followup.send(
-                f"Zprava odeslana do {target_channel.mention}.",
+                f"Zpráva odeslána do {target_channel.mention}.",
                 ephemeral=True
             )
         except discord.Forbidden:
             await interaction.followup.send(
-                "Bot nema opravneni psat do tohohle kanalu.",
+                "Bot nemá oprávnění psát do tohohle kanálu.",
                 ephemeral=True
             )
         except discord.HTTPException as e:
@@ -76,7 +76,7 @@ class SayAsBot(commands.Cog):
             )
         except Exception as e:
             await interaction.followup.send(
-                f"Nastala neocekavana chyba: {e}",
+                f"Nastala neočekávaná chyba: {e}",
                 ephemeral=True
             )
 
