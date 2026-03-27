@@ -1,6 +1,7 @@
 import os
 import random
-from datetime import datetime, timedelta
+import asyncio
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import discord
@@ -48,7 +49,7 @@ class CrazyLoop(commands.Cog):
         while not self.bot.is_closed():
             try:
                 if not self.can_send_now():
-                    await discord.utils.sleep_until(discord.utils.utcnow() + timedelta(seconds=30))
+                    await asyncio.sleep(30)
                     continue
 
                 channel = self.bot.get_channel(CHANNEL_ID)
@@ -57,7 +58,7 @@ class CrazyLoop(commands.Cog):
                         channel = await self.bot.fetch_channel(CHANNEL_ID)
                     except Exception as e:
                         print(f"[crazy_loop] Could not fetch channel: {e}")
-                        await discord.utils.sleep_until(discord.utils.utcnow() + timedelta(seconds=30))
+                        await asyncio.sleep(30)
                         continue
 
                 await channel.send(MESSAGES[self.message_index])
@@ -65,12 +66,16 @@ class CrazyLoop(commands.Cog):
 
                 self.message_index = (self.message_index + 1) % len(MESSAGES)
 
-                delay = random.randint(20, 55)
-                await discord.utils.sleep_until(discord.utils.utcnow() + timedelta(seconds=delay))
+                if random.random() < 0.15:
+                    delay = random.randint(45, 90)
+                else:
+                    delay = random.randint(5, 10)
+
+                await asyncio.sleep(delay)
 
             except Exception as e:
                 print(f"[crazy_loop] Error while sending message: {e}")
-                await discord.utils.sleep_until(discord.utils.utcnow() + timedelta(seconds=15))
+                await asyncio.sleep(15)
 
 
 async def setup(bot: commands.Bot):
