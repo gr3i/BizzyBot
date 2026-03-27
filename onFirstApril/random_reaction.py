@@ -6,9 +6,7 @@ from discord.ext import commands
 
 
 TARGET_CHANNEL_IDS = {
-    1487121536686096564,
-    # sem si pridej dalsi kanaly
-    # 123456789012345678,
+    1487121536686096564, 
 }
 
 MIN_TRIGGER = 2

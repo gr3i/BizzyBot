@@ -7,8 +7,8 @@ from discord.ext import commands
 
 ALLOWED_WORDS = ("mňau", "mnau", "meow")
 
-# Nech prazdnou sadu = hlida vsude.
-# Kdyz tam das ID kanalu, bude hlidat jen tam.
+# prazdny set == hlida vsude
+# dam ID kanalu, bude hlidat jen tam
 TARGET_CHANNEL_IDS = set()
 
 WARNING_DELETE_AFTER = 8

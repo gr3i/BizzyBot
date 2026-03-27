@@ -5,8 +5,7 @@ import discord
 from discord.ext import commands
 
 TARGET_CHANNEL_IDS = {
-    1487121536686096564,
-    # 123456789012345678,
+    1487121536686096564, 
 }
 
 MIN_TRIGGER = 3
@@ -56,11 +55,10 @@ class ReverseReposter(commands.Cog):
             return
 
         try:
-            # Smaže původní zprávu uživatele
+            # smaze puvodni zpravu uzivatele
             await message.delete()
 
-            # Pošle novou zprávu: @uživatel napsal: (text pozpátku)
-            # Používáme send místo reply, protože původní zpráva byla smazána
+            # posle novou zpravu: @uzivatel napsal: (text pozpatku)
             await message.channel.send(
                 f"{message.author.mention} napsal:\n{reverse_text(message.content)}"
             )
