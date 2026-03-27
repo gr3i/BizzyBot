@@ -25,7 +25,14 @@ class CrazyLoop(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.message_index = 0
-        self.bot.loop.create_task(self.run_loop())
+        self.loop_task = None
+
+    async def cog_load(self):
+        self.loop_task = asyncio.create_task(self.run_loop())
+
+    async def cog_unload(self):
+        if self.loop_task:
+            self.loop_task.cancel()
 
     def is_enabled(self) -> bool:
         return os.getenv("ENABLE_CRAZY_LOOP", "true").lower() == "true"
@@ -54,15 +61,10 @@ class CrazyLoop(commands.Cog):
 
                 channel = self.bot.get_channel(CHANNEL_ID)
                 if channel is None:
-                    try:
-                        channel = await self.bot.fetch_channel(CHANNEL_ID)
-                    except Exception as e:
-                        print(f"[crazy_loop] Could not fetch channel: {e}")
-                        await asyncio.sleep(30)
-                        continue
+                    channel = await self.bot.fetch_channel(CHANNEL_ID)
 
                 await channel.send(MESSAGES[self.message_index])
-                print(f"[crazy_loop] Sent message index {self.message_index}")
+                print(f"[crazy_loop] Sent: {MESSAGES[self.message_index]}")
 
                 self.message_index = (self.message_index + 1) % len(MESSAGES)
 
@@ -73,8 +75,10 @@ class CrazyLoop(commands.Cog):
 
                 await asyncio.sleep(delay)
 
+            except asyncio.CancelledError:
+                break
             except Exception as e:
-                print(f"[crazy_loop] Error while sending message: {e}")
+                print(f"[crazy_loop] Error: {e}")
                 await asyncio.sleep(15)
 
 
