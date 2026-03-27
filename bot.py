@@ -180,6 +180,7 @@ async def setup_hook():
         "cogs.bookmark_dm",
         "cogs.role_spolku",
         "onFirstApril.crazy_loop",
+        "onFirstApril.reverse_reposter",
     ]:
         try:
             await bot.load_extension(ext)
