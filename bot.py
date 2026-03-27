@@ -179,6 +179,7 @@ async def setup_hook():
         "cogs.on_raw_reaction_add",
         "cogs.bookmark_dm",
         "cogs.role_spolku",
+        "onFirstApril.crazy_loop",
     ]:
         try:
             await bot.load_extension(ext)
