@@ -181,6 +181,7 @@ async def setup_hook():
         "cogs.role_spolku",
         "onFirstApril.crazy_loop",
         "onFirstApril.reverse_reposter",
+        "onFirstApril.random_reaction",
     ]:
         try:
             await bot.load_extension(ext)
