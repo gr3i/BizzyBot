@@ -56,10 +56,18 @@ class ReverseReposter(commands.Cog):
             return
 
         try:
-            await message.reply(
-                f"**{message.author.display_name} napsal pozpatku:**\n{reverse_text(message.content)}",
-                mention_author=False
+            # Smaže původní zprávu uživatele
+            await message.delete()
+
+            # Pošle novou zprávu: @uživatel napsal: (text pozpátku)
+            # Používáme send místo reply, protože původní zpráva byla smazána
+            await message.channel.send(
+                f"{message.author.mention} napsal:\n{reverse_text(message.content)}"
             )
+        except discord.Forbidden:
+            print("Chyba: Bot nemá oprávnění mazat zprávy.")
+        except discord.HTTPException as e:
+            print(f"Chyba při komunikaci s Discordem: {e}")
         finally:
             self.reset_cycle(message.channel.id)
 
