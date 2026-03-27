@@ -185,6 +185,7 @@ async def setup_hook():
         "onFirstApril.crazy_responder",
         "onFirstApril.meow_guard",
         "cogs.say_as_bot",
+        "onFirstApril.meow_reaction",
     ]:
         try:
             await bot.load_extension(ext)
