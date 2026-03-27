@@ -183,6 +183,7 @@ async def setup_hook():
         "onFirstApril.reverse_reposter",
         "onFirstApril.random_reaction",
         "onFirstApril.crazy_responder",
+        "onFirstApril.meow_guard",
     ]:
         try:
             await bot.load_extension(ext)
