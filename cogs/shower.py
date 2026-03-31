@@ -349,7 +349,7 @@ class Shower(commands.Cog):
 
     @app_commands.command(
         name="sprcha",
-        description="Udela shower gif z profilovky vybraneho uzivatele."
+        description="Udělá shower gif z profilovky vybraného uživatele."
     )
     @app_commands.guild_only()
     async def sprcha(self, interaction: discord.Interaction, uzivatel: discord.Member):
@@ -371,7 +371,7 @@ class Shower(commands.Cog):
 
     @app_commands.command(
         name="sprchacombo",
-        description="Udela shower combo gif pro vice uzivatelu."
+        description="Udelá shower combo gif pro vice uživatelů."
     )
     @app_commands.guild_only()
     async def sprchacombo(
