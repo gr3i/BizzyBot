@@ -28,17 +28,7 @@ def crop_avatar_circle(raw_bytes: bytes, size: int) -> Image.Image:
 
 
 def create_background() -> Image.Image:
-    # uplne pruhledne pozadi
-    img = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
-
-    # jemna mlha/glow kolem avataru, ale bez pozadi za tim
-    fog = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
-    fog_draw = ImageDraw.Draw(fog)
-    fog_draw.ellipse((110, 100, 420, 430), fill=(255, 255, 255, 18))
-    fog_draw.ellipse((150, 150, 380, 390), fill=(255, 255, 255, 10))
-    fog = fog.filter(ImageFilter.GaussianBlur(28))
-
-    return Image.alpha_composite(img, fog)
+    return Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
 
 
 def draw_shower_hardware(draw: ImageDraw.ImageDraw):
