@@ -16,6 +16,26 @@ FRAME_COUNT = 12
 FRAME_DURATION_MS = 50
 
 
+ALLOWED_USER_IDS = {
+    685958402442133515
+}
+
+ALLOWED_ROLE_IDS = {
+    1358898283782602932, 1358911329737642014, 1466036385017233636, 1358905374500982995
+}
+
+
+def user_is_allowed(interaction: discord.Interaction) -> bool:
+    if interaction.user.id in ALLOWED_USER_IDS:
+        return True
+
+    member = interaction.user if isinstance(interaction.user, discord.Member) else None
+    if member is not None:
+        return any(role.id in ALLOWED_ROLE_IDS for role in member.roles)
+
+    return False
+
+
 def crop_avatar_circle(raw_bytes: bytes, size: int) -> Image.Image:
     avatar = Image.open(io.BytesIO(raw_bytes)).convert("RGBA")
     avatar = ImageOps.fit(avatar, (size, size), method=Image.Resampling.LANCZOS)
@@ -361,7 +381,7 @@ class Shower(commands.Cog):
             gif_buffer = build_shower_gif(raw_bytes)
         except Exception as error:
             await interaction.followup.send(
-                f"Nepodarilo se pripravit shower gif: {error}",
+                f"Nepodařilo se připravit shower gif: {error}",
                 ephemeral=True,
             )
             return
@@ -371,7 +391,7 @@ class Shower(commands.Cog):
 
     @app_commands.command(
         name="sprchacombo",
-        description="Udelá shower combo gif pro vice uživatelů."
+        description="Udělá shower combo gif pro více uživatelů."
     )
     @app_commands.guild_only()
     async def sprchacombo(
@@ -399,7 +419,7 @@ class Shower(commands.Cog):
             gif_buffer = build_shower_combo_gif(raw_avatar_bytes_list)
         except Exception as error:
             await interaction.followup.send(
-                f"Nepodarilo se pripravit shower combo gif: {error}",
+                f"Nepodařilo se připravit shower combo gif: {error}",
                 ephemeral=True,
             )
             return
@@ -409,4 +429,4 @@ class Shower(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Shower(bot))
+    await bot.add_cog(Shower(bot)) 
