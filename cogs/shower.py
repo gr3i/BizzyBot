@@ -1,6 +1,5 @@
 import io
 import math
-import random
 
 import discord
 from discord import app_commands
@@ -8,9 +7,11 @@ from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 
-CANVAS_W = 520
+SINGLE_CANVAS_W = 520
+COMBO_CANVAS_W = 720
 CANVAS_H = 520
-AVATAR_SIZE = 205
+SINGLE_AVATAR_SIZE = 205
+COMBO_AVATAR_SIZE = 170
 FRAME_COUNT = 12
 FRAME_DURATION_MS = 50
 
@@ -27,42 +28,64 @@ def crop_avatar_circle(raw_bytes: bytes, size: int) -> Image.Image:
     return avatar
 
 
-def create_background() -> Image.Image:
-    return Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
+def create_background(width: int) -> Image.Image:
+    return Image.new("RGBA", (width, CANVAS_H), (0, 0, 0, 0))
 
 
-def draw_shower_hardware(draw: ImageDraw.ImageDraw):
+def draw_single_shower_hardware(draw: ImageDraw.ImageDraw):
     line = (25, 25, 25, 255)
     fill = (245, 245, 245, 255)
 
-    # 1) dlouha horni trubka
     draw.rounded_rectangle((210, 22, 412, 40), radius=10, fill=fill, outline=line, width=3)
-
-    # 2) prava svisla trubka dolu
     draw.rounded_rectangle((396, 40, 414, 100), radius=10, fill=fill, outline=line, width=3)
-
-    # 3) kratka leva spojka do hlavice
     draw.rounded_rectangle((204, 38, 248, 54), radius=16, fill=fill, outline=line, width=3)
-
-    # hlavice - vrsek
     draw.ellipse((138, 52, 306, 80), fill=fill, outline=line, width=3)
-
-    # hlavice - spodek
     draw.ellipse((112, 66, 332, 122), fill=fill, outline=line, width=3)
-
-    # vnitrni linka na hlavici
     draw.arc((124, 72, 310, 112), start=198, end=342, fill=line, width=2)
 
-    # trysky
+    nozzle_points = []
     for x in [144, 158, 172, 186, 200, 214, 228, 242, 256, 270, 284]:
         draw.ellipse((x, 94, x + 3, 98), fill=line)
+        nozzle_points.append((x + 1, 98))
+
+    return nozzle_points
+
+
+def draw_combo_shower_hardware(draw: ImageDraw.ImageDraw, avatar_centers: list[int]):
+    line = (25, 25, 25, 255)
+    fill = (245, 245, 245, 255)
+
+    left = min(avatar_centers) - 70
+    right = max(avatar_centers) + 70
+    head_left = left - 20
+    head_right = right + 20
+
+    draw.rounded_rectangle((right - 20, 22, right + 182, 40), radius=10, fill=fill, outline=line, width=3)
+    draw.rounded_rectangle((right + 166, 40, right + 184, 100), radius=10, fill=fill, outline=line, width=3)
+    draw.rounded_rectangle((right - 26, 38, right + 18, 54), radius=16, fill=fill, outline=line, width=3)
+    draw.ellipse((head_left + 46, 52, head_right - 46, 80), fill=fill, outline=line, width=3)
+    draw.ellipse((head_left, 66, head_right, 122), fill=fill, outline=line, width=3)
+    draw.arc((head_left + 12, 72, head_right - 22, 112), start=198, end=342, fill=line, width=2)
+
+    nozzle_start = head_left + 32
+    nozzle_end = head_right - 32
+    count = max(11, int((nozzle_end - nozzle_start) / 16))
+    step = (nozzle_end - nozzle_start) / max(count - 1, 1)
+
+    nozzle_points = []
+    for i in range(count):
+        x = int(nozzle_start + i * step)
+        draw.ellipse((x, 94, x + 3, 98), fill=line)
+        nozzle_points.append((x + 1, 98))
+
+    return nozzle_points
 
 
 def add_shadow(scene: Image.Image, avatar_box: tuple[int, int, int, int]):
     return
 
 
-def add_bubbles(scene: Image.Image, frame_idx: int):
+def add_single_bubbles(scene: Image.Image, frame_idx: int):
     bubbles = Image.new("RGBA", scene.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(bubbles)
 
@@ -90,50 +113,60 @@ def add_bubbles(scene: Image.Image, frame_idx: int):
     scene.alpha_composite(bubbles)
 
 
-def add_water(scene: Image.Image, frame_idx: int):
+def add_combo_bubbles(scene: Image.Image, frame_idx: int, avatar_boxes: list[tuple[int, int, int, int]]):
+    bubbles = Image.new("RGBA", scene.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(bubbles)
+
+    for idx, (x0, y0, x1, y1) in enumerate(avatar_boxes):
+        cx = (x0 + x1) // 2
+        base_points = [
+            (cx - 42, y1 - 30, 7),
+            (cx - 18, y1 - 8, 9),
+            (cx + 12, y1 + 8, 6),
+            (cx + 36, y1 - 18, 8),
+        ]
+
+        for i, (bx, by, r) in enumerate(base_points):
+            lift = ((frame_idx * (3 + i % 2)) + i * 5 + idx * 4) % 34
+            x = bx + int(math.sin(frame_idx * 0.35 + i + idx) * 2)
+            y = by - lift
+
+            draw.ellipse(
+                (x - r, y - r, x + r, y + r),
+                outline=(255, 255, 255, 125),
+                width=2,
+            )
+
+    bubbles = bubbles.filter(ImageFilter.GaussianBlur(0.2))
+    scene.alpha_composite(bubbles)
+
+
+def add_water(scene: Image.Image, frame_idx: int, nozzle_points: list[tuple[int, int]], flow_bottom: int):
     water = Image.new("RGBA", scene.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(water)
 
-    nozzle_points = [
-        (148, 98), (162, 98), (176, 98), (190, 98), (204, 98),
-        (218, 98), (232, 98), (246, 98), (260, 98), (274, 98), (288, 98),
-    ]
-
     flow_top = 98
-    flow_bottom = 235
     cycle = 36
     offset = (frame_idx * 6) % cycle
 
-    # globalni pohyb sprchy do stran
     sweep = math.sin(frame_idx * 0.08 - 1.1) * 6
-
-    # lehke "otaceni" kolem stredu hlavice
     center_x = sum(x for x, _ in nozzle_points) / len(nozzle_points)
 
     for i, (start_x, start_y) in enumerate(nozzle_points):
         phase = frame_idx * 0.20 + i * 0.32
+        rel = (start_x - center_x) / max(len(nozzle_points) * 6, 1)
 
-        # jak dal je tryska od stredu hlavice
-        rel = (start_x - center_x) / 70.0
-
-        # horni bod se lehce pohybuje do stran
         origin_x = start_x + sweep * 0.35
-
-        # dole se proud rozhodi vic, aby to pusobilo jako kyvani sprchy
         side_bias = sweep * (0.45 + abs(rel) * 0.10)
-
-        # kazdy proud ma lehce jine vlnění
         sway = math.sin(phase) * 0.6
         twist = math.cos(frame_idx * 0.10 + rel * 1.6) * 0.6
 
-        # jemny podkladovy proud
         draw.line(
             (origin_x, flow_top, origin_x + side_bias * 0.55 + sway, flow_bottom),
             fill=(150, 212, 255, 65),
             width=1,
         )
 
-        # segmenty, ktere se hybou dolu
         seg_len = 16 + (i % 3) * 2
         gap = 14 + (i % 2) * 2
 
@@ -143,7 +176,6 @@ def add_water(scene: Image.Image, frame_idx: int):
             y2 = min(flow_bottom, y + seg_len)
 
             if y2 > flow_top:
-                # cim niz je voda, tim vic se vychyli do strany
                 fall_ratio_1 = (y1 - flow_top) / max(flow_bottom - flow_top, 1)
                 fall_ratio_2 = (y2 - flow_top) / max(flow_bottom - flow_top, 1)
 
@@ -164,8 +196,7 @@ def add_water(scene: Image.Image, frame_idx: int):
 
             y += seg_len + gap
 
-        # kapka nekde v proudu
-        droplet_y = flow_top + ((frame_idx * 9 + i * 13) % (flow_bottom - flow_top))
+        droplet_y = flow_top + ((frame_idx * 9 + i * 13) % max(flow_bottom - flow_top, 1))
         droplet_ratio = (droplet_y - flow_top) / max(flow_bottom - flow_top, 1)
         droplet_x = origin_x + side_bias * droplet_ratio + math.sin(phase + droplet_y * 0.04) * 2.5
 
@@ -174,7 +205,6 @@ def add_water(scene: Image.Image, frame_idx: int):
             fill=(195, 235, 255, 185),
         )
 
-        # splash dole
         splash_x = origin_x + side_bias + math.sin(frame_idx + i) * 3
         splash_y = flow_bottom + ((frame_idx * 3 + i) % 10)
 
@@ -187,53 +217,75 @@ def add_water(scene: Image.Image, frame_idx: int):
     scene.alpha_composite(water)
 
 
-def build_frame(avatar: Image.Image, frame_idx: int) -> Image.Image:
-    scene = create_background()
+def get_combo_avatar_layout(count: int) -> list[tuple[int, int]]:
+    y = 185
+
+    if count == 2:
+        return [(170, y), (375, y)]
+    if count == 3:
+        return [(95, y), (275, y), (455, y)]
+    return [(45, y), (205, y), (365, y), (525, y)]
+
+
+def build_single_frame(avatar: Image.Image, frame_idx: int) -> Image.Image:
+    scene = create_background(SINGLE_CANVAS_W)
     draw = ImageDraw.Draw(scene)
 
-    draw_shower_hardware(draw)
+    nozzle_points = draw_single_shower_hardware(draw)
 
     avatar_x = 110
     avatar_y = 150
-    avatar_box = (avatar_x, avatar_y, avatar_x + AVATAR_SIZE, avatar_y + AVATAR_SIZE)
+    avatar_box = (avatar_x, avatar_y, avatar_x + SINGLE_AVATAR_SIZE, avatar_y + SINGLE_AVATAR_SIZE)
 
     add_shadow(scene, avatar_box)
     scene.alpha_composite(avatar, (avatar_x, avatar_y))
-    add_water(scene, frame_idx)
-    add_bubbles(scene, frame_idx)
+    add_water(scene, frame_idx, nozzle_points, 235)
+    add_single_bubbles(scene, frame_idx)
 
     return scene
 
 
-def build_shower_gif(raw_bytes: bytes) -> io.BytesIO:
-    avatar = crop_avatar_circle(raw_bytes, AVATAR_SIZE)
-    rgba_frames = [build_frame(avatar, idx) for idx in range(FRAME_COUNT)]
+def build_combo_frame(avatars: list[Image.Image], frame_idx: int) -> Image.Image:
+    scene = create_background(COMBO_CANVAS_W)
+    draw = ImageDraw.Draw(scene)
 
+    positions = get_combo_avatar_layout(len(avatars))
+    avatar_boxes = []
+    avatar_centers = [x + COMBO_AVATAR_SIZE // 2 for x, _ in positions]
+    nozzle_points = draw_combo_shower_hardware(draw, avatar_centers)
+
+    for avatar, (avatar_x, avatar_y) in zip(avatars, positions):
+        avatar_box = (avatar_x, avatar_y, avatar_x + COMBO_AVATAR_SIZE, avatar_y + COMBO_AVATAR_SIZE)
+        avatar_boxes.append(avatar_box)
+        add_shadow(scene, avatar_box)
+        scene.alpha_composite(avatar, (avatar_x, avatar_y))
+
+    flow_bottom = min(y for _, y in positions) + int(COMBO_AVATAR_SIZE * 0.72)
+
+    add_water(scene, frame_idx, nozzle_points, flow_bottom)
+    add_combo_bubbles(scene, frame_idx, avatar_boxes)
+
+    return scene
+
+
+def rgba_frames_to_gif_bytes(rgba_frames: list[Image.Image]) -> io.BytesIO:
     gif_frames = []
     transparent_index = 0
 
     for frame in rgba_frames:
-        # preved frame na RGBA
         rgba = frame.convert("RGBA")
 
-        # vytvor paletovy obrazek s rezervovanou transparentni barvou na indexu 0
-        pal = Image.new("P", rgba.size, 0)
-        pal.putpalette(
-            [0, 0, 0] +  # index 0 = transparent
-            [i for rgb in [(j, j, j) for j in range(1, 256)] for i in rgb][:255 * 3]
-        )
-
-        # maska pruhlednosti
         alpha = rgba.getchannel("A")
         opaque = Image.new("RGBA", rgba.size, (255, 255, 255, 0))
         opaque.paste(rgba, mask=alpha)
 
-        # preved bez alpha do adaptivni palety
         quant = opaque.convert("RGB").convert("P", palette=Image.Palette.ADAPTIVE, colors=255)
 
-        # vloz do noveho obrazku, kde 0 zustane transparentni
         out = Image.new("P", rgba.size, transparent_index)
-        out.putpalette(quant.getpalette()[:3 * 255] + [0, 0, 0])
+        palette = quant.getpalette()
+        if len(palette) < 256 * 3:
+            palette += [0] * (256 * 3 - len(palette))
+        out.putpalette(palette[:256 * 3])
 
         mask = alpha.point(lambda a: 255 if a > 0 else 0)
         out.paste(quant, mask=mask)
@@ -256,6 +308,18 @@ def build_shower_gif(raw_bytes: bytes) -> io.BytesIO:
     )
     output.seek(0)
     return output
+
+
+def build_shower_gif(raw_bytes: bytes) -> io.BytesIO:
+    avatar = crop_avatar_circle(raw_bytes, SINGLE_AVATAR_SIZE)
+    frames = [build_single_frame(avatar, idx) for idx in range(FRAME_COUNT)]
+    return rgba_frames_to_gif_bytes(frames)
+
+
+def build_shower_combo_gif(raw_avatar_bytes_list: list[bytes]) -> io.BytesIO:
+    avatars = [crop_avatar_circle(raw, COMBO_AVATAR_SIZE) for raw in raw_avatar_bytes_list]
+    frames = [build_combo_frame(avatars, idx) for idx in range(FRAME_COUNT)]
+    return rgba_frames_to_gif_bytes(frames)
 
 
 class Shower(commands.Cog):
@@ -282,6 +346,44 @@ class Shower(commands.Cog):
             return
 
         file = discord.File(fp=gif_buffer, filename="sprcha.gif")
+        await interaction.followup.send(file=file)
+
+    @app_commands.command(
+        name="sprchacombo",
+        description="Udela shower combo gif pro vice uzivatelu."
+    )
+    @app_commands.guild_only()
+    async def sprchacombo(
+        self,
+        interaction: discord.Interaction,
+        uzivatel1: discord.Member,
+        uzivatel2: discord.Member,
+        uzivatel3: discord.Member | None = None,
+        uzivatel4: discord.Member | None = None,
+    ):
+        await interaction.response.defer()
+
+        try:
+            members = [uzivatel1, uzivatel2]
+            if uzivatel3 is not None:
+                members.append(uzivatel3)
+            if uzivatel4 is not None:
+                members.append(uzivatel4)
+
+            raw_avatar_bytes_list = []
+            for member in members:
+                avatar_asset = member.display_avatar.replace(format="png", size=512)
+                raw_avatar_bytes_list.append(await avatar_asset.read())
+
+            gif_buffer = build_shower_combo_gif(raw_avatar_bytes_list)
+        except Exception as error:
+            await interaction.followup.send(
+                f"Nepodarilo se pripravit shower combo gif: {error}",
+                ephemeral=True,
+            )
+            return
+
+        file = discord.File(fp=gif_buffer, filename="sprchacombo.gif")
         await interaction.followup.send(file=file)
 
 
