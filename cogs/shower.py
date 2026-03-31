@@ -5,154 +5,184 @@ import random
 import discord
 from discord import app_commands
 from discord.ext import commands
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 
-ALLOWED_USER_IDS = {
-    685958402442133515,
-}
-
-ALLOWED_ROLE_IDS = {
-    1358898283782602932,
-    1359508102222975087,
-    1370841996977246218,
-    1370842282084925541,
-}
+CANVAS_W = 520
+CANVAS_H = 520
+AVATAR_SIZE = 230
+FRAME_COUNT = 12
+FRAME_DURATION_MS = 70
 
 
-def user_is_allowed(interaction: discord.Interaction) -> bool:
-    if interaction.user.id in ALLOWED_USER_IDS:
-        return True
-
-    member = interaction.user if isinstance(interaction.user, discord.Member) else None
-    if member:
-        return any(role.id in ALLOWED_ROLE_IDS for role in member.roles)
-
-    return False
-
-
-def create_circular_avatar(avatar: Image.Image, size: int = 420) -> Image.Image:
-    avatar = avatar.convert("RGBA").resize((size, size))
+def crop_avatar_circle(raw_bytes: bytes, size: int) -> Image.Image:
+    avatar = Image.open(io.BytesIO(raw_bytes)).convert("RGBA")
+    avatar = ImageOps.fit(avatar, (size, size), method=Image.Resampling.LANCZOS)
 
     mask = Image.new("L", (size, size), 0)
     draw = ImageDraw.Draw(mask)
-    draw.ellipse((0, 0, size, size), fill=255)
+    draw.ellipse((0, 0, size - 1, size - 1), fill=255)
+    avatar.putalpha(mask)
 
-    result = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    result.paste(avatar, (0, 0), mask)
-    return result
+    return avatar
 
 
-def create_shower_image(avatar_bytes: bytes, username: str) -> io.BytesIO:
-    base_size = (900, 900)
-    canvas = Image.new("RGBA", base_size, (235, 245, 255, 255))
-    draw = ImageDraw.Draw(canvas)
+def create_background() -> Image.Image:
+    img = Image.new("RGBA", (CANVAS_W, CANVAS_H), (49, 51, 56, 255))
+    draw = ImageDraw.Draw(img)
 
-    # lehky gradient pozadi
-    for y in range(base_size[1]):
-        ratio = y / base_size[1]
-        r = int(235 - 20 * ratio)
-        g = int(245 - 10 * ratio)
-        b = int(255 - 5 * ratio)
-        draw.line((0, y, base_size[0], y), fill=(r, g, b, 255))
+    for y in range(CANVAS_H):
+        ratio = y / max(CANVAS_H - 1, 1)
+        shade = int(46 + ratio * 10)
+        draw.line((0, y, CANVAS_W, y), fill=(shade, shade + 2, shade + 6, 255))
 
-    # "koupelna" / stena
-    tile_color_1 = (220, 230, 240, 255)
-    tile_color_2 = (210, 222, 235, 255)
-    tile_size = 90
+    fog = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
+    fog_draw = ImageDraw.Draw(fog)
+    fog_draw.ellipse((110, 100, 420, 430), fill=(255, 255, 255, 26))
+    fog_draw.ellipse((150, 150, 380, 390), fill=(255, 255, 255, 18))
+    fog = fog.filter(ImageFilter.GaussianBlur(28))
 
-    for y in range(0, 700, tile_size):
-        for x in range(0, 900, tile_size):
-            color = tile_color_1 if ((x // tile_size) + (y // tile_size)) % 2 == 0 else tile_color_2
-            draw.rectangle((x, y, x + tile_size, y + tile_size), fill=color, outline=(190, 200, 210, 255))
+    return Image.alpha_composite(img, fog)
 
-    # spodni cast
-    draw.rectangle((0, 700, 900, 900), fill=(180, 190, 200, 255))
 
-    # nacteni avataru
-    avatar = Image.open(io.BytesIO(avatar_bytes)).convert("RGBA")
-    avatar_circle = create_circular_avatar(avatar, 420)
+def draw_shower_hardware(draw: ImageDraw.ImageDraw):
+    pipe = (150, 152, 160, 255)
+    head = (114, 116, 124, 255)
+    dark = (76, 78, 84, 255)
 
-    # stin pod avatar
-    shadow = Image.new("RGBA", (460, 460), (0, 0, 0, 0))
-    shadow_draw = ImageDraw.Draw(shadow)
-    shadow_draw.ellipse((20, 30, 440, 450), fill=(0, 0, 0, 110))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(18))
-    canvas.alpha_composite(shadow, (220, 215))
+    draw.rounded_rectangle((360, 48, 388, 164), radius=14, fill=pipe)
+    draw.rounded_rectangle((246, 140, 388, 168), radius=14, fill=pipe)
+    draw.ellipse((220, 142, 290, 212), fill=head)
 
-    # avatar doprostred
-    canvas.alpha_composite(avatar_circle, (240, 190))
-
-    # jednoducha sprchova hlavice
-    pipe_color = (150, 150, 155, 255)
-    head_color = (110, 110, 115, 255)
-
-    draw.rounded_rectangle((620, 70, 660, 250), radius=18, fill=pipe_color)
-    draw.rounded_rectangle((500, 220, 660, 260), radius=18, fill=pipe_color)
-    draw.ellipse((450, 230, 560, 320), fill=head_color)
-
-    # dirky ve sprchove hlavici
     for row in range(3):
-        for col in range(5):
-            x = 470 + col * 18
-            y = 248 + row * 16
-            draw.ellipse((x, y, x + 7, y + 7), fill=(70, 70, 75, 255))
+        for col in range(4):
+            x = 236 + col * 14
+            y = 158 + row * 12
+            draw.ellipse((x, y, x + 5, y + 5), fill=dark)
 
-    # kapky vody
-    water = Image.new("RGBA", base_size, (0, 0, 0, 0))
-    water_draw = ImageDraw.Draw(water)
 
-    for i in range(70):
-        start_x = random.randint(470, 550)
-        start_y = random.randint(285, 345)
-        length = random.randint(120, 260)
-        drift = random.randint(-35, 35)
+def add_shadow(scene: Image.Image, avatar_box: tuple[int, int, int, int]):
+    shadow = Image.new("RGBA", scene.size, (0, 0, 0, 0))
+    shadow_draw = ImageDraw.Draw(shadow)
 
-        end_x = start_x + drift
-        end_y = start_y + length
+    x0, y0, x1, y1 = avatar_box
+    shadow_draw.ellipse(
+        (x0 + 14, y1 - 4, x1 - 14, y1 + 34),
+        fill=(0, 0, 0, 110),
+    )
 
-        water_draw.line(
+    shadow = shadow.filter(ImageFilter.GaussianBlur(16))
+    scene.alpha_composite(shadow)
+
+
+def add_bubbles(scene: Image.Image, frame_idx: int):
+    bubbles = Image.new("RGBA", scene.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(bubbles)
+    rng = random.Random(1337)
+
+    for i in range(14):
+        base_x = 120 + (i * 23) % 220 + rng.randint(-10, 10)
+        base_y = 355 + (i * 19) % 120
+        float_up = (frame_idx * (5 + i % 3)) % 120
+
+        x = base_x + int(math.sin((frame_idx + i) * 0.7) * 6)
+        y = base_y - float_up
+        r = 6 + (i % 4) * 2
+        alpha = 110 + (i % 3) * 30
+
+        draw.ellipse(
+            (x - r, y - r, x + r, y + r),
+            outline=(255, 255, 255, alpha),
+            width=2,
+        )
+
+    bubbles = bubbles.filter(ImageFilter.GaussianBlur(0.5))
+    scene.alpha_composite(bubbles)
+
+
+def add_water(scene: Image.Image, frame_idx: int):
+    water = Image.new("RGBA", scene.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(water)
+
+    for i in range(16):
+        start_x = 234 + i * 4
+        wobble = math.sin((frame_idx * 0.8) + i * 0.55) * 8
+        start_y = 184 + (i % 2) * 3
+        end_x = start_x + wobble + (i - 8) * 1.2
+        end_y = 365 + (i % 4) * 10
+        width = 2 + (i % 3)
+        alpha = 105 + (i % 5) * 18
+
+        draw.line(
             (start_x, start_y, end_x, end_y),
-            fill=(120, 190, 255, random.randint(110, 180)),
-            width=random.randint(2, 4),
+            fill=(133, 197, 255, int(alpha)),
+            width=width,
         )
 
-        # mala kapka na konci
-        water_draw.ellipse(
-            (end_x - 5, end_y - 5, end_x + 5, end_y + 5),
-            fill=(140, 205, 255, random.randint(120, 190)),
+        mid_x = start_x + (end_x - start_x) * 0.55
+        mid_y = start_y + (end_y - start_y) * 0.55
+        draw.ellipse(
+            (mid_x - 2, mid_y - 6, mid_x + 2, mid_y + 6),
+            fill=(172, 223, 255, min(255, int(alpha) + 20)),
         )
 
-    water = water.filter(ImageFilter.GaussianBlur(1))
-    canvas = Image.alpha_composite(canvas, water)
-
-    # par bublin
-    bubbles = Image.new("RGBA", base_size, (0, 0, 0, 0))
-    bubbles_draw = ImageDraw.Draw(bubbles)
-
-    for _ in range(18):
-        radius = random.randint(12, 28)
-        x = random.randint(180, 650)
-        y = random.randint(430, 760)
-        bubbles_draw.ellipse(
-            (x, y, x + radius, y + radius),
-            outline=(255, 255, 255, 180),
-            width=3,
+        splash_x = end_x + math.sin(frame_idx + i) * 5
+        splash_y = end_y + (frame_idx * 2 + i) % 12
+        draw.ellipse(
+            (splash_x - 3, splash_y - 3, splash_x + 3, splash_y + 3),
+            fill=(180, 228, 255, 190),
         )
 
-    canvas = Image.alpha_composite(canvas, bubbles)
+    water = water.filter(ImageFilter.GaussianBlur(0.6))
+    scene.alpha_composite(water)
 
-    # text bez nutnosti externiho fontu
-    text_bar = Image.new("RGBA", (900, 100), (20, 20, 30, 180))
-    canvas.alpha_composite(text_bar, (0, 800))
 
-    draw = ImageDraw.Draw(canvas)
-    caption = f"{username} je ve sprse"
-    draw.text((30, 835), caption, fill=(255, 255, 255, 255))
+def add_caption(scene: Image.Image, username: str):
+    overlay = Image.new("RGBA", scene.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+
+    draw.rounded_rectangle((94, 436, 426, 485), radius=22, fill=(0, 0, 0, 116))
+    draw.text((114, 451), f"{username} je ve sprse", fill=(255, 255, 255, 235))
+
+    scene.alpha_composite(overlay)
+
+
+def build_frame(avatar: Image.Image, username: str, frame_idx: int) -> Image.Image:
+    scene = create_background()
+    draw = ImageDraw.Draw(scene)
+
+    draw_shower_hardware(draw)
+
+    avatar_x = (CANVAS_W - AVATAR_SIZE) // 2
+    avatar_y = 190
+    avatar_box = (avatar_x, avatar_y, avatar_x + AVATAR_SIZE, avatar_y + AVATAR_SIZE)
+
+    add_shadow(scene, avatar_box)
+    scene.alpha_composite(avatar, (avatar_x, avatar_y))
+    add_water(scene, frame_idx)
+    add_bubbles(scene, frame_idx)
+    add_caption(scene, username)
+
+    return scene
+
+
+def build_shower_gif(raw_bytes: bytes, username: str) -> io.BytesIO:
+    avatar = crop_avatar_circle(raw_bytes, AVATAR_SIZE)
+    frames = [build_frame(avatar, username, idx) for idx in range(FRAME_COUNT)]
 
     output = io.BytesIO()
-    canvas.save(output, format="PNG")
+    frames[0].save(
+        output,
+        format="GIF",
+        save_all=True,
+        append_images=frames[1:],
+        duration=FRAME_DURATION_MS,
+        loop=0,
+        disposal=2,
+        optimize=False,
+    )
     output.seek(0)
+
     return output
 
 
@@ -162,49 +192,28 @@ class Shower(commands.Cog):
 
     @app_commands.command(
         name="sprcha",
-        description="Vezme profilovku uzivatele a posle ji jako shower edit."
+        description="Udela shower gif z profilovky vybraneho uzivatele."
     )
-    @app_commands.checks.check(user_is_allowed)
     @app_commands.guild_only()
     async def sprcha(self, interaction: discord.Interaction, uzivatel: discord.Member):
         await interaction.response.defer()
 
-        avatar_asset = uzivatel.display_avatar.replace(size=512, format="png")
-        avatar_bytes = await avatar_asset.read()
-
-        image_buffer = create_shower_image(avatar_bytes, uzivatel.display_name)
-
-        file = discord.File(fp=image_buffer, filename="sprcha.png")
-        await interaction.followup.send(
-            content=f"🚿 {uzivatel.mention} dostal sprchu.",
-            file=file
-        )
-
-    @sprcha.error
-    async def sprcha_error(self, interaction: discord.Interaction, error):
-        if isinstance(error, app_commands.CheckFailure):
-            if interaction.response.is_done():
-                await interaction.followup.send(
-                    "Na tento příkaz nemáš oprávnění.",
-                    ephemeral=True
-                )
-            else:
-                await interaction.response.send_message(
-                    "Na tento příkaz nemáš oprávnění.",
-                    ephemeral=True
-                )
+        try:
+            avatar_asset = uzivatel.display_avatar.replace(format="png", size=512)
+            raw_bytes = await avatar_asset.read()
+            gif_buffer = build_shower_gif(raw_bytes, uzivatel.display_name)
+        except Exception as error:
+            await interaction.followup.send(
+                f"Nepodarilo se pripravit shower gif: {error}",
+                ephemeral=True,
+            )
             return
 
-        if interaction.response.is_done():
-            await interaction.followup.send(
-                f"Něco se pokazilo: {error}",
-                ephemeral=True
-            )
-        else:
-            await interaction.response.send_message(
-                f"Něco se pokazilo: {error}",
-                ephemeral=True
-            )
+        file = discord.File(fp=gif_buffer, filename="sprcha.gif")
+        await interaction.followup.send(
+            content=f"🚿 {uzivatel.mention} uz je ve sprse.",
+            file=file,
+        )
 
 
 async def setup(bot: commands.Bot):
