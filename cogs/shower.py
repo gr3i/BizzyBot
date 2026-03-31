@@ -12,7 +12,7 @@ CANVAS_W = 520
 CANVAS_H = 520
 AVATAR_SIZE = 205
 FRAME_COUNT = 12
-FRAME_DURATION_MS = 70
+FRAME_DURATION_MS = 50
 
 
 def crop_avatar_circle(raw_bytes: bytes, size: int) -> Image.Image:
@@ -35,27 +35,27 @@ def draw_shower_hardware(draw: ImageDraw.ImageDraw):
     line = (25, 25, 25, 255)
     fill = (245, 245, 245, 255)
 
-    # horni vodorovna trubka
-    draw.rounded_rectangle((250, 34, 392, 46), radius=6, fill=fill, outline=line, width=3)
+    # dlouha horni rovna trubka
+    draw.rounded_rectangle((205, 30, 392, 42), radius=6, fill=fill, outline=line, width=3)
 
     # pravy svisly kus
-    draw.rounded_rectangle((380, 34, 392, 98), radius=6, fill=fill, outline=line, width=3)
+    draw.rounded_rectangle((380, 30, 392, 98), radius=6, fill=fill, outline=line, width=3)
 
-    # spoj k hlavici
-    draw.rounded_rectangle((226, 42, 252, 54), radius=6, fill=fill, outline=line, width=3)
+    # kratky spoj z horni trubky do hlavice
+    draw.rounded_rectangle((176, 38, 210, 50), radius=6, fill=fill, outline=line, width=3)
 
     # vrch hlavice
-    draw.ellipse((150, 48, 260, 78), fill=fill, outline=line, width=3)
+    draw.ellipse((106, 48, 244, 78), fill=fill, outline=line, width=3)
 
-    # spodni hlavice
-    draw.ellipse((124, 62, 286, 112), fill=fill, outline=line, width=3)
+    # spodni velka hlavice
+    draw.ellipse((82, 62, 270, 116), fill=fill, outline=line, width=3)
 
-    # vnitrni oddelovaci linka
-    draw.arc((138, 66, 272, 102), start=198, end=342, fill=line, width=2)
+    # vnitrni oblouk na hlavici
+    draw.arc((98, 68, 254, 106), start=198, end=342, fill=line, width=2)
 
     # trysky
-    for x in [146, 158, 170, 182, 194, 206, 218, 230, 242, 254]:
-        draw.ellipse((x, 88, x + 3, 92), fill=line)
+    for x in [106, 120, 134, 148, 162, 176, 190, 204, 218, 232]:
+        draw.ellipse((x, 90, x + 3, 94), fill=line)
 
 
 def add_shadow(scene: Image.Image, avatar_box: tuple[int, int, int, int]):
@@ -102,7 +102,7 @@ def add_water(scene: Image.Image, frame_idx: int):
     flow_top = 98
     flow_bottom = 250
     cycle = 36
-    offset = (frame_idx * 6) % cycle
+    offset = (frame_idx * 10) % cycle
 
     for i, (start_x, start_y) in enumerate(nozzle_points):
         phase = frame_idx * 0.55 + i * 0.45
