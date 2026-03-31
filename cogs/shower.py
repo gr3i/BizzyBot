@@ -32,64 +32,55 @@ def create_background() -> Image.Image:
 
 
 def draw_shower_hardware(draw: ImageDraw.ImageDraw):
-    pipe_main = (196, 200, 208, 255)
-    pipe_shadow = (126, 132, 140, 255)
-    metal_dark = (88, 94, 102, 255)
-    metal_mid = (120, 126, 134, 255)
-    metal_light = (166, 172, 180, 255)
-    nozzle = (48, 52, 58, 255)
+    line = (20, 20, 20, 255)
+    fill = (245, 245, 245, 255)
 
-    # svisla trubka
-    draw.rounded_rectangle((372, 42, 396, 150), radius=12, fill=pipe_main)
+    # svisla leva trubka
+    draw.rounded_rectangle((145, 70, 161, 210), radius=8, fill=fill, outline=line, width=4)
 
-    # jemny stin na trubce
-    draw.rounded_rectangle((388, 42, 396, 150), radius=8, fill=pipe_shadow)
+    # horni vodorovna cast
+    draw.rounded_rectangle((152, 70, 300, 86), radius=8, fill=fill, outline=line, width=4)
 
-    # vodorovne rameno
-    draw.rounded_rectangle((286, 126, 388, 148), radius=11, fill=pipe_main)
-    draw.rounded_rectangle((286, 140, 388, 148), radius=7, fill=pipe_shadow)
+    # kratka sikma spojka
+    draw.polygon(
+        [(292, 70), (312, 70), (302, 96), (282, 96)],
+        fill=fill,
+        outline=line,
+    )
 
-    # koleno
-    draw.ellipse((366, 120, 398, 152), fill=pipe_main)
+    # kratky krk k hlavici
+    draw.rounded_rectangle((286, 92, 320, 106), radius=6, fill=fill, outline=line, width=4)
 
-    # krk hlavice
-    draw.rounded_rectangle((270, 132, 30 + 270, 146), radius=7, fill=metal_mid)
-
-    # hlavice sprchy z boku
-    draw.rounded_rectangle((206, 118, 284, 170), radius=24, fill=metal_dark)
-
-    # predni kulata cast
-    draw.ellipse((192, 118, 236, 170), fill=metal_dark)
-
-    # kovovy highlight
-    draw.rounded_rectangle((214, 126, 274, 138), radius=6, fill=metal_light)
-    draw.ellipse((200, 125, 224, 139), fill=metal_light)
+    # hlavice sprchy
+    draw.polygon(
+        [(250, 125), (275, 102), (345, 102), (370, 125), (356, 138), (264, 138)],
+        fill=fill,
+        outline=line,
+    )
 
     # spodni hrana hlavice
-    draw.rounded_rectangle((206, 160, 284, 170), radius=5, fill=metal_mid)
+    draw.line((264, 138, 356, 138), fill=line, width=4)
 
-    # trysky
-    nozzle_positions = [
-        (218, 160), (231, 162), (244, 163), (257, 162), (270, 160),
-        (224, 168), (237, 169), (250, 169), (263, 168),
-    ]
+    # kolecko/ventil vlevo
+    draw.rounded_rectangle((130, 185, 172, 225), radius=8, fill=fill, outline=line, width=4)
 
-    for x, y in nozzle_positions:
-        draw.ellipse((x - 2, y - 1, x + 2, y + 3), fill=nozzle)
+    cx, cy = 151, 205
+    r = 10
+    for angle in [0, 45, 90, 135]:
+        dx = int(math.cos(math.radians(angle)) * r)
+        dy = int(math.sin(math.radians(angle)) * r)
+        draw.line((cx - dx, cy - dy, cx + dx, cy + dy), fill=line, width=3)
+
+    draw.ellipse((145, 199, 157, 211), outline=line, width=3)
+
+    # spodni zahnuty konec trubky
+    draw.arc((120, 210, 160, 250), start=90, end=180, fill=line, width=4)
+    draw.line((120, 230, 120, 255), fill=line, width=4)
+    draw.arc((108, 245, 132, 269), start=90, end=270, fill=line, width=4)
 
 
 def add_shadow(scene: Image.Image, avatar_box: tuple[int, int, int, int]):
-    shadow = Image.new("RGBA", scene.size, (0, 0, 0, 0))
-    shadow_draw = ImageDraw.Draw(shadow)
-
-    x0, y0, x1, y1 = avatar_box
-    shadow_draw.ellipse(
-        (x0 + 14, y1 - 4, x1 - 14, y1 + 34),
-        fill=(0, 0, 0, 90),
-    )
-
-    shadow = shadow.filter(ImageFilter.GaussianBlur(16))
-    scene.alpha_composite(shadow)
+    return
 
 
 def add_bubbles(scene: Image.Image, frame_idx: int):
@@ -97,23 +88,21 @@ def add_bubbles(scene: Image.Image, frame_idx: int):
     draw = ImageDraw.Draw(bubbles)
     rng = random.Random(1337)
 
-    for i in range(9):
-        base_x = 145 + (i * 26) + rng.randint(-8, 8)
-        base_y = 360 + (i * 17) % 95
-        float_up = (frame_idx * (4 + i % 2)) % 90
+    for i in range(6):
+        base_x = 175 + i * 28 + rng.randint(-6, 6)
+        base_y = 345 + (i * 14) % 65
+        float_up = (frame_idx * (3 + i % 2)) % 65
 
-        x = base_x + int(math.sin((frame_idx + i) * 0.65) * 5)
+        x = base_x + int(math.sin((frame_idx + i) * 0.6) * 4)
         y = base_y - float_up
-        r = 6 + (i % 3) * 3
-        alpha = 105 + (i % 3) * 28
+        r = 7 + (i % 2) * 3
 
         draw.ellipse(
             (x - r, y - r, x + r, y + r),
-            outline=(255, 255, 255, alpha),
+            outline=(255, 255, 255, 150),
             width=2,
         )
 
-    bubbles = bubbles.filter(ImageFilter.GaussianBlur(0.35))
     scene.alpha_composite(bubbles)
 
 
@@ -121,61 +110,46 @@ def add_water(scene: Image.Image, frame_idx: int):
     water = Image.new("RGBA", scene.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(water)
 
-    base_points = [
-        (218, 164), (231, 166), (244, 167), (257, 166), (270, 164),
-        (224, 171), (237, 172), (250, 172), (263, 171),
+    base_lines = [
+        ((270, 142), (262, 170)),
+        ((284, 142), (278, 178)),
+        ((298, 142), (296, 186)),
+        ((312, 142), (314, 180)),
+        ((326, 142), (332, 172)),
+        ((340, 142), (350, 166)),
     ]
 
-    for i, (start_x, start_y) in enumerate(base_points):
-        phase = frame_idx * 0.85 + i * 0.55
-        length = 150 + (i % 3) * 16
-        spread = (i - (len(base_points) - 1) / 2.0) * 5.2
-        wobble = math.sin(phase) * 7
-        drift = math.cos(phase * 0.9) * 2
-
-        end_x = start_x + spread + wobble + drift
-        end_y = start_y + length
-
-        width = 2 + (i % 2)
-        alpha = 118 + (i % 4) * 18
+    for i, ((x1, y1), (x2, y2)) in enumerate(base_lines):
+        phase = frame_idx * 0.8 + i * 0.6
+        sway = math.sin(phase) * 3
+        extra = int((math.cos(phase) + 1) * 4)
 
         draw.line(
-            (start_x, start_y, end_x, end_y),
-            fill=(145, 208, 255, alpha),
-            width=width,
+            (x1, y1, x2 + sway, y2 + extra),
+            fill=(120, 200, 255, 210),
+            width=3,
         )
 
-        # sekundarni slabejsi proud vedle
+    # druha rada slabsich proudu
+    extra_lines = [
+        ((276, 146), (270, 162)),
+        ((292, 146), (289, 167)),
+        ((306, 146), (306, 171)),
+        ((320, 146), (323, 168)),
+        ((334, 146), (340, 161)),
+    ]
+
+    for i, ((x1, y1), (x2, y2)) in enumerate(extra_lines):
+        phase = frame_idx * 0.9 + i * 0.5
+        sway = math.sin(phase) * 2
+        extra = int((math.cos(phase) + 1) * 3)
+
         draw.line(
-            (start_x + 1, start_y, end_x + 3, end_y - 8),
-            fill=(190, 232, 255, max(70, alpha - 35)),
-            width=1,
+            (x1, y1, x2 + sway, y2 + extra),
+            fill=(170, 225, 255, 170),
+            width=2,
         )
 
-        # kapka uprostred
-        mid_x = start_x + (end_x - start_x) * 0.52
-        mid_y = start_y + (end_y - start_y) * 0.52
-        draw.ellipse(
-            (mid_x - 2, mid_y - 5, mid_x + 2, mid_y + 5),
-            fill=(188, 232, 255, min(255, alpha + 18)),
-        )
-
-        # splash dole
-        splash_x = end_x + math.sin(frame_idx + i * 0.7) * 5
-        splash_y = end_y + ((frame_idx * 2 + i) % 9)
-        draw.ellipse(
-            (splash_x - 3, splash_y - 3, splash_x + 3, splash_y + 3),
-            fill=(198, 236, 255, 185),
-        )
-
-    # jemna mlha vody pod hlavici
-    mist = Image.new("RGBA", scene.size, (0, 0, 0, 0))
-    mist_draw = ImageDraw.Draw(mist)
-    mist_draw.ellipse((205, 162, 292, 208), fill=(170, 220, 255, 28))
-    mist = mist.filter(ImageFilter.GaussianBlur(6))
-    water = Image.alpha_composite(water, mist)
-
-    water = water.filter(ImageFilter.GaussianBlur(0.45))
     scene.alpha_composite(water)
 
 
@@ -186,7 +160,7 @@ def build_frame(avatar: Image.Image, frame_idx: int) -> Image.Image:
     draw_shower_hardware(draw)
 
     avatar_x = (CANVAS_W - AVATAR_SIZE) // 2
-    avatar_y = 205
+    avatar_y = 210
     avatar_box = (avatar_x, avatar_y, avatar_x + AVATAR_SIZE, avatar_y + AVATAR_SIZE)
 
     add_shadow(scene, avatar_box)
