@@ -182,12 +182,12 @@ async def setup_hook():
         "cogs.say_as_bot",
         "cogs.red_or_black",
         "cogs.shower",
-        #onFirstApril.crazy_loop",
-        #onFirstApril.reverse_reposter",
-        #onFirstApril.random_reaction",
-        #"onFirstApril.crazy_responder",
-        #"onFirstApril.meow_guard", 
-        #"onFirstApril.meow_reaction",
+        "onFirstApril.crazy_loop",
+        "onFirstApril.reverse_reposter",
+        "onFirstApril.random_reaction",
+        "onFirstApril.crazy_responder",
+        "onFirstApril.meow_guard", 
+        "onFirstApril.meow_reaction",
     ]:
         try:
             await bot.load_extension(ext)
