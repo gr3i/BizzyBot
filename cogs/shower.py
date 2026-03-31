@@ -39,7 +39,7 @@ def draw_shower_hardware(draw: ImageDraw.ImageDraw):
     draw.rounded_rectangle((190, 22, 392, 40), radius=10, fill=fill, outline=line, width=3)
 
     # 2) prava svisla trubka dolu
-    draw.rounded_rectangle((372, 40, 398, 100), radius=10, fill=fill, outline=line, width=3)
+    draw.rounded_rectangle((376, 40, 394, 100), radius=10, fill=fill, outline=line, width=3)
 
     # 3) kratka leva spojka do hlavice
     draw.rounded_rectangle((144, 38, 188, 54), radius=16, fill=fill, outline=line, width=3)
