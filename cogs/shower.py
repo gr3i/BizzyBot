@@ -32,38 +32,46 @@ def create_background() -> Image.Image:
 
 
 def draw_shower_hardware(draw: ImageDraw.ImageDraw):
-    pipe = (185, 190, 198, 255)
-    pipe_dark = (120, 126, 134, 255)
-    head = (95, 101, 109, 255)
-    head_light = (135, 141, 149, 255)
-    nozzle = (55, 60, 66, 255)
+    pipe_main = (196, 200, 208, 255)
+    pipe_shadow = (126, 132, 140, 255)
+    metal_dark = (88, 94, 102, 255)
+    metal_mid = (120, 126, 134, 255)
+    metal_light = (166, 172, 180, 255)
+    nozzle = (48, 52, 58, 255)
 
     # svisla trubka
-    draw.rounded_rectangle((356, 52, 380, 162), radius=12, fill=pipe)
+    draw.rounded_rectangle((372, 42, 396, 150), radius=12, fill=pipe_main)
 
-    # vodorovna cast
-    draw.rounded_rectangle((270, 138, 368, 160), radius=11, fill=pipe)
+    # jemny stin na trubce
+    draw.rounded_rectangle((388, 42, 396, 150), radius=8, fill=pipe_shadow)
 
-    # napojeni / koleno
-    draw.ellipse((348, 132, 384, 168), fill=pipe)
+    # vodorovne rameno
+    draw.rounded_rectangle((286, 126, 388, 148), radius=11, fill=pipe_main)
+    draw.rounded_rectangle((286, 140, 388, 148), radius=7, fill=pipe_shadow)
+
+    # koleno
+    draw.ellipse((366, 120, 398, 152), fill=pipe_main)
+
+    # krk hlavice
+    draw.rounded_rectangle((270, 132, 30 + 270, 146), radius=7, fill=metal_mid)
 
     # hlavice sprchy z boku
-    draw.rounded_rectangle((214, 134, 286, 178), radius=18, fill=head)
+    draw.rounded_rectangle((206, 118, 284, 170), radius=24, fill=metal_dark)
 
-    # predni zaoblena cast hlavice
-    draw.ellipse((200, 132, 244, 180), fill=head)
+    # predni kulata cast
+    draw.ellipse((192, 118, 236, 170), fill=metal_dark)
 
-    # horni highlight, aby to pusobilo vic kovove
-    draw.rounded_rectangle((220, 140, 280, 151), radius=6, fill=head_light)
-    draw.ellipse((208, 139, 230, 154), fill=head_light)
+    # kovovy highlight
+    draw.rounded_rectangle((214, 126, 274, 138), radius=6, fill=metal_light)
+    draw.ellipse((200, 125, 224, 139), fill=metal_light)
 
-    # spodni okraj hlavice
-    draw.rounded_rectangle((212, 168, 286, 178), radius=5, fill=pipe_dark)
+    # spodni hrana hlavice
+    draw.rounded_rectangle((206, 160, 284, 170), radius=5, fill=metal_mid)
 
-    # trysky zespodu
+    # trysky
     nozzle_positions = [
-        (222, 168), (236, 170), (250, 171), (264, 170), (278, 168),
-        (229, 176), (243, 177), (257, 177), (271, 176),
+        (218, 160), (231, 162), (244, 163), (257, 162), (270, 160),
+        (224, 168), (237, 169), (250, 169), (263, 168),
     ]
 
     for x, y in nozzle_positions:
@@ -89,15 +97,15 @@ def add_bubbles(scene: Image.Image, frame_idx: int):
     draw = ImageDraw.Draw(bubbles)
     rng = random.Random(1337)
 
-    for i in range(14):
-        base_x = 120 + (i * 23) % 220 + rng.randint(-10, 10)
-        base_y = 355 + (i * 19) % 120
-        float_up = (frame_idx * (5 + i % 3)) % 120
+    for i in range(9):
+        base_x = 145 + (i * 26) + rng.randint(-8, 8)
+        base_y = 360 + (i * 17) % 95
+        float_up = (frame_idx * (4 + i % 2)) % 90
 
-        x = base_x + int(math.sin((frame_idx + i) * 0.7) * 6)
+        x = base_x + int(math.sin((frame_idx + i) * 0.65) * 5)
         y = base_y - float_up
-        r = 6 + (i % 4) * 2
-        alpha = 110 + (i % 3) * 30
+        r = 6 + (i % 3) * 3
+        alpha = 105 + (i % 3) * 28
 
         draw.ellipse(
             (x - r, y - r, x + r, y + r),
@@ -105,7 +113,7 @@ def add_bubbles(scene: Image.Image, frame_idx: int):
             width=2,
         )
 
-    bubbles = bubbles.filter(ImageFilter.GaussianBlur(0.5))
+    bubbles = bubbles.filter(ImageFilter.GaussianBlur(0.35))
     scene.alpha_composite(bubbles)
 
 
@@ -113,31 +121,61 @@ def add_water(scene: Image.Image, frame_idx: int):
     water = Image.new("RGBA", scene.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(water)
 
-    for i in range(15):
-        start_x = 224 + i * 4
-        wobble = math.sin((frame_idx * 0.9) + i * 0.5) * 7
-        start_y = 177 + (i % 2) * 2
+    base_points = [
+        (218, 164), (231, 166), (244, 167), (257, 166), (270, 164),
+        (224, 171), (237, 172), (250, 172), (263, 171),
+    ]
 
-        end_x = start_x + wobble + (i - 7) * 1.5
-        end_y = 360 + (i % 4) * 10
+    for i, (start_x, start_y) in enumerate(base_points):
+        phase = frame_idx * 0.85 + i * 0.55
+        length = 150 + (i % 3) * 16
+        spread = (i - (len(base_points) - 1) / 2.0) * 5.2
+        wobble = math.sin(phase) * 7
+        drift = math.cos(phase * 0.9) * 2
+
+        end_x = start_x + spread + wobble + drift
+        end_y = start_y + length
 
         width = 2 + (i % 2)
-        alpha = 120 + (i % 4) * 20
+        alpha = 118 + (i % 4) * 18
 
         draw.line(
             (start_x, start_y, end_x, end_y),
-            fill=(140, 205, 255, alpha),
+            fill=(145, 208, 255, alpha),
             width=width,
         )
 
-        splash_x = end_x + math.sin(frame_idx + i) * 4
-        splash_y = end_y + ((frame_idx * 2 + i) % 10)
-        draw.ellipse(
-            (splash_x - 3, splash_y - 3, splash_x + 3, splash_y + 3),
-            fill=(190, 232, 255, 190),
+        # sekundarni slabejsi proud vedle
+        draw.line(
+            (start_x + 1, start_y, end_x + 3, end_y - 8),
+            fill=(190, 232, 255, max(70, alpha - 35)),
+            width=1,
         )
 
-    water = water.filter(ImageFilter.GaussianBlur(0.5))
+        # kapka uprostred
+        mid_x = start_x + (end_x - start_x) * 0.52
+        mid_y = start_y + (end_y - start_y) * 0.52
+        draw.ellipse(
+            (mid_x - 2, mid_y - 5, mid_x + 2, mid_y + 5),
+            fill=(188, 232, 255, min(255, alpha + 18)),
+        )
+
+        # splash dole
+        splash_x = end_x + math.sin(frame_idx + i * 0.7) * 5
+        splash_y = end_y + ((frame_idx * 2 + i) % 9)
+        draw.ellipse(
+            (splash_x - 3, splash_y - 3, splash_x + 3, splash_y + 3),
+            fill=(198, 236, 255, 185),
+        )
+
+    # jemna mlha vody pod hlavici
+    mist = Image.new("RGBA", scene.size, (0, 0, 0, 0))
+    mist_draw = ImageDraw.Draw(mist)
+    mist_draw.ellipse((205, 162, 292, 208), fill=(170, 220, 255, 28))
+    mist = mist.filter(ImageFilter.GaussianBlur(6))
+    water = Image.alpha_composite(water, mist)
+
+    water = water.filter(ImageFilter.GaussianBlur(0.45))
     scene.alpha_composite(water)
 
 
@@ -148,7 +186,7 @@ def build_frame(avatar: Image.Image, frame_idx: int) -> Image.Image:
     draw_shower_hardware(draw)
 
     avatar_x = (CANVAS_W - AVATAR_SIZE) // 2
-    avatar_y = 190
+    avatar_y = 205
     avatar_box = (avatar_x, avatar_y, avatar_x + AVATAR_SIZE, avatar_y + AVATAR_SIZE)
 
     add_shadow(scene, avatar_box)
