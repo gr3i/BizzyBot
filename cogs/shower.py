@@ -42,19 +42,19 @@ def draw_shower_hardware(draw: ImageDraw.ImageDraw):
     draw.rounded_rectangle((376, 40, 394, 100), radius=10, fill=fill, outline=line, width=3)
 
     # 3) kratka leva spojka do hlavice
-    draw.rounded_rectangle((144, 38, 188, 54), radius=16, fill=fill, outline=line, width=3)
+    draw.rounded_rectangle((154, 38, 198, 54), radius=16, fill=fill, outline=line, width=3)
 
     # hlavice - vrsek
-    draw.ellipse((78, 52, 246, 80), fill=fill, outline=line, width=3)
+    draw.ellipse((88, 52, 256, 80), fill=fill, outline=line, width=3)
 
     # hlavice - spodek
-    draw.ellipse((52, 66, 272, 122), fill=fill, outline=line, width=3)
+    draw.ellipse((62, 66, 282, 122), fill=fill, outline=line, width=3)
 
     # vnitrni linka na hlavici
-    draw.arc((74, 72, 250, 112), start=198, end=342, fill=line, width=2)
+    draw.arc((84, 72, 260, 112), start=198, end=342, fill=line, width=2)
 
     # trysky
-    for x in [84, 98, 112, 126, 140, 154, 168, 182, 196, 210, 224]:
+    for x in [84, 108, 122, 136, 150, 164, 178, 192, 206, 220, 234]:
         draw.ellipse((x, 94, x + 3, 98), fill=line)
 
 
