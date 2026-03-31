@@ -207,22 +207,54 @@ def build_frame(avatar: Image.Image, frame_idx: int) -> Image.Image:
 
 def build_shower_gif(raw_bytes: bytes) -> io.BytesIO:
     avatar = crop_avatar_circle(raw_bytes, AVATAR_SIZE)
-    frames = [build_frame(avatar, idx) for idx in range(FRAME_COUNT)]
+    rgba_frames = [build_frame(avatar, idx) for idx in range(FRAME_COUNT)]
+
+    gif_frames = []
+    transparent_index = 0
+
+    for frame in rgba_frames:
+        # preved frame na RGBA
+        rgba = frame.convert("RGBA")
+
+        # vytvor paletovy obrazek s rezervovanou transparentni barvou na indexu 0
+        pal = Image.new("P", rgba.size, 0)
+        pal.putpalette(
+            [0, 0, 0] +  # index 0 = transparent
+            [i for rgb in [(j, j, j) for j in range(1, 256)] for i in rgb][:255 * 3]
+        )
+
+        # maska pruhlednosti
+        alpha = rgba.getchannel("A")
+        opaque = Image.new("RGBA", rgba.size, (255, 255, 255, 0))
+        opaque.paste(rgba, mask=alpha)
+
+        # preved bez alpha do adaptivni palety
+        quant = opaque.convert("RGB").convert("P", palette=Image.Palette.ADAPTIVE, colors=255)
+
+        # vloz do noveho obrazku, kde 0 zustane transparentni
+        out = Image.new("P", rgba.size, transparent_index)
+        out.putpalette(quant.getpalette()[:3 * 255] + [0, 0, 0])
+
+        mask = alpha.point(lambda a: 255 if a > 0 else 0)
+        out.paste(quant, mask=mask)
+
+        out.info["transparency"] = transparent_index
+        out.info["disposal"] = 2
+        gif_frames.append(out)
 
     output = io.BytesIO()
-    frames[0].save(
+    gif_frames[0].save(
         output,
         format="GIF",
         save_all=True,
-        append_images=frames[1:],
+        append_images=gif_frames[1:],
         duration=FRAME_DURATION_MS,
         loop=0,
+        transparency=transparent_index,
         disposal=2,
         optimize=False,
-        transparency=0,
     )
     output.seek(0)
-
     return output
 
 
