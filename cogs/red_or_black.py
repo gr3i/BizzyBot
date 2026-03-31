@@ -1,0 +1,26 @@
+import random
+from discord.ext import commands
+from discord import app_commands, Interaction, Embed
+
+
+class RedOrBlack(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @app_commands.command(
+        name="redorblack",
+        description="Náhodně vybere red nebo black (50/50)."
+    )
+    async def redorblack(self, interaction: Interaction):
+        result = random.choice(["Red", "Black"])
+
+        embed = Embed(
+            title="Red or Black",
+            description=f"Padlo: **{result}**"
+        )
+
+        await interaction.response.send_message(embed=embed)
+
+
+async def setup(bot):
+    await bot.add_cog(RedOrBlack(bot))

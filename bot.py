@@ -180,6 +180,7 @@ async def setup_hook():
         "cogs.bookmark_dm",
         "cogs.role_spolku",
         "cogs.say_as_bot",
+        "cogs.red_or_black",
         #onFirstApril.crazy_loop",
         #onFirstApril.reverse_reposter",
         #onFirstApril.random_reaction",
