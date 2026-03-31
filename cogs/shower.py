@@ -67,23 +67,25 @@ def add_shadow(scene: Image.Image, avatar_box: tuple[int, int, int, int]):
 def add_bubbles(scene: Image.Image, frame_idx: int):
     bubbles = Image.new("RGBA", scene.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(bubbles)
+    rng = random.Random(1337)
 
-    points = [
-        (175, 330, 9),
-        (290, 346, 7),
-        (205, 372, 6),
-    ]
+    for i in range(9):
+        base_x = 118 + (i * 21) + rng.randint(-6, 6)
+        base_y = 300 + (i * 15) % 78
+        float_up = (frame_idx * (4 + i % 2)) % 75
 
-    for i, (x, y, r) in enumerate(points):
-        yy = y - ((frame_idx * (2 + i)) % 18)
-        xx = x + int(math.sin(frame_idx * 0.5 + i) * 2)
+        x = base_x + int(math.sin((frame_idx + i) * 0.65) * 4)
+        y = base_y - float_up
+        r = 5 + (i % 3) * 3
+        alpha = 105 + (i % 3) * 26
 
         draw.ellipse(
-            (xx - r, yy - r, xx + r, yy + r),
-            outline=(255, 255, 255, 120),
+            (x - r, y - r, x + r, y + r),
+            outline=(255, 255, 255, alpha),
             width=2,
         )
 
+    bubbles = bubbles.filter(ImageFilter.GaussianBlur(0.3))
     scene.alpha_composite(bubbles)
 
 
@@ -91,41 +93,56 @@ def add_water(scene: Image.Image, frame_idx: int):
     water = Image.new("RGBA", scene.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(water)
 
-    xs = [150, 164, 178, 192, 206, 220, 234, 248, 262]
-    lengths = [122, 138, 130, 145, 156, 143, 132, 140, 124]
+    # body zhruba pod spodkem hlavice
+    base_points = [
+    (109, 96), (119, 97), (129, 98), (139, 99), (149, 100),
+    (159, 100), (169, 100), (179, 100), (189, 99), (199, 98),
+    (209, 97), (219, 96), (229, 95),
+    ]
 
-    for i, x in enumerate(xs):
-        phase = frame_idx * 0.75 + i * 0.45
-        sway = math.sin(phase) * 2.2
-        extra = math.cos(phase * 0.9) * 4
+    for i, (start_x, start_y) in enumerate(base_points):
+        phase = frame_idx * 0.85 + i * 0.55
+        length = 118 + (i % 3) * 14
+        spread = (i - (len(base_points) - 1) / 2.0) * 3.8
+        wobble = math.sin(phase) * 3.2
+        drift = math.cos(phase * 0.9) * 1.5
 
-        y1 = 127
-        y2 = y1 + lengths[i] + extra
+        end_x = start_x + spread + wobble + drift
+        end_y = start_y + length
+
+        width = 2 + (i % 2)
+        alpha = 120 + (i % 4) * 18
 
         draw.line(
-            (x, y1, x + sway, y2),
-            fill=(120, 200, 255, 190),
-            width=2,
+            (start_x, start_y, end_x, end_y),
+            fill=(145, 208, 255, alpha),
+            width=width,
         )
 
-    # jemna druha vrstva mezi proudy
-    xs2 = [157, 171, 185, 199, 213, 227, 241, 255]
-    lengths2 = [110, 126, 121, 135, 146, 132, 124, 116]
-
-    for i, x in enumerate(xs2):
-        phase = frame_idx * 0.95 + i * 0.38
-        sway = math.sin(phase) * 1.6
-        extra = math.cos(phase) * 3
-
-        y1 = 129
-        y2 = y1 + lengths2[i] + extra
-
+        # vedlejsi slabsi proud
         draw.line(
-            (x, y1, x + sway, y2),
-            fill=(180, 228, 255, 120),
+            (start_x + 1, start_y, end_x + 2, end_y - 8),
+            fill=(190, 232, 255, max(75, alpha - 38)),
             width=1,
         )
 
+        # kapka uprostred proudu
+        mid_x = start_x + (end_x - start_x) * 0.52
+        mid_y = start_y + (end_y - start_y) * 0.52
+        draw.ellipse(
+            (mid_x - 2, mid_y - 5, mid_x + 2, mid_y + 5),
+            fill=(188, 232, 255, min(255, alpha + 18)),
+        )
+
+        # mala kapka dole
+        splash_x = end_x + math.sin(frame_idx + i * 0.7) * 4
+        splash_y = end_y + ((frame_idx * 2 + i) % 8)
+        draw.ellipse(
+            (splash_x - 2.5, splash_y - 2.5, splash_x + 2.5, splash_y + 2.5),
+            fill=(198, 236, 255, 180),
+        )
+
+    water = water.filter(ImageFilter.GaussianBlur(0.35))
     scene.alpha_composite(water)
 
 
@@ -135,8 +152,8 @@ def build_frame(avatar: Image.Image, frame_idx: int) -> Image.Image:
 
     draw_shower_hardware(draw)
 
-    avatar_x = 155
-    avatar_y = 195
+    avatar_x = 115
+    avatar_y = 165
     avatar_box = (avatar_x, avatar_y, avatar_x + AVATAR_SIZE, avatar_y + AVATAR_SIZE)
 
     add_shadow(scene, avatar_box)
