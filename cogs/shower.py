@@ -95,30 +95,45 @@ def add_water(scene: Image.Image, frame_idx: int):
     draw = ImageDraw.Draw(water)
 
     nozzle_points = [
-    (148, 98), (162, 98), (176, 98), (190, 98), (204, 98),
-    (218, 98), (232, 98), (246, 98), (260, 98), (274, 98), (288, 98),
+        (148, 98), (162, 98), (176, 98), (190, 98), (204, 98),
+        (218, 98), (232, 98), (246, 98), (260, 98), (274, 98), (288, 98),
     ]
 
     flow_top = 98
-    flow_bottom = 250
+    flow_bottom = 255
     cycle = 36
     offset = (frame_idx * 10) % cycle
 
+    # globalni pohyb sprchy do stran
+    sweep = math.sin(frame_idx * 0.45) * 18
+
+    # lehke "otaceni" kolem stredu hlavice
+    center_x = sum(x for x, _ in nozzle_points) / len(nozzle_points)
+
     for i, (start_x, start_y) in enumerate(nozzle_points):
         phase = frame_idx * 0.55 + i * 0.45
-        spread = (i - (len(nozzle_points) - 1) / 2.0) * 2.8
+
+        # jak dal je tryska od stredu hlavice
+        rel = (start_x - center_x) / 70.0
+
+        # horni bod se lehce pohybuje do stran
+        origin_x = start_x + sweep * 0.35
+
+        # dole se proud rozhodi vic, aby to pusobilo jako kyvani sprchy
+        side_bias = sweep * (1.0 + abs(rel) * 0.35)
+
+        # kazdy proud ma lehce jine vlnění
         sway = math.sin(phase) * 2.2
+        twist = math.cos(frame_idx * 0.35 + rel * 2.4) * 3.0
 
-        x = start_x + spread * 0.15
-
-        # jemny hlavni proud jako podklad
+        # jemny podkladovy proud
         draw.line(
-            (x, flow_top, x + sway, flow_bottom),
-            fill=(150, 212, 255, 70),
+            (origin_x, flow_top, origin_x + side_bias * 0.55 + sway, flow_bottom),
+            fill=(150, 212, 255, 65),
             width=1,
         )
 
-        # animovane segmenty, ktere vytvari dojem teceni dolu
+        # segmenty, ktere se hybou dolu
         seg_len = 16 + (i % 3) * 2
         gap = 14 + (i % 2) * 2
 
@@ -128,8 +143,12 @@ def add_water(scene: Image.Image, frame_idx: int):
             y2 = min(flow_bottom, y + seg_len)
 
             if y2 > flow_top:
-                x1 = x + math.sin((y1 * 0.05) + phase) * 1.8
-                x2 = x + math.sin((y2 * 0.05) + phase) * 2.4 + sway
+                # cim niz je voda, tim vic se vychyli do strany
+                fall_ratio_1 = (y1 - flow_top) / max(flow_bottom - flow_top, 1)
+                fall_ratio_2 = (y2 - flow_top) / max(flow_bottom - flow_top, 1)
+
+                x1 = origin_x + side_bias * fall_ratio_1 * 0.75 + math.sin((y1 * 0.05) + phase) * 1.6
+                x2 = origin_x + side_bias * fall_ratio_2 + math.sin((y2 * 0.05) + phase) * 2.1 + sway + twist
 
                 draw.line(
                     (x1, y1, x2, y2),
@@ -145,17 +164,20 @@ def add_water(scene: Image.Image, frame_idx: int):
 
             y += seg_len + gap
 
-        # mala kapka nekde v proudu
+        # kapka nekde v proudu
         droplet_y = flow_top + ((frame_idx * 9 + i * 13) % (flow_bottom - flow_top))
-        droplet_x = x + math.sin(phase + droplet_y * 0.04) * 2.5
+        droplet_ratio = (droplet_y - flow_top) / max(flow_bottom - flow_top, 1)
+        droplet_x = origin_x + side_bias * droplet_ratio + math.sin(phase + droplet_y * 0.04) * 2.5
+
         draw.ellipse(
             (droplet_x - 2, droplet_y - 4, droplet_x + 2, droplet_y + 4),
             fill=(195, 235, 255, 185),
         )
 
         # splash dole
+        splash_x = origin_x + side_bias + math.sin(frame_idx + i) * 3
         splash_y = flow_bottom + ((frame_idx * 3 + i) % 10)
-        splash_x = x + sway * 1.3 + math.sin(frame_idx + i) * 3
+
         draw.ellipse(
             (splash_x - 2.5, splash_y - 2.5, splash_x + 2.5, splash_y + 2.5),
             fill=(198, 236, 255, 175),
