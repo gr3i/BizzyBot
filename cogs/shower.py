@@ -60,13 +60,34 @@ def draw_combo_shower_hardware(draw: ImageDraw.ImageDraw, avatar_centers: list[i
     head_left = left - 20
     head_right = right + 20
 
-    draw.rounded_rectangle((right - 20, 22, right + 182, 40), radius=10, fill=fill, outline=line, width=3)
-    draw.rounded_rectangle((right + 166, 40, right + 184, 100), radius=10, fill=fill, outline=line, width=3)
-    draw.rounded_rectangle((right - 26, 38, right + 18, 54), radius=16, fill=fill, outline=line, width=3)
+    head_center_x = (head_left + head_right) // 2
+
+    # jen jedna svisla trubka nad hlavici
+    pipe_w = 28
+    pipe_h = 42
+    pipe_x1 = head_center_x - pipe_w // 2
+    pipe_x2 = head_center_x + pipe_w // 2
+    pipe_y1 = 18
+    pipe_y2 = 60
+
+    draw.rounded_rectangle(
+        (pipe_x1, pipe_y1, pipe_x2, pipe_y2),
+        radius=10,
+        fill=fill,
+        outline=line,
+        width=3,
+    )
+
+    # hlavice - vrsek
     draw.ellipse((head_left + 46, 52, head_right - 46, 80), fill=fill, outline=line, width=3)
+
+    # hlavice - spodek
     draw.ellipse((head_left, 66, head_right, 122), fill=fill, outline=line, width=3)
+
+    # vnitrni linka
     draw.arc((head_left + 12, 72, head_right - 22, 112), start=198, end=342, fill=line, width=2)
 
+    # trysky po cele sirce
     nozzle_start = head_left + 32
     nozzle_end = head_right - 32
     count = max(11, int((nozzle_end - nozzle_start) / 16))
