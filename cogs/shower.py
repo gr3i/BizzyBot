@@ -100,12 +100,12 @@ def add_water(scene: Image.Image, frame_idx: int):
     ]
 
     flow_top = 98
-    flow_bottom = 255
+    flow_bottom = 235
     cycle = 36
-    offset = (frame_idx * 10) % cycle
+    offset = (frame_idx * 7) % cycle
 
     # globalni pohyb sprchy do stran
-    sweep = math.sin(frame_idx * 0.25 - 1.0) * 12
+    sweep = math.sin(frame_idx * 0.18 - 1.0) * 18
 
     # lehke "otaceni" kolem stredu hlavice
     center_x = sum(x for x, _ in nozzle_points) / len(nozzle_points)
