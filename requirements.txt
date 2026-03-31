@@ -3,3 +3,4 @@ requests
 aiohttp
 python-dotenv
 SQLAlchemy>=2.0
+Pillow

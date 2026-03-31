@@ -181,6 +181,7 @@ async def setup_hook():
         "cogs.role_spolku",
         "cogs.say_as_bot",
         "cogs.red_or_black",
+        "cogs.shower",
         #onFirstApril.crazy_loop",
         #onFirstApril.reverse_reposter",
         #onFirstApril.random_reaction",
