@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 CANVAS_W = 520
 CANVAS_H = 520
-AVATAR_SIZE = 230
+AVATAR_SIZE = 210
 FRAME_COUNT = 12
 FRAME_DURATION_MS = 70
 
@@ -32,51 +32,32 @@ def create_background() -> Image.Image:
 
 
 def draw_shower_hardware(draw: ImageDraw.ImageDraw):
-    line = (20, 20, 20, 255)
+    line = (25, 25, 25, 255)
     fill = (245, 245, 245, 255)
 
-    # svisla leva trubka
-    draw.rounded_rectangle((145, 70, 161, 210), radius=8, fill=fill, outline=line, width=4)
+    # horni trubka
+    draw.rounded_rectangle((250, 58, 386, 72), radius=7, fill=fill, outline=line, width=3)
 
-    # horni vodorovna cast
-    draw.rounded_rectangle((152, 70, 300, 86), radius=8, fill=fill, outline=line, width=4)
+    # pravy svisly kus
+    draw.rounded_rectangle((372, 58, 386, 128), radius=7, fill=fill, outline=line, width=3)
 
-    # kratka sikma spojka
-    draw.polygon(
-        [(292, 70), (312, 70), (302, 96), (282, 96)],
-        fill=fill,
-        outline=line,
-    )
+    # kratky spoj ke hlavici
+    draw.rounded_rectangle((232, 70, 252, 84), radius=6, fill=fill, outline=line, width=3)
 
-    # kratky krk k hlavici
-    draw.rounded_rectangle((286, 92, 320, 106), radius=6, fill=fill, outline=line, width=4)
+    # horni cast hlavice
+    draw.ellipse((154, 78, 262, 112), fill=fill, outline=line, width=3)
 
-    # hlavice sprchy
-    draw.polygon(
-        [(250, 125), (275, 102), (345, 102), (370, 125), (356, 138), (264, 138)],
-        fill=fill,
-        outline=line,
-    )
+    # spodni velka hlavice
+    draw.ellipse((130, 92, 286, 142), fill=fill, outline=line, width=3)
 
-    # spodni hrana hlavice
-    draw.line((264, 138, 356, 138), fill=line, width=4)
+    # tenka oddelovaci linka na hlavici
+    draw.arc((142, 98, 274, 132), start=200, end=340, fill=line, width=2)
 
-    # kolecko/ventil vlevo
-    draw.rounded_rectangle((130, 185, 172, 225), radius=8, fill=fill, outline=line, width=4)
-
-    cx, cy = 151, 205
-    r = 10
-    for angle in [0, 45, 90, 135]:
-        dx = int(math.cos(math.radians(angle)) * r)
-        dy = int(math.sin(math.radians(angle)) * r)
-        draw.line((cx - dx, cy - dy, cx + dx, cy + dy), fill=line, width=3)
-
-    draw.ellipse((145, 199, 157, 211), outline=line, width=3)
-
-    # spodni zahnuty konec trubky
-    draw.arc((120, 210, 160, 250), start=90, end=180, fill=line, width=4)
-    draw.line((120, 230, 120, 255), fill=line, width=4)
-    draw.arc((108, 245, 132, 269), start=90, end=270, fill=line, width=4)
+    # trysky
+    nozzle_y1 = 118
+    nozzle_y2 = 125
+    for x in range(150, 267, 12):
+        draw.ellipse((x, nozzle_y1, x + 2, nozzle_y2), fill=line)
 
 
 def add_shadow(scene: Image.Image, avatar_box: tuple[int, int, int, int]):
@@ -86,20 +67,20 @@ def add_shadow(scene: Image.Image, avatar_box: tuple[int, int, int, int]):
 def add_bubbles(scene: Image.Image, frame_idx: int):
     bubbles = Image.new("RGBA", scene.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(bubbles)
-    rng = random.Random(1337)
 
-    for i in range(6):
-        base_x = 175 + i * 28 + rng.randint(-6, 6)
-        base_y = 345 + (i * 14) % 65
-        float_up = (frame_idx * (3 + i % 2)) % 65
+    points = [
+        (175, 330, 9),
+        (290, 346, 7),
+        (205, 372, 6),
+    ]
 
-        x = base_x + int(math.sin((frame_idx + i) * 0.6) * 4)
-        y = base_y - float_up
-        r = 7 + (i % 2) * 3
+    for i, (x, y, r) in enumerate(points):
+        yy = y - ((frame_idx * (2 + i)) % 18)
+        xx = x + int(math.sin(frame_idx * 0.5 + i) * 2)
 
         draw.ellipse(
-            (x - r, y - r, x + r, y + r),
-            outline=(255, 255, 255, 150),
+            (xx - r, yy - r, xx + r, yy + r),
+            outline=(255, 255, 255, 120),
             width=2,
         )
 
@@ -110,44 +91,39 @@ def add_water(scene: Image.Image, frame_idx: int):
     water = Image.new("RGBA", scene.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(water)
 
-    base_lines = [
-        ((270, 142), (262, 170)),
-        ((284, 142), (278, 178)),
-        ((298, 142), (296, 186)),
-        ((312, 142), (314, 180)),
-        ((326, 142), (332, 172)),
-        ((340, 142), (350, 166)),
-    ]
+    xs = [150, 164, 178, 192, 206, 220, 234, 248, 262]
+    lengths = [122, 138, 130, 145, 156, 143, 132, 140, 124]
 
-    for i, ((x1, y1), (x2, y2)) in enumerate(base_lines):
-        phase = frame_idx * 0.8 + i * 0.6
-        sway = math.sin(phase) * 3
-        extra = int((math.cos(phase) + 1) * 4)
+    for i, x in enumerate(xs):
+        phase = frame_idx * 0.75 + i * 0.45
+        sway = math.sin(phase) * 2.2
+        extra = math.cos(phase * 0.9) * 4
+
+        y1 = 127
+        y2 = y1 + lengths[i] + extra
 
         draw.line(
-            (x1, y1, x2 + sway, y2 + extra),
-            fill=(120, 200, 255, 210),
-            width=3,
+            (x, y1, x + sway, y2),
+            fill=(120, 200, 255, 190),
+            width=2,
         )
 
-    # druha rada slabsich proudu
-    extra_lines = [
-        ((276, 146), (270, 162)),
-        ((292, 146), (289, 167)),
-        ((306, 146), (306, 171)),
-        ((320, 146), (323, 168)),
-        ((334, 146), (340, 161)),
-    ]
+    # jemna druha vrstva mezi proudy
+    xs2 = [157, 171, 185, 199, 213, 227, 241, 255]
+    lengths2 = [110, 126, 121, 135, 146, 132, 124, 116]
 
-    for i, ((x1, y1), (x2, y2)) in enumerate(extra_lines):
-        phase = frame_idx * 0.9 + i * 0.5
-        sway = math.sin(phase) * 2
-        extra = int((math.cos(phase) + 1) * 3)
+    for i, x in enumerate(xs2):
+        phase = frame_idx * 0.95 + i * 0.38
+        sway = math.sin(phase) * 1.6
+        extra = math.cos(phase) * 3
+
+        y1 = 129
+        y2 = y1 + lengths2[i] + extra
 
         draw.line(
-            (x1, y1, x2 + sway, y2 + extra),
-            fill=(170, 225, 255, 170),
-            width=2,
+            (x, y1, x + sway, y2),
+            fill=(180, 228, 255, 120),
+            width=1,
         )
 
     scene.alpha_composite(water)
@@ -159,8 +135,8 @@ def build_frame(avatar: Image.Image, frame_idx: int) -> Image.Image:
 
     draw_shower_hardware(draw)
 
-    avatar_x = (CANVAS_W - AVATAR_SIZE) // 2
-    avatar_y = 210
+    avatar_x = 155
+    avatar_y = 195
     avatar_box = (avatar_x, avatar_y, avatar_x + AVATAR_SIZE, avatar_y + AVATAR_SIZE)
 
     add_shadow(scene, avatar_box)
