@@ -42,7 +42,7 @@ def draw_shower_hardware(draw: ImageDraw.ImageDraw):
     draw.rounded_rectangle((380, 26, 392, 98), radius=6, fill=fill, outline=line, width=3)
 
     # 3) kratka leva spojka do hlavice
-    draw.rounded_rectangle((150, 34, 202, 52), radius=12, fill=fill, outline=line, width=3)
+    draw.rounded_rectangle((144, 34, 188, 52), radius=12, fill=fill, outline=line, width=3)
 
     # hlavice - vrsek
     draw.ellipse((78, 52, 246, 80), fill=fill, outline=line, width=3)
