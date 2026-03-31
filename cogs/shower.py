@@ -105,13 +105,13 @@ def add_water(scene: Image.Image, frame_idx: int):
     offset = (frame_idx * 6) % cycle
 
     # globalni pohyb sprchy do stran
-    sweep = math.sin(frame_idx * 0.15 - 1.1) * 12
+    sweep = math.sin(frame_idx * 0.08 - 1.1) * 6
 
     # lehke "otaceni" kolem stredu hlavice
     center_x = sum(x for x, _ in nozzle_points) / len(nozzle_points)
 
     for i, (start_x, start_y) in enumerate(nozzle_points):
-        phase = frame_idx * 0.38 + i * 0.40
+        phase = frame_idx * 0.20 + i * 0.32
 
         # jak dal je tryska od stredu hlavice
         rel = (start_x - center_x) / 70.0
@@ -120,11 +120,11 @@ def add_water(scene: Image.Image, frame_idx: int):
         origin_x = start_x + sweep * 0.35
 
         # dole se proud rozhodi vic, aby to pusobilo jako kyvani sprchy
-        side_bias = sweep * (0.72 + abs(rel) * 0.18)
+        side_bias = sweep * (0.45 + abs(rel) * 0.10)
 
         # kazdy proud ma lehce jine vlnění
-        sway = math.sin(phase) * 1.2
-        twist = math.cos(frame_idx * 0.22 + rel * 2.0) * 1.4
+        sway = math.sin(phase) * 0.6
+        twist = math.cos(frame_idx * 0.10 + rel * 1.6) * 0.6
 
         # jemny podkladovy proud
         draw.line(
