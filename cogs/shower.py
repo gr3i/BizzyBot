@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 CANVAS_W = 520
 CANVAS_H = 520
-AVATAR_SIZE = 210
+AVATAR_SIZE = 205
 FRAME_COUNT = 12
 FRAME_DURATION_MS = 70
 
@@ -35,29 +35,27 @@ def draw_shower_hardware(draw: ImageDraw.ImageDraw):
     line = (25, 25, 25, 255)
     fill = (245, 245, 245, 255)
 
-    # horni trubka
-    draw.rounded_rectangle((250, 58, 386, 72), radius=7, fill=fill, outline=line, width=3)
+    # horni vodorovna trubka
+    draw.rounded_rectangle((250, 34, 392, 46), radius=6, fill=fill, outline=line, width=3)
 
     # pravy svisly kus
-    draw.rounded_rectangle((372, 58, 386, 128), radius=7, fill=fill, outline=line, width=3)
+    draw.rounded_rectangle((380, 34, 392, 98), radius=6, fill=fill, outline=line, width=3)
 
-    # kratky spoj ke hlavici
-    draw.rounded_rectangle((232, 70, 252, 84), radius=6, fill=fill, outline=line, width=3)
+    # spoj k hlavici
+    draw.rounded_rectangle((226, 42, 252, 54), radius=6, fill=fill, outline=line, width=3)
 
-    # horni cast hlavice
-    draw.ellipse((154, 78, 262, 112), fill=fill, outline=line, width=3)
+    # vrch hlavice
+    draw.ellipse((150, 48, 260, 78), fill=fill, outline=line, width=3)
 
-    # spodni velka hlavice
-    draw.ellipse((130, 92, 286, 142), fill=fill, outline=line, width=3)
+    # spodni hlavice
+    draw.ellipse((124, 62, 286, 112), fill=fill, outline=line, width=3)
 
-    # tenka oddelovaci linka na hlavici
-    draw.arc((142, 98, 274, 132), start=200, end=340, fill=line, width=2)
+    # vnitrni oddelovaci linka
+    draw.arc((138, 66, 272, 102), start=198, end=342, fill=line, width=2)
 
     # trysky
-    nozzle_y1 = 118
-    nozzle_y2 = 125
-    for x in range(150, 267, 12):
-        draw.ellipse((x, nozzle_y1, x + 2, nozzle_y2), fill=line)
+    for x in [146, 158, 170, 182, 194, 206, 218, 230, 242, 254]:
+        draw.ellipse((x, 88, x + 3, 92), fill=line)
 
 
 def add_shadow(scene: Image.Image, avatar_box: tuple[int, int, int, int]):
@@ -67,25 +65,28 @@ def add_shadow(scene: Image.Image, avatar_box: tuple[int, int, int, int]):
 def add_bubbles(scene: Image.Image, frame_idx: int):
     bubbles = Image.new("RGBA", scene.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(bubbles)
-    rng = random.Random(1337)
 
-    for i in range(9):
-        base_x = 118 + (i * 21) + rng.randint(-6, 6)
-        base_y = 300 + (i * 15) % 78
-        float_up = (frame_idx * (4 + i % 2)) % 75
+    bubble_points = [
+        (132, 292, 7),
+        (154, 320, 9),
+        (188, 338, 6),
+        (230, 346, 8),
+        (256, 318, 7),
+        (214, 362, 10),
+    ]
 
-        x = base_x + int(math.sin((frame_idx + i) * 0.65) * 4)
-        y = base_y - float_up
-        r = 5 + (i % 3) * 3
-        alpha = 105 + (i % 3) * 26
+    for i, (bx, by, r) in enumerate(bubble_points):
+        lift = ((frame_idx * (3 + i % 2)) + i * 5) % 36
+        x = bx + int(math.sin(frame_idx * 0.45 + i) * 3)
+        y = by - lift
 
         draw.ellipse(
             (x - r, y - r, x + r, y + r),
-            outline=(255, 255, 255, alpha),
+            outline=(255, 255, 255, 135),
             width=2,
         )
 
-    bubbles = bubbles.filter(ImageFilter.GaussianBlur(0.3))
+    bubbles = bubbles.filter(ImageFilter.GaussianBlur(0.25))
     scene.alpha_composite(bubbles)
 
 
@@ -93,56 +94,74 @@ def add_water(scene: Image.Image, frame_idx: int):
     water = Image.new("RGBA", scene.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(water)
 
-    # body zhruba pod spodkem hlavice
-    base_points = [
-    (109, 96), (119, 97), (129, 98), (139, 99), (149, 100),
-    (159, 100), (169, 100), (179, 100), (189, 99), (199, 98),
-    (209, 97), (219, 96), (229, 95),
+    nozzle_points = [
+        (147, 92), (159, 92), (171, 92), (183, 92), (195, 92),
+        (207, 92), (219, 92), (231, 92), (243, 92), (255, 92),
     ]
 
-    for i, (start_x, start_y) in enumerate(base_points):
-        phase = frame_idx * 0.85 + i * 0.55
-        length = 118 + (i % 3) * 14
-        spread = (i - (len(base_points) - 1) / 2.0) * 3.8
-        wobble = math.sin(phase) * 3.2
-        drift = math.cos(phase * 0.9) * 1.5
+    flow_top = 98
+    flow_bottom = 250
+    cycle = 36
+    offset = (frame_idx * 6) % cycle
 
-        end_x = start_x + spread + wobble + drift
-        end_y = start_y + length
+    for i, (start_x, start_y) in enumerate(nozzle_points):
+        phase = frame_idx * 0.55 + i * 0.45
+        spread = (i - (len(nozzle_points) - 1) / 2.0) * 2.8
+        sway = math.sin(phase) * 2.2
 
-        width = 2 + (i % 2)
-        alpha = 120 + (i % 4) * 18
+        x = start_x + spread * 0.15
 
+        # jemny hlavni proud jako podklad
         draw.line(
-            (start_x, start_y, end_x, end_y),
-            fill=(145, 208, 255, alpha),
-            width=width,
-        )
-
-        # vedlejsi slabsi proud
-        draw.line(
-            (start_x + 1, start_y, end_x + 2, end_y - 8),
-            fill=(190, 232, 255, max(75, alpha - 38)),
+            (x, flow_top, x + sway, flow_bottom),
+            fill=(150, 212, 255, 70),
             width=1,
         )
 
-        # kapka uprostred proudu
-        mid_x = start_x + (end_x - start_x) * 0.52
-        mid_y = start_y + (end_y - start_y) * 0.52
+        # animovane segmenty, ktere vytvari dojem teceni dolu
+        seg_len = 16 + (i % 3) * 2
+        gap = 14 + (i % 2) * 2
+
+        y = flow_top - cycle + offset + (i * 2)
+        while y < flow_bottom:
+            y1 = max(flow_top, y)
+            y2 = min(flow_bottom, y + seg_len)
+
+            if y2 > flow_top:
+                x1 = x + math.sin((y1 * 0.05) + phase) * 1.8
+                x2 = x + math.sin((y2 * 0.05) + phase) * 2.4 + sway
+
+                draw.line(
+                    (x1, y1, x2, y2),
+                    fill=(145, 208, 255, 220),
+                    width=2,
+                )
+
+                draw.line(
+                    (x1 + 1, y1, x2 + 2, y2 - 2),
+                    fill=(205, 238, 255, 120),
+                    width=1,
+                )
+
+            y += seg_len + gap
+
+        # mala kapka nekde v proudu
+        droplet_y = flow_top + ((frame_idx * 9 + i * 13) % (flow_bottom - flow_top))
+        droplet_x = x + math.sin(phase + droplet_y * 0.04) * 2.5
         draw.ellipse(
-            (mid_x - 2, mid_y - 5, mid_x + 2, mid_y + 5),
-            fill=(188, 232, 255, min(255, alpha + 18)),
+            (droplet_x - 2, droplet_y - 4, droplet_x + 2, droplet_y + 4),
+            fill=(195, 235, 255, 185),
         )
 
-        # mala kapka dole
-        splash_x = end_x + math.sin(frame_idx + i * 0.7) * 4
-        splash_y = end_y + ((frame_idx * 2 + i) % 8)
+        # splash dole
+        splash_y = flow_bottom + ((frame_idx * 3 + i) % 10)
+        splash_x = x + sway * 1.3 + math.sin(frame_idx + i) * 3
         draw.ellipse(
             (splash_x - 2.5, splash_y - 2.5, splash_x + 2.5, splash_y + 2.5),
-            fill=(198, 236, 255, 180),
+            fill=(198, 236, 255, 175),
         )
 
-    water = water.filter(ImageFilter.GaussianBlur(0.35))
+    water = water.filter(ImageFilter.GaussianBlur(0.2))
     scene.alpha_composite(water)
 
 
@@ -152,8 +171,8 @@ def build_frame(avatar: Image.Image, frame_idx: int) -> Image.Image:
 
     draw_shower_hardware(draw)
 
-    avatar_x = 115
-    avatar_y = 165
+    avatar_x = 110
+    avatar_y = 150
     avatar_box = (avatar_x, avatar_y, avatar_x + AVATAR_SIZE, avatar_y + AVATAR_SIZE)
 
     add_shadow(scene, avatar_box)
