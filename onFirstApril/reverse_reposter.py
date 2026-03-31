@@ -5,11 +5,11 @@ import discord
 from discord.ext import commands
 
 TARGET_CHANNEL_IDS = {
-    1487121536686096564, 
+  1358888500845346866,1358913164493852682  
 }
 
 MIN_TRIGGER = 3
-MAX_TRIGGER = 10
+MAX_TRIGGER = 7
 
 def reverse_text(text: str) -> str:
     return text[::-1]

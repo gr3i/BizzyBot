@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 
-CHANNEL_ID = 1487121536686096564
+CHANNEL_ID = 1488635677141635143 
 TIMEZONE_NAME = "Europe/Prague"
 
 MESSAGES = [

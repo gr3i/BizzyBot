@@ -6,20 +6,25 @@ from discord.ext import commands
 
 
 TARGET_CHANNEL_IDS = {
-    1487121536686096564, 
+    1358888500845346866,1358913164493852682  
 }
 
 MIN_TRIGGER = 2
-MAX_TRIGGER = 5
+MAX_TRIGGER = 7
 
 REACTIONS = [
     "🚿",
-    "<:Koteseni:1156329924764901406>",
     "<a:hutaoris:1441556265900965968>",
-    "<:KannaSip:1359694460807811344>",
-    "<:cheemsBlush:1439311238097015009>",
+    "<:KannaSip:1359694460807811344>", 
     "<:sweatduck:1359699350544056400>",
     "<:koteseni:1361038813719302175>",
+    "<:owoYay:1478853603862249829>",
+    "<:koteSmutny:1439311176054870080>",
+    "<:pomojkat:1472556706528493713>",
+    "<:aware:1439311210565599232>",
+    "<:chibipaimonsmug:1439320261534023860>",
+
+
 ]
 
 
