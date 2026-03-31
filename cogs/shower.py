@@ -35,26 +35,27 @@ def draw_shower_hardware(draw: ImageDraw.ImageDraw):
     line = (25, 25, 25, 255)
     fill = (245, 245, 245, 255)
 
-    # dlouha horni rovna trubka
-    draw.rounded_rectangle((205, 30, 392, 42), radius=6, fill=fill, outline=line, width=3)
+    # dlouha horni trubka
+    draw.rounded_rectangle((225, 24, 392, 36), radius=6, fill=fill, outline=line, width=3)
 
     # pravy svisly kus
-    draw.rounded_rectangle((380, 30, 392, 98), radius=6, fill=fill, outline=line, width=3)
+    draw.rounded_rectangle((380, 24, 392, 98), radius=6, fill=fill, outline=line, width=3)
 
-    # kratky spoj z horni trubky do hlavice
-    draw.rounded_rectangle((176, 38, 210, 50), radius=6, fill=fill, outline=line, width=3)
+    # plynule zahnuty spoj doleva k hlavici
+    draw.rounded_rectangle((182, 36, 240, 48), radius=6, fill=fill, outline=line, width=3)
+    draw.rounded_rectangle((170, 36, 182, 62), radius=6, fill=fill, outline=line, width=3)
 
     # vrch hlavice
-    draw.ellipse((106, 48, 244, 78), fill=fill, outline=line, width=3)
+    draw.ellipse((88, 48, 250, 78), fill=fill, outline=line, width=3)
 
     # spodni velka hlavice
-    draw.ellipse((82, 62, 270, 116), fill=fill, outline=line, width=3)
+    draw.ellipse((62, 62, 276, 118), fill=fill, outline=line, width=3)
 
-    # vnitrni oblouk na hlavici
-    draw.arc((98, 68, 254, 106), start=198, end=342, fill=line, width=2)
+    # vnitrni linka hlavice
+    draw.arc((82, 68, 256, 108), start=198, end=342, fill=line, width=2)
 
     # trysky
-    for x in [106, 120, 134, 148, 162, 176, 190, 204, 218, 232]:
+    for x in [90, 104, 118, 132, 146, 160, 174, 188, 202, 216, 230]:
         draw.ellipse((x, 90, x + 3, 94), fill=line)
 
 
@@ -95,8 +96,8 @@ def add_water(scene: Image.Image, frame_idx: int):
     draw = ImageDraw.Draw(water)
 
     nozzle_points = [
-        (147, 92), (159, 92), (171, 92), (183, 92), (195, 92),
-        (207, 92), (219, 92), (231, 92), (243, 92), (255, 92),
+    (92, 92), (106, 92), (120, 92), (134, 92), (148, 92),
+    (162, 92), (176, 92), (190, 92), (204, 92), (218, 92), (232, 92),
     ]
 
     flow_top = 98
