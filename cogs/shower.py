@@ -28,18 +28,14 @@ def crop_avatar_circle(raw_bytes: bytes, size: int) -> Image.Image:
 
 
 def create_background() -> Image.Image:
-    img = Image.new("RGBA", (CANVAS_W, CANVAS_H), (49, 51, 56, 255))
-    draw = ImageDraw.Draw(img)
+    # uplne pruhledne pozadi
+    img = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
 
-    for y in range(CANVAS_H):
-        ratio = y / max(CANVAS_H - 1, 1)
-        shade = int(46 + ratio * 10)
-        draw.line((0, y, CANVAS_W, y), fill=(shade, shade + 2, shade + 6, 255))
-
+    # jemna mlha/glow kolem avataru, ale bez pozadi za tim
     fog = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
     fog_draw = ImageDraw.Draw(fog)
-    fog_draw.ellipse((110, 100, 420, 430), fill=(255, 255, 255, 26))
-    fog_draw.ellipse((150, 150, 380, 390), fill=(255, 255, 255, 18))
+    fog_draw.ellipse((110, 100, 420, 430), fill=(255, 255, 255, 18))
+    fog_draw.ellipse((150, 150, 380, 390), fill=(255, 255, 255, 10))
     fog = fog.filter(ImageFilter.GaussianBlur(28))
 
     return Image.alpha_composite(img, fog)
@@ -68,7 +64,7 @@ def add_shadow(scene: Image.Image, avatar_box: tuple[int, int, int, int]):
     x0, y0, x1, y1 = avatar_box
     shadow_draw.ellipse(
         (x0 + 14, y1 - 4, x1 - 14, y1 + 34),
-        fill=(0, 0, 0, 110),
+        fill=(0, 0, 0, 90),
     )
 
     shadow = shadow.filter(ImageFilter.GaussianBlur(16))
@@ -137,17 +133,7 @@ def add_water(scene: Image.Image, frame_idx: int):
     scene.alpha_composite(water)
 
 
-def add_caption(scene: Image.Image, username: str):
-    overlay = Image.new("RGBA", scene.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
-
-    draw.rounded_rectangle((94, 436, 426, 485), radius=22, fill=(0, 0, 0, 116))
-    draw.text((114, 451), f"{username} je ve sprse", fill=(255, 255, 255, 235))
-
-    scene.alpha_composite(overlay)
-
-
-def build_frame(avatar: Image.Image, username: str, frame_idx: int) -> Image.Image:
+def build_frame(avatar: Image.Image, frame_idx: int) -> Image.Image:
     scene = create_background()
     draw = ImageDraw.Draw(scene)
 
@@ -161,14 +147,13 @@ def build_frame(avatar: Image.Image, username: str, frame_idx: int) -> Image.Ima
     scene.alpha_composite(avatar, (avatar_x, avatar_y))
     add_water(scene, frame_idx)
     add_bubbles(scene, frame_idx)
-    add_caption(scene, username)
 
     return scene
 
 
-def build_shower_gif(raw_bytes: bytes, username: str) -> io.BytesIO:
+def build_shower_gif(raw_bytes: bytes) -> io.BytesIO:
     avatar = crop_avatar_circle(raw_bytes, AVATAR_SIZE)
-    frames = [build_frame(avatar, username, idx) for idx in range(FRAME_COUNT)]
+    frames = [build_frame(avatar, idx) for idx in range(FRAME_COUNT)]
 
     output = io.BytesIO()
     frames[0].save(
@@ -180,6 +165,7 @@ def build_shower_gif(raw_bytes: bytes, username: str) -> io.BytesIO:
         loop=0,
         disposal=2,
         optimize=False,
+        transparency=0,
     )
     output.seek(0)
 
@@ -201,7 +187,7 @@ class Shower(commands.Cog):
         try:
             avatar_asset = uzivatel.display_avatar.replace(format="png", size=512)
             raw_bytes = await avatar_asset.read()
-            gif_buffer = build_shower_gif(raw_bytes, uzivatel.display_name)
+            gif_buffer = build_shower_gif(raw_bytes)
         except Exception as error:
             await interaction.followup.send(
                 f"Nepodarilo se pripravit shower gif: {error}",
@@ -210,10 +196,7 @@ class Shower(commands.Cog):
             return
 
         file = discord.File(fp=gif_buffer, filename="sprcha.gif")
-        await interaction.followup.send(
-            content=f"🚿 {uzivatel.mention} uz je ve sprse.",
-            file=file,
-        )
+        await interaction.followup.send(file=file)
 
 
 async def setup(bot: commands.Bot):
