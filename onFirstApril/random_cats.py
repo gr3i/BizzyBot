@@ -10,7 +10,6 @@ from discord.ext import commands
 
 
 TIMEZONE_NAME = "Europe/Prague"
-CAT_TEXT = "Check this out:"
 THE_CAT_API_KEY = os.getenv("THE_CAT_API_KEY", "")
 
 ENABLE_ENV_NAME = "ENABLE_RANDOM_CATS"
@@ -153,7 +152,10 @@ class RandomCats(commands.Cog):
             if channel is None:
                 channel = await self.bot.fetch_channel(channel_id)
 
-            await channel.send(f"{CAT_TEXT} {image_url}")
+            embed = discord.Embed()
+            embed.set_image(url=image_url)
+
+            await channel.send(embed=embed)
             print(f"[random_cats] sent ok to channel {channel_id}", flush=True)
 
         except discord.Forbidden:
