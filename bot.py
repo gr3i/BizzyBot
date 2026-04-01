@@ -191,7 +191,7 @@ async def setup_hook():
         "onFirstApril.meow_guard", 
         "onFirstApril.meow_reaction",
         "onFirstApril.random_cats",
-        #"onFirstApril.random_links",
+        "onFirstApril.random_links",
     ]:
         try:
             await bot.load_extension(ext)
