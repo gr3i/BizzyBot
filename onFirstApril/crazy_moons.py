@@ -70,54 +70,77 @@ MESSAGES = [
     "SMYČKA SE UZAVÍRÁ",
     "Čas se restartuje...",
     "znovu a zas...",
-    "ZNOVU A ZAS...", 
-    "--- RESTARTUJI POHÁDKU ---"
+    "ZNOVU A ZAS...",
+    "--- RESTARTUJI POHÁDKU ---",
 ]
+
 
 class CrazyLoop(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.message_index = 0
         self.loop_task = None
+        print("[crazy_moons] __init__ called")
 
     async def cog_load(self):
+        print("[crazy_moons] cog_load called")
         self.loop_task = asyncio.create_task(self.run_loop())
 
     async def cog_unload(self):
+        print("[crazy_moons] cog_unload called")
         if self.loop_task:
             self.loop_task.cancel()
 
     def is_enabled(self) -> bool:
-        return os.getenv("ENABLE_CRAZY_LOOP", "true").lower() == "true"
+        value = os.getenv("ENABLE_CRAZY_LOOP", "true").lower() == "true"
+        print(f"[crazy_moons] ENABLE_CRAZY_LOOP = {value}")
+        return value
 
     def april_only(self) -> bool:
-        return os.getenv("CRAZY_LOOP_ONLY_ON_FIRST_APRIL", "false").lower() == "true"
+        value = os.getenv("CRAZY_LOOP_ONLY_ON_FIRST_APRIL", "false").lower() == "true"
+        print(f"[crazy_moons] CRAZY_LOOP_ONLY_ON_FIRST_APRIL = {value}")
+        return value
 
     def can_send_now(self) -> bool:
         if not self.is_enabled():
+            print("[crazy_moons] can_send_now = False (disabled)")
             return False
 
         if not self.april_only():
+            print("[crazy_moons] can_send_now = True (not april only)")
             return True
 
         now = datetime.now(ZoneInfo(TIMEZONE_NAME))
-        return now.month == 4 and now.day == 1
+        result = now.month == 4 and now.day == 1
+        print(f"[crazy_moons] now = {now.isoformat()} | can_send_now = {result}")
+        return result
 
     async def run_loop(self):
+        print("[crazy_moons] run_loop started")
         await self.bot.wait_until_ready()
+        print(f"[crazy_moons] bot ready as {self.bot.user} | id = {self.bot.user.id}")
 
         while not self.bot.is_closed():
             try:
                 if not self.can_send_now():
+                    print("[crazy_moons] sleeping 30s because cannot send now")
                     await asyncio.sleep(30)
                     continue
 
                 channel = self.bot.get_channel(CHANNEL_ID)
                 if channel is None:
+                    print(f"[crazy_moons] channel {CHANNEL_ID} not in cache, fetching")
                     channel = await self.bot.fetch_channel(CHANNEL_ID)
 
-                await channel.send(MESSAGES[self.message_index])
-                print(f"[crazy_loop] Sent: {MESSAGES[self.message_index]}")
+                print(f"[crazy_moons] sending to channel = {channel} | id = {channel.id}")
+                print(f"[crazy_moons] next index = {self.message_index}")
+                print(f"[crazy_moons] next message = {MESSAGES[self.message_index]!r}")
+
+                sent_message = await channel.send(MESSAGES[self.message_index])
+                print(
+                    f"[crazy_moons] sent ok | sent_message_id = {sent_message.id} "
+                    f"| bot_user_id = {self.bot.user.id}"
+                )
 
                 self.message_index = (self.message_index + 1) % len(MESSAGES)
 
@@ -126,15 +149,17 @@ class CrazyLoop(commands.Cog):
                 else:
                     delay = random.randint(5, 10)
 
+                print(f"[crazy_moons] sleeping for {delay}s")
                 await asyncio.sleep(delay)
 
             except asyncio.CancelledError:
+                print("[crazy_moons] loop cancelled")
                 break
             except Exception as e:
-                print(f"[crazy_loop] Error: {e}")
+                print(f"[crazy_moons] ERROR: {type(e).__name__}: {e}")
                 await asyncio.sleep(15)
 
 
 async def setup(bot: commands.Bot):
+    print("[crazy_moons] setup called")
     await bot.add_cog(CrazyLoop(bot))
-
