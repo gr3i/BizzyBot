@@ -8,9 +8,17 @@ import discord
 from discord.ext import commands
 
 
-CHANNEL_IDS = [
-    1358888500845346866,
-    1358913164493852682,
+CHANNEL_CONFIGS = [
+    {
+        "channel_id": 1358888500845346866,
+        "delay_min": 15,
+        "delay_max": 45,
+    },
+    {
+        "channel_id": 1358913164493852682,
+        "delay_min": 25,
+        "delay_max": 60,
+    },
 ]
 
 TIMEZONE_NAME = "Europe/Prague"
@@ -28,18 +36,25 @@ LINKS = [
 class RandomLinks(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.loop_task = None
-        self.last_link = None
+        self.channel_tasks = []
+        self.last_link_by_channel = {}
         print("[random_links] __init__ called", flush=True)
 
     async def cog_load(self):
         print("[random_links] cog_load called", flush=True)
-        self.loop_task = asyncio.create_task(self.run_loop())
+
+        for config in CHANNEL_CONFIGS:
+            task = asyncio.create_task(self.run_channel_loop(config))
+            self.channel_tasks.append(task)
 
     async def cog_unload(self):
         print("[random_links] cog_unload called", flush=True)
-        if self.loop_task:
-            self.loop_task.cancel()
+
+        for task in self.channel_tasks:
+            task.cancel()
+
+        if self.channel_tasks:
+            await asyncio.gather(*self.channel_tasks, return_exceptions=True)
 
     def is_enabled(self) -> bool:
         value = os.getenv("ENABLE_RANDOM_LINKS", "true").lower() == "true"
@@ -64,16 +79,18 @@ class RandomLinks(commands.Cog):
         print(f"[random_links] now = {now.isoformat()} | can_send_now = {result}", flush=True)
         return result
 
-    def pick_link(self) -> str | None:
+    def pick_link_for_channel(self, channel_id: int) -> str | None:
         if not LINKS:
             return None
 
-        available_links = [link for link in LINKS if link != self.last_link]
+        last_link = self.last_link_by_channel.get(channel_id)
+
+        available_links = [link for link in LINKS if link != last_link]
         if not available_links:
             available_links = LINKS[:]
 
         link = random.choice(available_links)
-        self.last_link = link
+        self.last_link_by_channel[channel_id] = link
         return link
 
     async def send_to_channel(self, channel_id: int, message_text: str):
@@ -95,10 +112,25 @@ class RandomLinks(commands.Cog):
         except Exception as e:
             print(f"[random_links] ERROR: unexpected error in channel {channel_id}: {e}", flush=True)
 
-    async def run_loop(self):
-        print("[random_links] run_loop started", flush=True)
+    async def run_channel_loop(self, config: dict):
+        channel_id = config["channel_id"]
+        delay_min = config["delay_min"]
+        delay_max = config["delay_max"]
+
+        print(
+            f"[random_links] run_channel_loop started | channel_id = {channel_id} "
+            f"| delay = {delay_min}-{delay_max}s",
+            flush=True
+        )
+
         await self.bot.wait_until_ready()
-        print(f"[random_links] bot ready as {self.bot.user} | id = {self.bot.user.id}", flush=True)
+
+        initial_delay = random.randint(1, max(2, delay_max))
+        print(
+            f"[random_links] initial delay for channel {channel_id}: {initial_delay}s",
+            flush=True
+        )
+        await asyncio.sleep(initial_delay)
 
         while not self.bot.is_closed():
             try:
@@ -106,27 +138,32 @@ class RandomLinks(commands.Cog):
                     await asyncio.sleep(30)
                     continue
 
-                link = self.pick_link()
+                link = self.pick_link_for_channel(channel_id)
                 if link is None:
-                    print("[random_links] LINKS is empty", flush=True)
+                    print(f"[random_links] LINKS is empty for channel {channel_id}", flush=True)
                     await asyncio.sleep(30)
                     continue
 
                 message_text = f"Check this out: {link}"
-                print(f"[random_links] chosen link = {link}", flush=True)
+                print(f"[random_links] chosen link for channel {channel_id} = {link}", flush=True)
 
-                for channel_id in CHANNEL_IDS:
-                    await self.send_to_channel(channel_id, message_text)
+                await self.send_to_channel(channel_id, message_text)
 
-                delay = random.randint(15, 45)
-                print(f"[random_links] sleeping for {delay}s", flush=True)
+                delay = random.randint(delay_min, delay_max)
+                print(
+                    f"[random_links] sleeping for {delay}s | channel_id = {channel_id}",
+                    flush=True
+                )
                 await asyncio.sleep(delay)
 
             except asyncio.CancelledError:
-                print("[random_links] loop cancelled", flush=True)
+                print(f"[random_links] channel loop cancelled | channel_id = {channel_id}", flush=True)
                 break
             except Exception as e:
-                print(f"[random_links] ERROR: {type(e).__name__}: {e}", flush=True)
+                print(
+                    f"[random_links] ERROR in channel {channel_id}: {type(e).__name__}: {e}",
+                    flush=True
+                )
                 await asyncio.sleep(15)
 
 
