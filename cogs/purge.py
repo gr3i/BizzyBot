@@ -4,7 +4,7 @@ from discord.ext import commands
 
 
 ALLOWED_USER_IDS = {
-    685958402442133515,  
+    685958402442133515,
 }
 
 ALLOWED_ROLE_IDS = {
@@ -93,6 +93,13 @@ class Purge(commands.Cog):
             async for msg in channel.history(limit=None, after=message):
                 to_delete.append(msg)
 
+            if not to_delete:
+                await interaction.followup.send(
+                    "Nenašly se žádné zprávy ke smazání.",
+                    ephemeral=True
+                )
+                return
+
             deleted_count = 0
             recent_messages = []
             old_messages = []
@@ -104,9 +111,12 @@ class Purge(commands.Cog):
                 else:
                     old_messages.append(msg)
 
-            if recent_messages:
-                deleted = await channel.delete_messages(recent_messages)
-                deleted_count += len(deleted)
+            if len(recent_messages) == 1:
+                await recent_messages[0].delete()
+                deleted_count += 1
+            elif len(recent_messages) > 1:
+                await channel.delete_messages(recent_messages)
+                deleted_count += len(recent_messages)
 
             for msg in old_messages:
                 try:
