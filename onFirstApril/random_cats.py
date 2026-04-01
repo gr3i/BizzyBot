@@ -15,26 +15,25 @@ THE_CAT_API_KEY = os.getenv("THE_CAT_API_KEY", "")
 ENABLE_ENV_NAME = "ENABLE_RANDOM_CATS"
 APRIL_ONLY_ENV_NAME = "RANDOM_CATS_ONLY_ON_FIRST_APRIL"
 
-CHANNEL_CONFIGS = [
-    {
-        "channel_id": 1358888500845346866,
-        "delay_min": 15,
-        "delay_max": 45,
-    },
-    {
-        "channel_id": 1358913164493852682,
-        "delay_min": 20,
-        "delay_max": 40,
-    },
-]
+TARGET_CHANNEL_IDS = {
+    1358888500845346866,
+    1358913164493852682,
+}
+
+# pravdepodobnost, ze bot na zpravu odpovi kockou
+# 0.10 = 10 %
+REPLY_CHANCE = 0.10
+
+# minimalni rozestup mezi kockami v jednom kanalu
+CHANNEL_COOLDOWN_SECONDS = 20
 
 
 class RandomCats(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.http_session = None
-        self.channel_tasks = []
         self.last_url_by_channel = {}
+        self.last_sent_at_by_channel = {}
         print("[random_cats] __init__ called", flush=True)
 
     async def cog_load(self):
@@ -42,19 +41,8 @@ class RandomCats(commands.Cog):
         timeout = aiohttp.ClientTimeout(total=15)
         self.http_session = aiohttp.ClientSession(timeout=timeout)
 
-        for config in CHANNEL_CONFIGS:
-            task = asyncio.create_task(self.run_channel_loop(config))
-            self.channel_tasks.append(task)
-
     async def cog_unload(self):
         print("[random_cats] cog_unload called", flush=True)
-
-        for task in self.channel_tasks:
-            task.cancel()
-
-        if self.channel_tasks:
-            await asyncio.gather(*self.channel_tasks, return_exceptions=True)
-
         if self.http_session and not self.http_session.closed:
             await self.http_session.close()
 
@@ -73,6 +61,24 @@ class RandomCats(commands.Cog):
 
         now = datetime.now(ZoneInfo(TIMEZONE_NAME))
         return now.month == 4 and now.day == 1
+
+    def is_target_channel(self, channel_id: int) -> bool:
+        return channel_id in TARGET_CHANNEL_IDS
+
+    def passes_random_chance(self) -> bool:
+        return random.random() < REPLY_CHANCE
+
+    def is_channel_on_cooldown(self, channel_id: int) -> bool:
+        now_ts = asyncio.get_running_loop().time()
+        last_ts = self.last_sent_at_by_channel.get(channel_id)
+
+        if last_ts is None:
+            return False
+
+        return (now_ts - last_ts) < CHANNEL_COOLDOWN_SECONDS
+
+    def mark_channel_sent_now(self, channel_id: int):
+        self.last_sent_at_by_channel[channel_id] = asyncio.get_running_loop().time()
 
     async def fetch_from_the_cat_api(self) -> str | None:
         url = "https://api.thecatapi.com/v1/images/search"
@@ -146,16 +152,13 @@ class RandomCats(commands.Cog):
             self.last_url_by_channel[channel_id] = image_url
         return image_url
 
-    async def send_to_channel(self, channel_id: int, image_url: str):
+    async def send_cat_to_channel(self, channel: discord.abc.Messageable, channel_id: int, image_url: str):
         try:
-            channel = self.bot.get_channel(channel_id)
-            if channel is None:
-                channel = await self.bot.fetch_channel(channel_id)
-
             embed = discord.Embed()
             embed.set_image(url=image_url)
 
             await channel.send(embed=embed)
+            self.mark_channel_sent_now(channel_id)
             print(f"[random_cats] sent ok to channel {channel_id}", flush=True)
 
         except discord.Forbidden:
@@ -165,56 +168,29 @@ class RandomCats(commands.Cog):
         except Exception as e:
             print(f"[random_cats] unexpected error in channel {channel_id}: {e}", flush=True)
 
-    async def run_channel_loop(self, config: dict):
-        channel_id = config["channel_id"]
-        delay_min = config["delay_min"]
-        delay_max = config["delay_max"]
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
 
-        print(
-            f"[random_cats] run_channel_loop started | channel_id={channel_id} "
-            f"| delay={delay_min}-{delay_max}s",
-            flush=True
-        )
+        if not self.can_send_now():
+            return
 
-        await self.bot.wait_until_ready()
+        if not self.is_target_channel(message.channel.id):
+            return
 
-        initial_delay = random.randint(1, max(2, delay_max))
-        print(
-            f"[random_cats] initial delay for channel {channel_id}: {initial_delay}s",
-            flush=True
-        )
-        await asyncio.sleep(initial_delay)
+        if self.is_channel_on_cooldown(message.channel.id):
+            return
 
-        while not self.bot.is_closed():
-            try:
-                if not self.can_send_now():
-                    await asyncio.sleep(30)
-                    continue
+        if not self.passes_random_chance():
+            return
 
-                image_url = await self.pick_cat_url_for_channel(channel_id)
-                if not image_url:
-                    print(f"[random_cats] no cat url fetched for channel {channel_id}", flush=True)
-                    await asyncio.sleep(30)
-                    continue
+        image_url = await self.pick_cat_url_for_channel(message.channel.id)
+        if not image_url:
+            print(f"[random_cats] no cat url fetched for channel {message.channel.id}", flush=True)
+            return
 
-                await self.send_to_channel(channel_id, image_url)
-
-                delay = random.randint(delay_min, delay_max)
-                print(
-                    f"[random_cats] sleeping for {delay}s | channel_id={channel_id}",
-                    flush=True
-                )
-                await asyncio.sleep(delay)
-
-            except asyncio.CancelledError:
-                print(f"[random_cats] channel loop cancelled | channel_id={channel_id}", flush=True)
-                break
-            except Exception as e:
-                print(
-                    f"[random_cats] ERROR in channel {channel_id}: {type(e).__name__}: {e}",
-                    flush=True
-                )
-                await asyncio.sleep(15)
+        await self.send_cat_to_channel(message.channel, message.channel.id, image_url)
 
 
 async def setup(bot: commands.Bot):
