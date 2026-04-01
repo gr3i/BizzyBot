@@ -184,6 +184,7 @@ async def setup_hook():
         "cogs.shower",
         "onFirstApril.crazy_loop",
         "onFirstApril.crazy_moons",
+        "onFirstApril.crazy_hamster",
         "onFirstApril.reverse_reposter",
         "onFirstApril.random_reaction",
         "onFirstApril.crazy_responder",
