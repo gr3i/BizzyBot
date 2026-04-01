@@ -146,9 +146,7 @@ class CrazyMoons(commands.Cog):
                 self.message_index = (self.message_index + 1) % len(MESSAGES)
 
                 if random.random() < 0.15:
-                    delay = random.randint(45, 90)
-                else:
-                    delay = random.randint(5, 10)
+                    delay = random.randint(4, 11) 
 
                 print(f"[crazy_moons] sleeping for {delay}s", flush=True)
                 await asyncio.sleep(delay)
