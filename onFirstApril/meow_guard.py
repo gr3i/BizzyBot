@@ -6,10 +6,11 @@ from discord.ext import commands
 
 
 ALLOWED_WORDS = ("mňau", "mnau", "meow")
+TARGET_CHANNEL_IDS = {1358888500845346866, 1358913164493852682}
 
-# prazdny set == hlida vsude
-# dam ID kanalu, bude hlidat jen tam
-TARGET_CHANNEL_IDS = {1358888500845346866,1358913164493852682}
+EXEMPT_USER_IDS = {
+  1358884104413904998 
+}
 
 WARNING_DELETE_AFTER = 8
 
@@ -24,33 +25,61 @@ class MeowGuard(commands.Cog):
     def is_target_channel(self, channel_id: int) -> bool:
         return not TARGET_CHANNEL_IDS or channel_id in TARGET_CHANNEL_IDS
 
+    def is_exempt_user(self, user_id: int) -> bool:
+        return user_id in EXEMPT_USER_IDS
+
     def contains_allowed_word(self, content: str) -> bool:
         lowered = content.casefold()
         return any(word in lowered for word in ALLOWED_WORDS)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        print(
+            f"[meow_guard] author={message.author} "
+            f"id={message.author.id} "
+            f"bot={message.author.bot} "
+            f"webhook_id={message.webhook_id} "
+            f"channel={message.channel.id} "
+            f"content={message.content!r}"
+        )
+
+        if self.is_exempt_user(message.author.id):
+            print("[meow_guard] skip: exempt user")
+            await self.bot.process_commands(message)
+            return
+
         if message.author.bot:
+            print("[meow_guard] skip: author is bot")
+            await self.bot.process_commands(message)
+            return
+
+        if message.webhook_id is not None:
+            print("[meow_guard] skip: webhook")
             await self.bot.process_commands(message)
             return
 
         if not self.is_enabled():
+            print("[meow_guard] skip: disabled")
             await self.bot.process_commands(message)
             return
 
         if not self.is_target_channel(message.channel.id):
+            print("[meow_guard] skip: wrong channel")
             await self.bot.process_commands(message)
             return
 
         if not message.content or not message.content.strip():
+            print("[meow_guard] skip: empty content")
             await self.bot.process_commands(message)
             return
 
         if self.contains_allowed_word(message.content):
+            print("[meow_guard] skip: contains allowed word")
             await self.bot.process_commands(message)
             return
 
         try:
+            print("[meow_guard] delete: missing allowed word")
             await message.delete()
 
             warning = await message.channel.send(
