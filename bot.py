@@ -184,14 +184,14 @@ async def setup_hook():
         "cogs.shower",
         #"onFirstApril.crazy_loop",
         #"onFirstApril.crazy_moons",
-        #"onFirstApril.crazy_hamster",
         "onFirstApril.reverse_reposter",
         "onFirstApril.random_reaction",
-        #"onFirstApril.crazy_responder",
+        "onFirstApril.crazy_responder",
         "onFirstApril.meow_guard", 
         "onFirstApril.meow_reaction",
         "onFirstApril.random_cats",
         #"onFirstApril.random_links",
+        "cogs.purge",
     ]:
         try:
             await bot.load_extension(ext)
