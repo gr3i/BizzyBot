@@ -9,7 +9,11 @@ ALLOWED_WORDS = ("mňau", "mnau", "meow")
 TARGET_CHANNEL_IDS = {1358888500845346866, 1358913164493852682}
 
 EXEMPT_USER_IDS = {
-  1358884104413904998 
+    1358884104413904998,
+}
+
+EXEMPT_ROLE_IDS = {
+   1358887045115941059 
 }
 
 WARNING_DELETE_AFTER = 8
@@ -28,6 +32,11 @@ class MeowGuard(commands.Cog):
     def is_exempt_user(self, user_id: int) -> bool:
         return user_id in EXEMPT_USER_IDS
 
+    def has_exempt_role(self, member: discord.abc.User | discord.Member) -> bool:
+        if not isinstance(member, discord.Member):
+            return False
+        return any(role.id in EXEMPT_ROLE_IDS for role in member.roles)
+
     def contains_allowed_word(self, content: str) -> bool:
         lowered = content.casefold()
         return any(word in lowered for word in ALLOWED_WORDS)
@@ -45,6 +54,11 @@ class MeowGuard(commands.Cog):
 
         if self.is_exempt_user(message.author.id):
             print("[meow_guard] skip: exempt user")
+            await self.bot.process_commands(message)
+            return
+
+        if self.has_exempt_role(message.author):
+            print("[meow_guard] skip: exempt role")
             await self.bot.process_commands(message)
             return
 
