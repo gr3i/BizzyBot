@@ -36,7 +36,7 @@ MESSAGES = [
     "ZRAJE ŠROT",
     "teče pot",
     "TEČE POT",
-    "dpč, to kdo vymyslel tuhle kktinu..."
+    "dpč, to kdo vymyslel tuhle kktinu...",
     "jsme čas",
     "zhasni jas",
     "dej nám pas!",
