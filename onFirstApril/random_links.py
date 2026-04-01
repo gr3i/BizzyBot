@@ -16,8 +16,8 @@ CHANNEL_CONFIGS = [
     },
     {
         "channel_id": 1358913164493852682,
-        "delay_min": 25,
-        "delay_max": 60,
+        "delay_min": 10,
+        "delay_max": 30,
     },
 ]
 
