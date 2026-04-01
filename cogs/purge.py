@@ -4,51 +4,72 @@ from discord.ext import commands
 
 
 ALLOWED_USER_IDS = {
-    685958402442133515,
+    685958402442133515,  
+}
+
+ALLOWED_ROLE_IDS = {
+   
 }
 
 
 class Purge(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.purge_context_menu = app_commands.ContextMenu(
+            name="Purge od této zprávy",
+            callback=self.purge_from_message,
+        )
 
-    def is_allowed(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id in ALLOWED_USER_IDS
+    async def cog_load(self):
+        self.bot.tree.add_command(self.purge_context_menu)
 
-    @app_commands.command(
-        name="purge",
-        description="Smaže označenou zprávu a všechny zprávy pod ní v aktuálním kanálu."
-    )
-    @app_commands.describe(
-        message="Zpráva, od které se má mazat"
-    )
-    async def purge(
+    async def cog_unload(self):
+        self.bot.tree.remove_command(
+            self.purge_context_menu.name,
+            type=self.purge_context_menu.type
+        )
+
+    def is_allowed(self, member: discord.Member) -> bool:
+        if member.id in ALLOWED_USER_IDS:
+            return True
+
+        return any(role.id in ALLOWED_ROLE_IDS for role in member.roles)
+
+    async def purge_from_message(
         self,
         interaction: discord.Interaction,
         message: discord.Message
     ):
-        if not self.is_allowed(interaction):
+        if not interaction.guild or not isinstance(interaction.user, discord.Member):
+            await interaction.response.send_message(
+                "Tento příkaz lze použít jen na serveru.",
+                ephemeral=True
+            )
+            return
+
+        if not self.is_allowed(interaction.user):
             await interaction.response.send_message(
                 "Na tento příkaz nemáš oprávnění.",
                 ephemeral=True
             )
             return
 
-        if interaction.channel is None or not isinstance(interaction.channel, discord.TextChannel):
+        channel = interaction.channel
+        if channel is None or not isinstance(channel, discord.TextChannel):
             await interaction.response.send_message(
                 "Tento příkaz lze použít jen v textovém kanálu.",
                 ephemeral=True
             )
             return
 
-        if message.channel.id != interaction.channel.id:
+        if message.channel.id != channel.id:
             await interaction.response.send_message(
-                "Musíš vybrat zprávu ze stejného kanálu, kde příkaz používáš.",
+                "Musíš vybrat zprávu ze stejného kanálu.",
                 ephemeral=True
             )
             return
 
-        me = interaction.guild.me if interaction.guild else None
+        me = interaction.guild.me
         if me is None:
             await interaction.response.send_message(
                 "Nepodařilo se zjistit bota na serveru.",
@@ -56,7 +77,7 @@ class Purge(commands.Cog):
             )
             return
 
-        perms = interaction.channel.permissions_for(me)
+        perms = channel.permissions_for(me)
         if not perms.manage_messages:
             await interaction.response.send_message(
                 "Bot nemá oprávnění Spravovat zprávy.",
@@ -69,15 +90,8 @@ class Purge(commands.Cog):
         to_delete = [message]
 
         try:
-            async for msg in interaction.channel.history(limit=None, after=message):
+            async for msg in channel.history(limit=None, after=message):
                 to_delete.append(msg)
-
-            if not to_delete:
-                await interaction.followup.send(
-                    "Nenašly se žádné zprávy ke smazání.",
-                    ephemeral=True
-                )
-                return
 
             deleted_count = 0
             recent_messages = []
@@ -91,7 +105,7 @@ class Purge(commands.Cog):
                     old_messages.append(msg)
 
             if recent_messages:
-                deleted = await interaction.channel.delete_messages(recent_messages)
+                deleted = await channel.delete_messages(recent_messages)
                 deleted_count += len(deleted)
 
             for msg in old_messages:
