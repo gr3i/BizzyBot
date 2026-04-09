@@ -25,10 +25,10 @@ class CreditLimit(commands.Cog):
         embed = Embed(
             title="Kreditový strop",
                 description=(
-                "• průměr pod **1,5** -> **80 bodů**\n"
-                "• průměr od **1,5 do 1,99** -> **75 bodů**\n"
-                "• průměr **2,0 a více** nebo **1 nesplněný povinný předmět** -> **70 bodů**\n"
-                "• **nesplněný volitelný předmět** nebo **alespoň 2 nesplněné povinné předměty** -> **65 bodů**"
+                "• průměr pod **1,5** -> **80 kreditů**\n"
+                "• průměr od **1,5 do 1,99** -> **75 kreditů**\n"
+                "• průměr **2,0 a více** nebo **1 nesplněný povinný předmět** -> **70 kreditů**\n"
+                "• **nesplněný volitelný předmět** nebo **alespoň 2 nesplněné povinné předměty** -> **65 kreditů**"
             ),
             color=0x2ecc71
         )
