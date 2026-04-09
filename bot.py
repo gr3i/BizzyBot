@@ -192,6 +192,7 @@ async def setup_hook():
         #"onFirstApril.random_cats",
         #"onFirstApril.random_links",
         "cogs.purge",
+        "cogs.kreditovy_strop",
     ]:
         try:
             await bot.load_extension(ext)
