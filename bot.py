@@ -192,7 +192,7 @@ async def setup_hook():
         #"onFirstApril.random_cats",
         #"onFirstApril.random_links",
         "cogs.purge",
-        "cogs.kreditovy_strop",
+        #"cogs.kreditovy_strop", // dokud nezjistim, jak to presne je, tak nepridavat
         "cogs.prirucka_prvaka_react",
     ]:
         try:
