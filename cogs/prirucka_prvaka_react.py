@@ -13,7 +13,7 @@ TRIGGER_PHRASES = {
     "prirucka pro prvaka",
 }
 
-RESPONSE_TEXT = "https://prirucka.vut.cz/category/fp/ <:KannaSip:1359694460807811344>"
+RESPONSE_TEXT = "Aaa, to najdeš tady v příručce prváka ✨ --> https://prirucka.vut.cz/category/fp/ <:KannaSip:1359694460807811344>"
 
 
 class PriruckaResponder(commands.Cog):
