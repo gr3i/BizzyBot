@@ -133,7 +133,7 @@ class Room(commands.Cog):
         if room_code not in ROOMS:
             await interaction.response.send_message(
                 f"Místnost **{room_code.upper()}** nemám v seznamu. "
-                "Zkontroluj prosím, jestli jsi ji napsal správně.",
+                "Zkontroluj prosím, jestli jsi ji napsal*a správně.",
                 ephemeral=True,
             )
             return
