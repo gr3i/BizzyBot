@@ -157,6 +157,7 @@ async def setup_hook():
         #"onFirstApril.random_links",
         "cogs.purge", 
         "cogs.prirucka_prvaka_react",
+        "cogs.mapa_fektu_react",
     ]:
         try:
             await bot.load_extension(ext)
