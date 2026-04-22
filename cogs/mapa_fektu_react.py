@@ -7,7 +7,7 @@ TRIGGER_PHRASES = {
     "mapa fekt",
 }
 
-RESPONSE_TEXT = "Mapu FEKTu najdes tady --> https://vitapavlik.cz/fekt_mapa/ <:koteseni:1361038813719302175>"
+RESPONSE_TEXT = "Mapu FEKTu najdeš tady --> https://vitapavlik.cz/fekt_mapa/ <:koteseni:1361038813719302175>"
 
 
 class MapaFektuResponder(commands.Cog):
