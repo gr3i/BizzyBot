@@ -1,62 +1,106 @@
-:crescent_moon: Pohádka o Kouzelném Botovi
+# FP VUT Survival Guide pro prváky
+Krátký rozcestník k tomu nejdůležitějšímu. Když nevíš, kde něco najít, začni tady.
 
-Bylo nebylo, na serveru zvaném VUT Discord, žil mocný kouzelný pomocník jménem BizzyBot. Ten měl mnoho kouzel, která lidem pomáhala a chránila království před zmatkem.
+## 1. První krok: zprovozni si VUT login
+Bez toho se skoro nikam nedostaneš.
 
-V království panovali dva druhy hrdinů – MODové a obyčejní studenti. Každý z nich měl jiné zaklínadla.
+- VUT login / první přihlášení: [VUT login](https://www.vut.cz/cis/navody/vut-login)
 
-:man_mage: Kouzla MODů
+---
 
-MODové drželi v rukou ta nejsilnější kouzla. Když se někdo vetřel do hradu a měl na sobě podivné pláště, mohli na něj seslat kouzlo:
+## 2. 4 věci, které budeš používat pořád
 
-`!strip` – a všechny role z jeho pláště zmizely.
+### Studis
+Tvoje hlavní studijní centrum.
+Najdeš tam:
+- rozvrh
+- registraci předmětů
+- registraci vyučování
+- termíny zkoušek
+- zápis do vyššího ročníku
+- potvrzení o studiu
 
-Když pak chtěli vědět, kdo cizinec doopravdy je, zvolali:
+### Elearning
+Kurzy, materiály a některé věci k výuce.
 
-`!whois` – a kouzelné zrcadlo jim ukázalo jeho jméno a přezdívku.
+### Teams / Office 365
+Online výuka, meetingy, komunikace.
 
-Pokud MODové chtěli promluvit hlasem samotného Bota, použili kouzlo:
+### VUT mail
+Kontroluj pravidelně. Spousta důležitých věcí chodí právě sem.
 
-`!writeasbot`, a z úst Bota zazněla jejich zpráva.
+- Rozcestník informačních systémů: [Informační systémy FP](https://www.fp.vut.cz/cs/pro-studenty/informacni-systemy)
+- Stránka pro prváky: [Pro prváky](https://www.fp.vut.cz/cs/pro-studenty/pro-prvaky)
 
-Jen nejvyšší kouzelník Ent3i však měl moc použít tajemné kouzlo:
+---
 
-`!writeasbot_longmessage`, kterým dokázal nechat Bota napsat nekonečně dlouhou zprávu, jako by se rozléhala celým královstvím.
+## 3. Když řešíš termíny, jdi sem
+Nehledej to po chatech.
 
-:woman_student: Kouzla obyčejných studentů
+- Časový plán: [Časový plán FP](https://www.fp.vut.cz/cs/pro-studenty/casovy-plan)
 
-Aby studenti mohli vejít do hradu, museli se nejprve ověřit. Seslali kouzlo:
+---
 
-`/verify jejich_jmeno@vutbr.cz` – a BizzyBot jim poslal dopis s tajným kódem.
+## 4. Registrace předmětů: co si pohlídat
+- **Povinné předměty** bývají automaticky.
+- **Povinně volitelné a volitelné** si hlídáš ve Studisu.
+- **TV** a některé jiné věci můžou mít vlastní registraci.
 
-Když kód přečetli nahlas pomocí kouzla `/verify_code`, objevily se na nich role VUT/HOST a Verified a mohli vstoupit.
+- Info k registraci: [Registrace předmětů](https://www.fp.vut.cz/cs/pro-studenty/pro-prvaky/registrace-predmetu)
 
-Když si chtěli ověřit, že Bot stále žije a nespí, zavolali:
+---
 
-`/hello`, a Bot vždy odpověděl: „Ahoj“.
+## 5. Co si zařídit hned na začátku
+- VUT login
+- průkaz / ISIC
+- BOZP
+- rozvrh
+- kontrolu registrací
 
-Pak se studenti učili různým předmětům. Když si přidali nový obor či předmět, zvolali:
+---
 
-`/predmet pridat Matematika` nebo `/obor pridat IT` – a Bot jim dal kouzelnou roli, která je pustila do učebny.
+## 6. Když potřebuješ potvrzení nebo něco oficiálního
+Nejdřív zkus Studis.
+Když to nejde nebo je to speciální případ, řeší to studijní oddělení.
 
-Když už roli nepotřebovali, použili opačné kouzlo: `/predmet odebrat` či `/obor odebrat`.
+- Studijní oddělení: [Studijní oddělení FP](https://www.fp.vut.cz/cs/pro-studenty/studijni-oddeleni)
 
-Studium nebylo jen o chození na přednášky – každý mohl ohodnotit, jak těžký nebo zajímavý je předmět.
+---
 
-Kouzlo `/hodnoceni zobrazit` jim ukázalo, co si myslí ostatní.
+## 7. Když hledáš formulář nebo žádost
+- Formuláře ke stažení: [Formuláře FP](https://www.fp.vut.cz/cs/pro-studenty/studijni-informace/formulare-ke-stazeni)
 
-Kouzlem `/hodnoceni pridat` přidali vlastní hodnocení.
+---
 
-Když se zmýlili, použili `/hodnoceni upravit`, nebo když hodnocení chtěli smazat, seslali `/hodnoceni odebrat`.
+## 8. Když nevíš, kde co hledat
+Používej tohle:
 
-A kdo chtěl vědět víc o samotném Botovi, mohl říct:
+- **Studis** = rozvrh, registrace, zkoušky, potvrzení
+- **Elearning** = materiály a kurzy
+- **Teams** = online výuka a komunikace
+- **Časový plán** = důležité termíny
+- **Studijní oddělení** = když něco nejde vyřešit elektronicky
+- **Formuláře** = oficiální žádosti
 
-`/bot info`, a BizzyBot vyprávěl o sobě, o své rychlosti i síle.
+---
 
-Nakonec, aby se nikdo v království neztratil, existovalo kouzlo:
+## 9. Když jsi ztracený úplně
+Začni tady:
+- [FP VUT – Pro studenty](https://www.fp.vut.cz/)
+- [Pro prváky](https://www.fp.vut.cz/cs/pro-studenty/pro-prvaky)
+- [Informační systémy](https://www.fp.vut.cz/cs/pro-studenty/informacni-systemy)
+- [Studijní oddělení](https://www.fp.vut.cz/cs/pro-studenty/studijni-oddeleni)
 
-`/role`, které ukázalo všechny důležité role v říši a jejich vysvětlení.
+---
 
-:star2: Závěr
+## TL;DR
+Když řešíš:
+- **login** → [VUT login](https://www.vut.cz/cis/navody/vut-login)
+- **rozvrh / registrace / zkoušky / potvrzení** → Studis
+- **materiály** → Elearning
+- **online výuku** → Teams
+- **termíny** → [Časový plán FP](https://www.fp.vut.cz/cs/pro-studenty/casovy-plan)
+- **papíry a žádosti** → [Formuláře FP](https://www.fp.vut.cz/cs/pro-studenty/studijni-informace/formulare-ke-stazeni)
+- **něco neobvyklého** → [Studijní oddělení FP](https://www.fp.vut.cz/cs/pro-studenty/studijni-oddeleni)
 
-A tak díky kouzlům MODů a studentů vládl na serveru řád. BizzyBot byl věrným průvodcem, který vždy pomohl, když někdo vyslovil správné zaklínadlo.
-
+Když si nejsi jistý/á, koukni sem dřív, než začneš panikařit 😄
