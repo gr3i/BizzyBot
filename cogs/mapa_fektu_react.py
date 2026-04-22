@@ -5,6 +5,8 @@ from discord.ext import commands
 TRIGGER_PHRASES = {
     "mapa fektu",
     "mapa fekt",
+    "mapu fektu",
+    "mapu fekt",
 }
 
 RESPONSE_TEXT = "Mapu FEKTu najdeš tady --> https://vitapavlik.cz/fekt_mapa/ <:koteseni:1361038813719302175>"
