@@ -2,8 +2,8 @@ from io import BytesIO
 from pathlib import Path
 
 import discord
-from discord import Interaction, app_commands
 from discord.ext import commands
+from discord import app_commands, Interaction
 from PIL import Image
 
 
@@ -22,15 +22,15 @@ ARROW_IMAGE_PATH = ASSETS_DIRECTORY / "arrow.png"
 FLOOR_CONFIG = {
     1: {
         "label": "1. patro Fakulty podnikatelské",
-        "description": "Patro po vejítí zezadu od Technologického parku.",
+        "footer": "Patro po vejítí ze zadu od Technologického parku.",
     },
     2: {
         "label": "2. patro Fakulty podnikatelské",
-        "description": "Patro s učebnami uprostřed budovy.",
+        "footer": "Patro s učebnami uprostřed budovy.",
     },
     3: {
         "label": "3. patro Fakulty podnikatelské",
-        "description": "Patro hned po vstupu z velkého parkoviště u FP.",
+        "footer": "Patro hned po vstupu z velkého parkoviště u FP.",
     },
 }
 
@@ -79,7 +79,7 @@ def build_room_preview_image(room_code: str) -> BytesIO:
     map_image = Image.open(FLOOR_IMAGE_PATHS[floor_number]).convert("RGBA")
     arrow_image = Image.open(ARROW_IMAGE_PATH).convert("RGBA")
 
-    target_map_width = 1400
+    target_map_width = 1280
     map_scale_ratio = target_map_width / map_image.width
     target_map_height = int(map_image.height * map_scale_ratio)
 
@@ -91,7 +91,7 @@ def build_room_preview_image(room_code: str) -> BytesIO:
     marker_center_x = int((room_data["x"] / 100) * target_map_width)
     marker_center_y = int(((100 - room_data["y"]) / 100) * target_map_height)
 
-    arrow_target_width = max(60, target_map_width // 22)
+    arrow_target_width = max(56, target_map_width // 22)
     arrow_aspect_ratio = arrow_image.height / arrow_image.width
     arrow_target_height = int(arrow_target_width * arrow_aspect_ratio)
 
@@ -117,7 +117,7 @@ def build_room_preview_image(room_code: str) -> BytesIO:
 
 
 class Room(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot):
         self.bot = bot
 
     @app_commands.command(
@@ -125,21 +125,18 @@ class Room(commands.Cog):
         description="Ukáže místnost na mapě.",
     )
     @app_commands.describe(
-        code="Zadej zkratku místnosti, např. P165 nebo P287",
+        code="Zadej zkratku místnosti, např. P384 nebo P287",
     )
     async def room(self, interaction: Interaction, code: str):
         room_code = code.strip().lower()
 
         if room_code not in ROOMS:
             await interaction.response.send_message(
-                f"Místnost **{room_code.upper()}** nemám v seznamu. Zkontroluj prosím zápis.",
+                f"Místnost **{room_code.upper()}** nemám v seznamu. "
+                "Zkontroluj prosím, jestli jsi ji napsal správně.",
                 ephemeral=True,
             )
             return
-
-        room_data = ROOMS[room_code]
-        floor_number = room_data["floor"]
-        floor_config = FLOOR_CONFIG[floor_number]
 
         room_url = f"{BASE_URL}?room={room_code}"
         preview_image_buffer = build_room_preview_image(room_code)
@@ -150,21 +147,24 @@ class Room(commands.Cog):
             filename=preview_filename,
         )
 
+        floor_number = ROOMS[room_code]["floor"]
+        floor_footer = FLOOR_CONFIG[floor_number]["footer"]
+
         embed = discord.Embed(
             title=f"Místnost: {room_code.upper()}",
-            description=f"[Odkaz na plánek]({room_url})",
+            description=f"[Otevřít plánek na webu]({room_url})",
             color=discord.Color.blue(),
         )
-        embed.add_field(name="Patro", value=floor_config["label"], inline=False)
-        embed.add_field(name="Popis", value=floor_config["description"], inline=False)
+        embed.add_field(name="Patro", value=str(floor_number), inline=True)
+        embed.add_field(name="Popis", value=floor_footer, inline=False)
         embed.set_image(url=f"attachment://{preview_filename}")
-        embed.set_footer(text="BizzyBot • /room")
 
         await interaction.response.send_message(
             embed=embed,
             file=preview_discord_file,
+            ephemeral=False,
         )
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot):
     await bot.add_cog(Room(bot))
