@@ -48,42 +48,7 @@ def is_owner(ctx):
     return False
 
 
-@bot.command()
-@commands.check(is_owner)  # tato kontrola zajisti, že prikaz muze spustit pouze vlastnik
-async def writeasbot(ctx, *, text: str):
-    """Příkaz pro bota, aby napsal zprávu za uživatele."""
-    await ctx.send(text)
 
-@writeasbot.error
-async def writeasbot_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):                         # pokud se objevi chyba kontroly (napr. neni vlastnik)
-        await ctx.send("Na tento příkaz nemáš oprávnění.")               # posle zpravu, ze nema opravneni
-
-@bot.command()
-@commands.check(is_owner)  # kontrola zajisti, ze prikaz muze spustit pouze vlastnik
-async def writeasbot_longmessage(ctx):
-    """Prikaz pro bota, aby napsal zpravu z textoveho souboru longmessage_for_bot.txt."""
-    try:
-        # otevreni souboru a nacteni jeho obsahu
-        with open("longmessage_for_bot.txt", "r", encoding="utf-8") as file:
-            content = file.read()
-        
-        # pokud je obsah prazdni, informujeme uzivatele
-        if not content:
-            await ctx.send("Soubor 'longmessage_for_bot.txt' je prázdný.")
-        else:
-            await ctx.send(content)
-    
-    except FileNotFoundError:
-        await ctx.send("Soubor 'longmessage_for_bot.txt' nebyl nalezen.")
-    except Exception as e:
-        await ctx.send(f"Došlo k chybě při čtení souboru: {e}")
-
-# osetreni chyby pro pripad, ze prikaz pouzije uzivatel bez prav
-@writeasbot_longmessage.error
-async def writeasbot_longmessage_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):                            # pokud se objevi chyba kontroly (napr. neni vlastnik)
-        await ctx.send("Tento příkaz může použít pouze vlastník bota.")     # posle zpravu, ze nema opravneni
 
 @bot.command()
 @commands.check(is_owner)  # only owner or allowed role
@@ -182,8 +147,7 @@ async def setup_hook():
         "cogs.say_as_bot",
         "cogs.red_or_black",
         "cogs.shower",
-        #"onFirstApril.crazy_loop",
-        #"onFirstApril.crazy_moons",
+        #"onFirstApril.crazy_loop", 
         #"onFirstApril.reverse_reposter",
         #"onFirstApril.random_reaction",
         "onFirstApril.crazy_responder",
@@ -191,8 +155,7 @@ async def setup_hook():
         #"onFirstApril.meow_reaction",
         #"onFirstApril.random_cats",
         #"onFirstApril.random_links",
-        "cogs.purge",
-        #"cogs.kreditovy_strop", // dokud nezjistim, jak to presne je, tak nepridavat
+        "cogs.purge", 
         "cogs.prirucka_prvaka_react",
     ]:
         try:
