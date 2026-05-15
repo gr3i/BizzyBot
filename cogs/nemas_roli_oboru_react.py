@@ -7,7 +7,7 @@ TRIGGER_PHRASES = {
     "nemas roli oboru",
 }
 
-RESPONSE_TEXT = "Pro přidání role oboru použij příkaz ''/obor''. <:koteseni:1361038813719302175>"
+RESPONSE_TEXT = "Pro přidání role oboru použij příkaz `/obor.` <:huggers:1379563250307563550>"
 
 
 class OborRoleResponder(commands.Cog):
