@@ -158,6 +158,7 @@ async def setup_hook():
         "cogs.purge", 
         "cogs.prirucka_prvaka_react",
         "cogs.mapa_fektu_react",
+        "cogs.nemas_roli_oboru_react",
     ]:
         try:
             await bot.load_extension(ext)
