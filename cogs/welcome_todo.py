@@ -120,8 +120,8 @@ class WelcomeTodo(commands.Cog):
                 value="\n".join(f"- {l}" for l in lines),
                 inline=False
             )
-           embed.set_footer(
-           text="Tenhle server vznikl proto, aby studentkám a studentům FP reálně pomáhal, a stojí za ním stovky hodin práce. Byla by škoda, kdyby zůstal jen jako další mrtvý server bez života. Nebojte se proto být aktivní, psát své dotazy a odpovídat ostatním — právě vaše aktivita mu dá skutečný smysl.\n\nKdykoliv napište moderátorům, když si nebudete vědět rady. Jsme tu od toho, abychom pomohli.\n— Ent3i"
+          embed.set_footer(
+                text="Tenhle server vznikl proto, aby studentkám a studentům FP reálně pomáhal, a je za ním stovky hodin práce. Byla by škoda, kdyby zůstal jen jako další mrtvý server bez života. Nebojte se proto být aktivní, psát své dotazy a odpovídat ostatním — právě vaše aktivita mu dá skutečný smysl.\n\nKdykoliv napiš moderátorům, když si nebudeš vědět rady. Jsme tu od toho, abychom pomohli.\n— Ent3i" 
             ) 
 
             await dm.send(embed=embed)
