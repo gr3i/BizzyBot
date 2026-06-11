@@ -143,7 +143,6 @@ async def setup_hook():
         "cogs.room",
         "cogs.on_raw_reaction_add",
         "cogs.bookmark_dm",
-        "cogs.role_spolku",
         "cogs.say_as_bot",
         "cogs.red_or_black",
         "cogs.shower",
