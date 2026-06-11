@@ -6,7 +6,7 @@ class RoleInfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="role", description="Vypíše hlavní role na serveru a jejich popisky")
+    @app_commands.command(name="roleinfo", description="Vypíše hlavní role na serveru a jejich popisky")
     async def role(self, interaction: Interaction):
 
         # povol pouze v jednom kanalu
