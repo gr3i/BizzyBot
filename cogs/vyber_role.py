@@ -9,7 +9,7 @@ ALLOWED_ROLE_IDS = {1358911329737642014, 1466036385017233636}
 # role: (hodnota_pro_vyber, nazev_pro_uzivatele, role_id)
 ROLE_OPTIONS = [
     ("spolku", "Spolku", 1437796762260607067),
-    ("cesa_sport", "CESA / Sport", 1514716246610940116),
+    ("cesa_sport", "Sport / CESA", 1514716246610940116),
 ]
 
 
