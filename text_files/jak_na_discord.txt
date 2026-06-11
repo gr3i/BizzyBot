@@ -7,7 +7,7 @@ specializovaných kanálů, takže má uživatel plnou kontrolu nad tím, co chc
 
 **•** Lze na Discord přistupovat přes mobilní aplikaci, desktopovou aplikaci i jen přes webový prohlížeč 
 
-**•** Umožňuje doprogramovat další funkcionality na míru potřebám členům konkrétního serveru – my třeba máme kanál <#1358908501031915621> kde si můžete skrz našeho bota přidat role oboru, recenze předmětů. Více najdete v <#1406271329946173520> 
+**•** Umožňuje doprogramovat další funkcionality na míru potřebám členům konkrétního serveru – my třeba máme kanál <#1358908501031915621> kde si můžete skrz našeho bota přidat role oboru, recenze předmětů, zobrazit mapu fakulty a mnoho dalšího.
 
 **•** Dají se přidávat vlastní emotikony!  <:ZeroTwo_heartlove:1359699566387265617> <:dogeSmile:1359694444873650247> <:dogekek:1359697609190674554>
 **2) Discordový rychlokurz**
@@ -23,7 +23,7 @@ Kliknutím na server se obrazovka změní. Vlevo v panelu serveru uvidíte kaná
 Existuje několik druhů kanálů. Na našem serveru najdete především textové. Ve studijních kategoriích si můžete najít váš předmět a být v obraze, co zde vaši spolužáci řeší a nebo se rovnou zapojit do diskuze!
 
 **Role**
-Slouží hlavně k tomu, abyste viděli pro vás aktuální místnosti a aby ostatní poznali, v jakém jste ročníku. Pokud jste v prváku, poznají vás podle role FP-1BC, ve druháku podle role FP-2BC a ve třeťáku (nebo vyšším ročníku bakaláře) podle role FP-3+BC. Díky tomu snadno najdete své spolužáky a poznáte je i podle barvy jejich jména. Role si můžete vybrat v kanálu <#1359530605309726893>.
+Slouží hlavně k tomu, abyste viděli pro vás aktuální místnosti a aby ostatní poznali, v jakém jste ročníku. Pokud jste v prváku, poznají vás podle role FP-1BC, ve druháku podle role FP-2BC a ve třeťáku (nebo vyšším ročníku bakaláře) podle role FP-3+BC. Díky tomu snadno najdete své spolužáky a poznáte je i podle barvy jejich jména.
 **3) Tipy a triky**
 
 **•** Discord je platforma postavená defaultně na anonymitě (na rozdíl od Facebooku). Je zcela na vás, pokud tu budete pod svým jménem a fotkou, respektujte soukromí ostatních a i když člena znáte jménem, obvykle se oslovujeme přezdívkami. V nastavení si můžete vaši přezdívku pro tento server (horní lišta se šipkou server -> upravit profil serveru).
@@ -49,8 +49,6 @@ Vše se dá ovládat pomocí těchto nejdůležitějších příkazů:
 
 /pozvanka - Do chatu pošle QR kód tohoto FP serveru a jeho invite link.
 /hello - Bot ti odpoví do chatu „Ahoj“. Používá se často pro kontrolu, jestli bot "žije". **Vstup:** /hello  Výstup jako bot: "Ahoj".
-/predmet pridat - Přidá uživateli předmět. **Vstup:** /predmet název předmětu  Výstup: Přidání role předmět a přístup do dané místnosti uživateli.
-/predmet odebrat - Odebere uživateli předmět. Stejný způsob jako u /predmet pridat.
 /obor pridat - Přidá uživateli roli oboru. **Vstup:** /obor název oboru Výstup: Přidání uživateli role oboru.
 /obor odebrat - Odebere uživateli roli oboru. Stejný způsob jako u /obor pridat.
 /hodnoceni zobrazit - Zobrazí hodnocení předmětu, pokud existuje. (Postup je napsaný co a jak přímo v něm.)
@@ -58,7 +56,9 @@ Vše se dá ovládat pomocí těchto nejdůležitějších příkazů:
 /hodnoceni odebrat - Odebere hodnocení předmětu. (Postup je napsaný co a jak přímo v něm.)
 /hodnoceni upravit - Upraví hodnocení předmětu. (Postup je napsaný co a jak přímo v něm.)
 /bot info - Zobrazí informace o botovi. (Nejdůležitější věc je zde pro vás ping/latency, kdy vidíte, jak rychle bot odpovídá.)
-/role - Zobrazí nejdůležitější role na serveru a jejich vysvětlení.
+/roleinfo - Zobrazí nejdůležitější role na serveru a jejich vysvětlení.
+/role pridat - Přidá ti zvolenou volitelnou roli, např. *Spolku nebo* nebo *CESA / Sport*.
+/role odebrat - Odebere ti zvolenou volitelnou roli. Funguje stejně jako `/role pridat`, jen vybranou roli odebere.
 /room - Zadáš číslo místnosti na FP (třeba P123) a bot ti pošle mapu s označeným místem.
 
 **6) Další vychytávky <:koteseni:1361038813719302175>**
