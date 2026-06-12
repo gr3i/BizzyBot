@@ -332,7 +332,7 @@ class Verify(commands.Cog):
                         if "D" in typy_studia:
                             specific_role_id = ROLE_DOKTORAND_ID
 
-                        elif typy_studia.issubset({"B", "N", "C4"}):
+                        elif typy_studia and typy_studia.issubset({"B", "N", "C4"}):
                             if "FP" in fakulty:
                                 specific_role_id = ROLE_FP_ID
 
