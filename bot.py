@@ -123,7 +123,16 @@ async def strip_error(ctx, error):
 async def setup_hook():
     print("[setup_hook] start")
 
-    bot.vut_api = VutApiClient(api_key=config.vut_api_key, owner_id=config.owner_id)
+    bot.vut_api = VutApiClient(
+        api_key=config.vut_api_key,
+        owner_id=config.owner_id,
+        use_client_credentials=config.vut_use_client_credentials,
+        allow_static_token_fallback=config.vut_allow_static_token_fallback,
+        client_id=config.vut_client_id,
+        client_secret=config.vut_client_secret,
+        token_url=config.vut_token_url,
+        api_base=config.vut_api_base,
+    ) 
     await bot.vut_api.start() 
 
     guild = discord.Object(id=GUILD_ID)
