@@ -310,13 +310,7 @@ class VutApiClient:
             headers=self._static_token_headers(),
             auth_source="static_token",
         )
-
-    async def _get_user_details_generated_token(self, user_id: str) -> dict | None:
-        headers = await self._generated_token_headers()
-
-        try:
-            return await self._get_json_with_headers(
-    
+ 
     async def _get_user_details_generated_token(self, user_id: str) -> dict | None:
         headers = await self._generated_token_headers()
 
