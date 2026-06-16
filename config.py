@@ -25,6 +25,14 @@ class Config:
     vut_use_client_credentials: bool = env_bool("VUT_USE_CLIENT_CREDENTIALS", False)
     vut_allow_static_token_fallback: bool = env_bool("VUT_ALLOW_STATIC_TOKEN_FALLBACK", True)
 
+    vut_static_token_owner_id: int = int(
+        os.getenv("VUT_STATIC_TOKEN_OWNER_ID", os.getenv("OWNER_ID", "0")) or 0
+    )
+
+    vut_client_credentials_author_id: int = int(
+        os.getenv("VUT_CLIENT_CREDENTIALS_AUTHOR_ID", os.getenv("OWNER_ID", "0")) or 0
+    ) 
+
     vut_client_id: str = os.getenv("VUT_CLIENT_ID", "")
     vut_client_secret: str = os.getenv("VUT_CLIENT_SECRET", "")
     vut_token_url: str = os.getenv(

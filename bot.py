@@ -144,6 +144,8 @@ async def setup_hook():
     bot.vut_api = VutApiClient(
         api_key=config.vut_api_key,
         owner_id=config.owner_id,
+        static_token_owner_id=config.vut_static_token_owner_id,
+        client_credentials_author_id=config.vut_client_credentials_author_id,
         use_client_credentials=config.vut_use_client_credentials,
         allow_static_token_fallback=config.vut_allow_static_token_fallback,
         client_id=config.vut_client_id,

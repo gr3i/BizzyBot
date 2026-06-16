@@ -6,6 +6,8 @@ import time
 
 import aiohttp
 
+import base64
+import json 
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +26,13 @@ class RateLimited(VutApiError):
 
 class VutApiClient:
     DEFAULT_BASE = "https://www.vut.cz/api/person/v1"
-
+  
     def __init__(
         self,
         api_key: str,
         owner_id: str | int,
+        static_token_owner_id: str | int | None = None,
+        client_credentials_author_id: str | int | None = None,
         use_client_credentials: bool = False,
         allow_static_token_fallback: bool = True,
         client_id: str = "",
@@ -40,6 +44,16 @@ class VutApiClient:
     ):
         self._api_key = api_key
         self._owner_id = str(owner_id)
+
+        self._static_token_owner_id = str(
+            static_token_owner_id if static_token_owner_id is not None else owner_id
+        )
+
+        self._client_credentials_author_id = str(
+            client_credentials_author_id
+            if client_credentials_author_id is not None
+            else owner_id
+        ) 
 
         self._use_client_credentials = use_client_credentials
         self._allow_static_token_fallback = allow_static_token_fallback
@@ -56,6 +70,23 @@ class VutApiClient:
         self._token_lock = asyncio.Lock()
 
         self.session: aiohttp.ClientSession | None = None
+
+    def _decode_jwt_claims_unverified(self, token: str) -> dict:
+        try:
+            parts = token.split(".")
+
+            if len(parts) < 2:
+                return {}
+
+            payload = parts[1]
+            payload += "=" * (-len(payload) % 4)
+
+            decoded = base64.urlsafe_b64decode(payload.encode("utf-8"))
+            return json.loads(decoded.decode("utf-8"))
+
+        except Exception as error:
+            logger.warning("Could not decode access token claims. error=%s", error)
+            return {}
 
     async def start(self):
         timeout = aiohttp.ClientTimeout(total=10)
@@ -75,7 +106,7 @@ class VutApiClient:
     def _static_token_headers(self) -> dict[str, str]:
         return {
             "Authorization": f"Bearer {self._api_key}",
-            "Author": self._owner_id,
+            "Author": self._static_token_owner_id,
         }
 
     async def _request_generated_access_token(self, auth_method: str) -> dict:
@@ -194,6 +225,16 @@ class VutApiClient:
 
             self._generated_access_token = access_token
             self._generated_token_expires_at = time.time() + expires_in
+            claims = self._decode_jwt_claims_unverified(access_token)
+
+            logger.info(
+                "VUT access token claims. iss=%s, aud=%s, scope=%s, azp=%s, client_id=%s",
+                claims.get("iss"),
+                claims.get("aud"),
+                claims.get("scope"),
+                claims.get("azp"),
+                claims.get("client_id"),
+            )
 
             logger.info("VUT access token cached. expires_in=%s seconds", expires_in)
 
@@ -204,7 +245,7 @@ class VutApiClient:
 
         return {
             "Authorization": f"Bearer {access_token}",
-            "Author": self._owner_id,
+            "Author": self._client_credentials_author_id,
         }
 
     async def _get_json_with_headers(
@@ -219,10 +260,11 @@ class VutApiClient:
         url = f"{self._api_base}/{user_id}/pusobeni-osoby"
 
         logger.info(
-            "Calling VUT API. user_id=%s, auth_source=%s",
+            "Calling VUT API. user_id=%s, auth_source=%s, author_id=%s",
             user_id,
             auth_source,
-        )
+            headers.get("Author"),
+        ) 
 
         async with self.session.get(url, headers=headers) as response:
             if response.status in (401, 403):
