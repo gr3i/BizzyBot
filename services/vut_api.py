@@ -45,6 +45,9 @@ class VutApiClient:
         self._api_key = api_key
         self._owner_id = str(owner_id)
 
+        self._client_credentials_failed_until: float = 0
+        self._client_credentials_failure_cooldown_seconds: int = 600
+
         self._static_token_owner_id = str(
             static_token_owner_id if static_token_owner_id is not None else owner_id
         )
@@ -319,13 +322,24 @@ class VutApiClient:
             headers=headers,
             auth_source="client_credentials",
         )
-
     async def get_user_details(self, user_id: str) -> dict | None:
         user_id = user_id.strip().lower()
 
         if not self._use_client_credentials:
             logger.info("Using old static VUT token as primary auth method.")
             return await self._get_user_details_static_token(user_id)
+
+        now = time.time()
+
+        if now < self._client_credentials_failed_until:
+            remaining_seconds = int(self._client_credentials_failed_until - now)
+
+            logger.warning(
+                "Skipping VUT client credentials because they recently failed. remaining_cooldown_seconds=%s",
+                remaining_seconds,
+            )
+
+            return await self._get_user_details_static_token_fallback(user_id)
 
         try:
             logger.info("Using new VUT client credentials as primary auth method.")
@@ -337,27 +351,39 @@ class VutApiClient:
                 primary_error,
             )
 
-            if not self._allow_static_token_fallback:
-                logger.error(
-                    "Static token fallback is disabled. Verification cannot continue."
-                )
-                raise
+            self._client_credentials_failed_until = (
+                time.time() + self._client_credentials_failure_cooldown_seconds
+            )
 
-            if not self._api_key:
-                logger.error(
-                    "Static token fallback is enabled, but VUT_API_KEY is not configured."
-                )
-                raise
+            logger.warning(
+                "VUT client credentials disabled temporarily. cooldown_seconds=%s",
+                self._client_credentials_failure_cooldown_seconds,
+            )
 
-            logger.warning("Trying old static VUT token fallback.")
+            return await self._get_user_details_static_token_fallback(user_id)
+        
+    async def _get_user_details_static_token_fallback(self, user_id: str) -> dict | None:
+        if not self._allow_static_token_fallback:
+            logger.error(
+                "Static token fallback is disabled. Verification cannot continue."
+            )
+            raise VutApiError("Static token fallback is disabled.")
 
-            try:
-                result = await self._get_user_details_static_token(user_id)
-                logger.info("Old static VUT token fallback finished successfully.")
-                return result
-            except (InvalidApiKey, RateLimited, VutApiError) as fallback_error:
-                logger.exception(
-                    "Old static VUT token fallback also failed. error=%s",
-                    fallback_error,
-                )
-                raise
+        if not self._api_key:
+            logger.error(
+                "Static token fallback is enabled, but VUT_API_KEY is not configured."
+            )
+            raise VutApiError("Static token fallback is enabled, but VUT_API_KEY is missing.")
+
+        logger.warning("Trying old static VUT token fallback.")
+
+        try:
+            result = await self._get_user_details_static_token(user_id)
+            logger.info("Old static VUT token fallback finished successfully.")
+            return result
+        except (InvalidApiKey, RateLimited, VutApiError) as fallback_error:
+            logger.exception(
+                "Old static VUT token fallback also failed. error=%s",
+                fallback_error,
+            )
+            raise   
