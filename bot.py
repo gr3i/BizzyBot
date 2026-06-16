@@ -1,4 +1,5 @@
 import os
+import logging
 import discord
 from db.session import engine
 from db.models import Base
@@ -14,6 +15,13 @@ from services.vut_api import VutApiClient
 
 # nacteni tokenu a databaze
 load_dotenv()
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))
 
@@ -121,7 +129,17 @@ async def strip_error(ctx, error):
 
 @bot.event
 async def setup_hook():
-    print("[setup_hook] start")
+    @bot.event
+    async def setup_hook():
+        print("[setup_hook] start")
+
+    logger.info(
+        "VUT API config: use_client_credentials=%s, static_token_fallback=%s, client_id_set=%s, static_token_set=%s",
+        config.vut_use_client_credentials,
+        config.vut_allow_static_token_fallback,
+        bool(config.vut_client_id),
+        bool(config.vut_api_key),
+    )
 
     bot.vut_api = VutApiClient(
         api_key=config.vut_api_key,
@@ -131,8 +149,11 @@ async def setup_hook():
         client_id=config.vut_client_id,
         client_secret=config.vut_client_secret,
         token_url=config.vut_token_url,
+        scope=config.vut_scope,
+        token_auth_method=config.vut_token_auth_method,
         api_base=config.vut_api_base,
-    ) 
+    )
+
     await bot.vut_api.start() 
 
     guild = discord.Object(id=GUILD_ID)
