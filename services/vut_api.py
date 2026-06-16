@@ -316,25 +316,15 @@ class VutApiClient:
 
         try:
             return await self._get_json_with_headers(
-                user_id=user_id,
-                headers=headers,
-                auth_source="client_credentials",
-            )
-        except InvalidApiKey:
-            logger.warning(
-                "Generated VUT access token was rejected. Clearing token cache and retrying once."
-            )
+    
+    async def _get_user_details_generated_token(self, user_id: str) -> dict | None:
+        headers = await self._generated_token_headers()
 
-            self._generated_access_token = None
-            self._generated_token_expires_at = 0
-
-            headers = await self._generated_token_headers()
-
-            return await self._get_json_with_headers(
-                user_id=user_id,
-                headers=headers,
-                auth_source="client_credentials_retry",
-            )
+        return await self._get_json_with_headers(
+            user_id=user_id,
+            headers=headers,
+            auth_source="client_credentials",
+        )
 
     async def get_user_details(self, user_id: str) -> dict | None:
         user_id = user_id.strip().lower()
