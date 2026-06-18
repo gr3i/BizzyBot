@@ -26,7 +26,7 @@ HOST_TODO_LINES = [
 
 VUT_TODO_LINES = [
     "✅ Pokud máš dotaz, napiš do general/offtopic/poradna.",
-    "✅ Přes /role si můžeš přidat dobrovolné role. (Některé role slouží k tagování pro zajímavé akce zdarma.)",
+    "✅ Přes `/role` si můžeš přidat dobrovolné role. (Některé role slouží k tagování pro zajímavé akce zdarma.)",
     "✅ Do [předmět]-public vidí i vyučující.",
     "✅ Do [předmět]-private pouze studenti, co studují bakaláře nebo magistra.",
     "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
@@ -40,7 +40,7 @@ FP_TODO_LINES = [
     "✅ Pokud tohle uděláš, dostaneš přístup do nových místností.",
     "✅ Do [předmět]-public vidí i vyučující.",
     "✅ Do [předmět]-private pouze studenti, co studují bakaláře nebo magistra.",
-    "✅ Přes /role si můžeš přidat dobrovolné role. (Některé role slouží k tagování pro zajímavé akce zdarma.)",
+    "✅ Přes `/role` si můžeš přidat dobrovolné role. (Některé role slouží k tagování pro zajímavé akce zdarma.)",
     "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
     "✅ Kdyby jsi chtěl*a někoho pozvat, můžeš použít příkaz `/pozvanka`, kde je QR kód.",
 ]

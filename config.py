@@ -41,4 +41,7 @@ class Config:
     )
     vut_scope: str = os.getenv("VUT_SCOPE", "")
     vut_token_auth_method: str = os.getenv("VUT_TOKEN_AUTH_METHOD", "basic")
-    vut_api_base: str = os.getenv("VUT_API_BASE", "https://www.vut.cz/api/person/v1")
+
+    # Person API v1 does not accept access tokens from id.vut.cz Client Credentials.
+    # Use v2 for the new OAuth-based authentication.
+    vut_api_base: str = os.getenv("VUT_API_BASE", "https://www.vut.cz/api/person/v2")
