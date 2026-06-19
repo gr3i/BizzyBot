@@ -19,6 +19,7 @@ ROLE_VUT_ID = 1358911329737642014
 ROLE_VUT_STAFF_ID = 1431724268160549096
 ROLE_DOKTORAND_ID = 1433984072266285097
 ROLE_FP_ID = 1466036385017233636
+ROLE_MUNI_ID = 1489610996732661880 
 
 # FP year roles (based on rok_studia + typ_studia.zkratka)
 FP_B_1 = 1469298142959898840
@@ -58,6 +59,10 @@ def extract_fp_study_info(details: dict):
     candidates.sort(key=lambda x: x[0], reverse=True)
     return candidates[0]
 
+def is_muni_mail(mail: str) -> bool:
+    # aliasy pro muni 
+    domain = (mail or "").strip().lower().split("@")[-1]
+    return domain == "muni.cz" or domain.endswith(".muni.cz")
 
 def pick_fp_year_role_id(rok: int, typ: str):
     """
@@ -350,10 +355,14 @@ class Verify(commands.Cog):
                 print(f"[VUT API] Chyba při ověřování role: {e}")
 
         if specific_role_id is None:
-            specific_role_id = ROLE_HOST_ID
+            if is_muni_mail(mail_value):
+                specific_role_id = ROLE_MUNI_ID
+            else:
+                specific_role_id = ROLE_HOST_ID
 
         trust_roles_priority = {
             ROLE_HOST_ID: 0,
+            ROLE_MUNI_ID: 1,
             ROLE_VUT_ID: 1,
             ROLE_FP_ID: 1,
             ROLE_VUT_STAFF_ID: 2,
