@@ -109,7 +109,7 @@ class Ruleta(commands.Cog):
                 f"**Zadané možnosti**\n"
                 f"{seznam_moznosti}"
             ),
-            color=discord.Color.gold(),
+            color=discord.Color(0x9B59B6), 
         )
 
         embed.set_footer(
