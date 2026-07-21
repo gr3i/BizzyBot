@@ -191,6 +191,7 @@ async def setup_hook():
         "cogs.mapa_fektu_react",
         "cogs.nemas_roli_oboru_react",
         "cogs.vyber_role",
+        "cogs.ruleta",
     ]:
         try:
             await bot.load_extension(ext)
