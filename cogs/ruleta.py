@@ -33,7 +33,7 @@ class Ruleta(commands.Cog):
         self,
         interaction: discord.Interaction,
         nazev_1: str,
-        nazev_2: str,
+        nazev_2: str | None = None,
         nazev_3: str | None = None,
         nazev_4: str | None = None,
         nazev_5: str | None = None,
