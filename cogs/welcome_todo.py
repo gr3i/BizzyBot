@@ -35,7 +35,8 @@ VUT_TODO_LINES = [
 ]
 
 FP_TODO_LINES = [
-    "✅ Nastav si obor, který studuješ (napiš `/` a vyber `obor`). ",
+    "✅ Nastav si obor, který studuješ (napiš `/` a vyber `obor`).",
+    "✅ Pokud studuješ navazující magisterský obor, předměty najdeš ve fórech rozdělených na povinné, povinně volitelné, volitelné a nezařazené pod kategorií `magisterské`.",
     "✅ Příkaz použij klidně v místnosti #general. Zprávu uvidíš jen ty...",
     "✅ Pokud tohle uděláš, dostaneš přístup do nových místností.",
     "✅ Do [předmět]-public vidí i vyučující.",
