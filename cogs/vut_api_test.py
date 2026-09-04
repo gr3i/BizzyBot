@@ -16,7 +16,7 @@ class VutApiTest(commands.Cog):
         description="Otestuje jeden VUT API request.",
     )
     @app_commands.describe(
-        ident="VUT ID nebo login, napr. 268500 nebo xlogin00",
+        ident="VUT ID nebo login, napr. 123456 nebo xlogin00",
     )
     async def vut_api_test(
         self,
