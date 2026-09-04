@@ -393,6 +393,16 @@ class VutRoleSync(commands.Cog):
         api_request_count = 0
 
         for index, member in enumerate(target_members, start=1):
+            if index == 1 or index % 25 == 0 or index == len(target_members):
+                progress = (index / len(target_members)) * 100
+
+                logger.info(
+                    "VUT role sync progress: %s/%s users processed (%.1f%%)",
+                    index,
+                    len(target_members),
+                    progress,
+                )
+
             has_vut = vut_role in member.roles
             has_fp = fp_role in member.roles
 
