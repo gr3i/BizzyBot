@@ -283,6 +283,14 @@ class VutRoleSync(commands.Cog):
 
         await interaction.response.defer(ephemeral=True)
 
+        await interaction.followup.send(
+            "VUT role dry run byl spusten.\n"
+            "Vysledek ti poslu do DM.",
+            ephemeral=True,
+        )
+
+        dm_channel = await interaction.user.create_dm()
+
         guild = interaction.guild
 
         if guild is None:
@@ -428,7 +436,7 @@ class VutRoleSync(commands.Cog):
                 # Kratka pauza po kazdem uzivateli
                 await asyncio.sleep(API_REQUEST_DELAY)
 
-                # Delsi pauza po kazde davce requestu
+                # Delsi pauza po kazde davce requestu   
                 if api_request_count % API_BATCH_SIZE == 0:
                     logger.info(
                         "VUT role sync batch cooldown. "
@@ -578,57 +586,74 @@ class VutRoleSync(commands.Cog):
             "**DRY RUN - zadne role nebyly zmeneny.**"
         )
 
-        await interaction.followup.send(
-            summary,
-            ephemeral=True,
-        )
+        await dm_channel.send(summary)
 
         # Konkretni lide, u kterych by se neco menilo
-        await send_list(
-            interaction,
-            "VUT -> FP",
-            vut_to_fp,
-        )
+        async def send_list(
+            destination,
+            title: str,
+            lines: list[str],
+        ):
+            """
+            Rozdeli dlouhy seznam do vice Discord zprav.
+            """
+
+            if not lines:
+                return
+
+            message = f"**{title}**\n"
+
+            for line in lines:
+                new_line = line + "\n"
+
+                if len(message) + len(new_line) > 1900:
+                    await destination.send(message)
+                    message = f"**{title} - pokracovani**\n"
+
+                message += new_line
+
+            if message.strip():
+                await destination.send(message)
 
         await send_list(
-            interaction,
+            dm_channel,
             "FP -> VUT",
             fp_to_vut,
         )
 
         await send_list(
-            interaction,
+            dm_channel,
             "VUT+FP -> FP",
             both_to_fp,
         )
 
         await send_list(
-            interaction,
+            dm_channel,
             "VUT+FP -> VUT",
             both_to_vut,
         )
 
         await send_list(
-            interaction,
+            dm_channel,
             "FP/VUT -> ExStudent",
             to_exstudent,
         )
 
         # Tyto lidi nechceme automaticky menit
         await send_list(
-            interaction,
+            dm_channel,
             "MANUAL - nepodporovany typ studia",
             unsupported,
         )
 
         await send_list(
-            interaction,
+            dm_channel,
             "MANUAL - chybi VUT ID v databazi",
             missing_ident,
         )
 
         await send_list(
-            interaction,
+            dm_channel,
             "MANUAL - chyba VUT API",
             api_errors,
         )
