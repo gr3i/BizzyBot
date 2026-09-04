@@ -168,6 +168,7 @@ async def setup_hook():
         "cogs.vut_role_sync",
         "cogs.fp_year_roles",
         "cogs.migrate_vut_idents",
+        "cogs.exstudent_role_cleanup",
         "cogs.vut_api_test",
         "cogs.reviews",
         "utils.vyber_oboru",
