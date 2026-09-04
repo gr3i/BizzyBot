@@ -223,6 +223,12 @@ class MigrateVutIdents(commands.Cog):
 
         await send_list(
             interaction,
+            "Neni VUT e-mail",
+            non_vut,
+        )
+
+        await send_list(
+            interaction,
             "Neplatne zaznamy - manualni kontrola",
             invalid,
         )
