@@ -26,16 +26,20 @@ YEAR_ROLE_IDS = {
 }
 
 
-# Pauza mezi jednotlivymi pozadavky na VUT API
+# Pauza mezi jednotlivymi uzivateli
 API_REQUEST_DELAY = 0.5
 
 # Po kazde davce dame API delsi pauzu
 API_BATCH_SIZE = 100
 API_BATCH_DELAY = 10
 
-# Pokud API vrati 429, pockame a stejny request zopakujeme
+# Pokud API vrati 429, pockame a request zopakujeme
 RATE_LIMIT_MAX_RETRIES = 3
 RATE_LIMIT_DEFAULT_WAIT = 60
+
+# Pri timeoutu request take zopakujeme
+TIMEOUT_MAX_RETRIES = 3
+TIMEOUT_RETRY_DELAY = 10
 
 
 def load_verified_vut_idents() -> dict[int, str]:
@@ -55,6 +59,7 @@ def load_verified_vut_idents() -> dict[int, str]:
         )
 
     for row in rows:
+        # Zajima nas pouze posledni verified zaznam uzivatele
         if row.user_id in seen_users:
             continue
 
@@ -105,8 +110,10 @@ def relation_summary(details: dict) -> str:
         rok = vztah.get("rok_studia")
 
         output.append(
-            f"{fakulta or '-'} / {pozice or '-'} / "
-            f"{typ or '-'} / rok {rok if rok is not None else '-'}"
+            f"{fakulta or '-'} / "
+            f"{pozice or '-'} / "
+            f"{typ or '-'} / "
+            f"rok {rok if rok is not None else '-'}"
         )
 
     if not output:
@@ -115,7 +122,9 @@ def relation_summary(details: dict) -> str:
     return "; ".join(output[:5])
 
 
-def get_fp_year_target(details: dict) -> tuple[str | None, str]:
+def get_fp_year_target(
+    details: dict,
+) -> tuple[str | None, str]:
     """
     Vraci cilovou rocnikovou roli podle aktualniho FP studia.
 
@@ -141,7 +150,7 @@ def get_fp_year_target(details: dict) -> tuple[str | None, str]:
             .upper()
         )
 
-        # Zajima nas pouze studium na FP
+        # Zajima nas pouze studentsky vztah na FP
         if pozice != "student" or fakulta != "FP":
             continue
 
@@ -160,8 +169,10 @@ def get_fp_year_target(details: dict) -> tuple[str | None, str]:
         if typ == "B":
             if rok == 1:
                 targets.add("1BC")
+
             elif rok == 2:
                 targets.add("2BC")
+
             else:
                 targets.add("3+BC")
 
@@ -169,13 +180,14 @@ def get_fp_year_target(details: dict) -> tuple[str | None, str]:
         elif typ == "N":
             if rok == 1:
                 targets.add("1MGR")
+
             else:
                 targets.add("2+MGR")
 
     if len(targets) == 1:
         return next(iter(targets)), "OK"
 
-    # Kdyby API vratilo dva rozdilne platne FP rocniky
+    # API vratilo vice ruznych platnych FP rocniku
     if len(targets) > 1:
         return None, "AMBIGUOUS"
 
@@ -187,29 +199,54 @@ async def get_user_details_with_retry(
     vut_ident: str,
 ):
     """
-    Zavola VUT API a pri 429 stejny request zopakuje.
+    Zavola VUT API a pri docasne chybe request zopakuje.
     """
 
-    for attempt in range(RATE_LIMIT_MAX_RETRIES + 1):
+    rate_limit_retries = 0
+    timeout_retries = 0
+
+    while True:
         try:
             return await vut_api.get_user_details(vut_ident)
 
         except RateLimited as error:
-            if attempt >= RATE_LIMIT_MAX_RETRIES:
+            if rate_limit_retries >= RATE_LIMIT_MAX_RETRIES:
                 raise
 
-            wait_seconds = error.retry_after or RATE_LIMIT_DEFAULT_WAIT
+            rate_limit_retries += 1
+
+            wait_seconds = (
+                error.retry_after
+                or RATE_LIMIT_DEFAULT_WAIT
+            )
 
             logger.warning(
                 "VUT API rate limit during FP year role sync. "
                 "vut_ident=%s, retry=%s/%s, wait_seconds=%s",
                 vut_ident,
-                attempt + 1,
+                rate_limit_retries,
                 RATE_LIMIT_MAX_RETRIES,
                 wait_seconds,
             )
 
             await asyncio.sleep(wait_seconds)
+
+        except TimeoutError:
+            if timeout_retries >= TIMEOUT_MAX_RETRIES:
+                raise
+
+            timeout_retries += 1
+
+            logger.warning(
+                "VUT API timeout during FP year role sync. "
+                "vut_ident=%s, retry=%s/%s, wait_seconds=%s",
+                vut_ident,
+                timeout_retries,
+                TIMEOUT_MAX_RETRIES,
+                TIMEOUT_RETRY_DELAY,
+            )
+
+            await asyncio.sleep(TIMEOUT_RETRY_DELAY)
 
 
 async def send_list(
@@ -239,10 +276,49 @@ async def send_list(
         await destination.send(message)
 
 
+async def apply_year_role(
+    member: discord.Member,
+    target_role_name: str,
+    year_roles: dict[str, discord.Role],
+):
+    """
+    Nastavi uzivateli prave jednu spravnou rocnikovou roli.
+    """
+
+    target_role = year_roles[target_role_name]
+
+    roles_to_remove = [
+        role
+        for role_name, role in year_roles.items()
+        if (
+            role_name != target_role_name
+            and role in member.roles
+        )
+    ]
+
+    # Nejdřív pridame spravnou roli
+    if target_role not in member.roles:
+        await member.add_roles(
+            target_role,
+            reason="FP year role sync",
+        )
+
+    # Az potom odebereme pripadne spatne rocnikove role
+    if roles_to_remove:
+        await member.remove_roles(
+            *roles_to_remove,
+            reason="FP year role sync",
+        )
+
+
 class FpYearRoleSync(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    # ---------------------------------------------------------
+    # DRY RUN
+    # ---------------------------------------------------------
 
     @app_commands.command(
         name="fp_year_roles_dry_run",
@@ -265,7 +341,7 @@ class FpYearRoleSync(commands.Cog):
         if guild is None:
             return
 
-        # Odpovime hned, protoze kontrola muze kvuli VUT API trvat dlouho
+        # Odpovime hned, protoze kontrola muze trvat dlouho
         await interaction.response.send_message(
             "FP year role dry run byl spusten.\n"
             "Prubeh uvidis v konzoli a vysledek ti poslu do DM.",
@@ -287,7 +363,7 @@ class FpYearRoleSync(commands.Cog):
             )
             return
 
-        # Ujistime se, ze mame vsechny cleny serveru
+        # Nacteme vsechny cleny serveru
         if not guild.chunked:
             try:
                 await guild.chunk(cache=True)
@@ -326,7 +402,7 @@ class FpYearRoleSync(commands.Cog):
             )
             return
 
-        # Kontrolujeme vsechny uzivatele s FP roli
+        # Kontrolujeme pouze uzivatele s FP roli
         fp_members = [
             member
             for member in guild.members
@@ -346,6 +422,7 @@ class FpYearRoleSync(commands.Cog):
         }
 
         already_correct = []
+
         missing_ident = []
         unsupported = []
         ambiguous = []
@@ -359,7 +436,10 @@ class FpYearRoleSync(commands.Cog):
             total_members,
         )
 
-        for index, member in enumerate(fp_members, start=1):
+        for index, member in enumerate(
+            fp_members,
+            start=1,
+        ):
             # Prubeh v konzoli
             if (
                 index == 1
@@ -429,7 +509,7 @@ class FpYearRoleSync(commands.Cog):
                 continue
 
             finally:
-                # Kratka pauza po kazdem API uzivateli
+                # Kratka pauza po kazdem uzivateli
                 await asyncio.sleep(API_REQUEST_DELAY)
 
                 # Delsi pauza po kazde davce
@@ -446,8 +526,7 @@ class FpYearRoleSync(commands.Cog):
 
                     await asyncio.sleep(API_BATCH_DELAY)
 
-            # 404 tady automaticky nic neznamena
-            # Jen ho dame na manualni kontrolu
+            # 404 zde automaticky nic nemeni
             if details is None:
                 unsupported.append(
                     f"{member} | Discord ID: {member.id} | "
@@ -463,7 +542,9 @@ class FpYearRoleSync(commands.Cog):
                 )
                 continue
 
-            target_role_name, status = get_fp_year_target(details)
+            target_role_name, status = get_fp_year_target(
+                details
+            )
 
             if status == "AMBIGUOUS":
                 ambiguous.append(
@@ -473,7 +554,10 @@ class FpYearRoleSync(commands.Cog):
                 )
                 continue
 
-            if status != "OK" or target_role_name is None:
+            if (
+                status != "OK"
+                or target_role_name is None
+            ):
                 unsupported.append(
                     f"{member} | Discord ID: {member.id} | "
                     f"VUT: {vut_ident} | "
@@ -483,14 +567,13 @@ class FpYearRoleSync(commands.Cog):
 
             target_counts[target_role_name] += 1
 
-            # Podivame se na soucasne rocnikove role
             current_year_roles = [
                 role_name
                 for role_name, role in year_roles.items()
                 if role in member.roles
             ]
 
-            # Ma presne tu roli, kterou ma mit
+            # Pokud ma presne jednu spravnou roli
             if current_year_roles == [target_role_name]:
                 already_correct.append(
                     f"{member} | Discord ID: {member.id} | "
@@ -515,7 +598,9 @@ class FpYearRoleSync(commands.Cog):
             for lines in would_assign.values()
         )
 
-        valid_targets = sum(target_counts.values())
+        valid_targets = sum(
+            target_counts.values()
+        )
 
         summary = (
             "**FP YEAR ROLE SYNC - DRY RUN**\n\n"
@@ -548,7 +633,6 @@ class FpYearRoleSync(commands.Cog):
 
         await dm_channel.send(summary)
 
-        # Vypiseme lidi podle cilove role
         for role_name in YEAR_ROLE_IDS:
             await send_list(
                 dm_channel,
@@ -593,6 +677,444 @@ class FpYearRoleSync(commands.Cog):
             len(unsupported),
             len(ambiguous),
             len(api_errors),
+        )
+
+    # ---------------------------------------------------------
+    # REAL RUN
+    # ---------------------------------------------------------
+
+    @app_commands.command(
+        name="fp_year_roles_apply",
+        description="Prideli FP studentum rocnikove role podle VUT API.",
+    )
+    @app_commands.guild_only()
+    async def fp_year_roles_apply(
+        self,
+        interaction: discord.Interaction,
+    ):
+        if interaction.user.id != ALLOWED_USER_ID:
+            await interaction.response.send_message(
+                "Tento prikaz nemuzes pouzit.",
+                ephemeral=True,
+            )
+            return
+
+        guild = interaction.guild
+
+        if guild is None:
+            return
+
+        # Odpovime hned, protoze sync muze trvat dlouho
+        await interaction.response.send_message(
+            "FP year role sync byl spusten naostro.\n"
+            "Prubeh uvidis v konzoli a vysledek ti poslu do DM.",
+            ephemeral=True,
+        )
+
+        try:
+            dm_channel = await interaction.user.create_dm()
+
+            await dm_channel.send(
+                "**FP YEAR ROLE SYNC - REAL RUN STARTED**\n\n"
+                "Sync byl spusten. Rocnikove role se budou skutecne menit."
+            )
+
+        except discord.HTTPException as error:
+            logger.exception(
+                "Could not create DM for FP year role sync. error=%s",
+                error,
+            )
+            return
+
+        # Nacteme vsechny cleny serveru
+        if not guild.chunked:
+            try:
+                await guild.chunk(cache=True)
+
+            except Exception as error:
+                await dm_channel.send(
+                    "Sync byl ukoncen.\n"
+                    f"Nepodarilo se nacist cleny serveru: `{error}`"
+                )
+                return
+
+        fp_role = guild.get_role(FP_ROLE_ID)
+
+        if fp_role is None:
+            await dm_channel.send(
+                "Sync byl ukoncen. FP role nebyla nalezena."
+            )
+            return
+
+        year_roles: dict[str, discord.Role] = {}
+        missing_roles = []
+
+        for role_name, role_id in YEAR_ROLE_IDS.items():
+            role = guild.get_role(role_id)
+
+            if role is None:
+                missing_roles.append(role_name)
+                continue
+
+            year_roles[role_name] = role
+
+        if missing_roles:
+            await dm_channel.send(
+                "Sync byl ukoncen. Chybi rocnikove role: "
+                + ", ".join(missing_roles)
+            )
+            return
+
+        # Overime prava bota
+        bot_member = guild.me
+
+        if bot_member is None:
+            await dm_channel.send(
+                "Sync byl ukoncen. Bot nebyl nalezen na serveru."
+            )
+            return
+
+        if not bot_member.guild_permissions.manage_roles:
+            await dm_channel.send(
+                "Sync byl ukoncen. Bot nema Manage Roles."
+            )
+            return
+
+        unmanageable_roles = [
+            role_name
+            for role_name, role in year_roles.items()
+            if role >= bot_member.top_role
+        ]
+
+        if unmanageable_roles:
+            await dm_channel.send(
+                "Sync byl ukoncen. Bot nemuze spravovat role: "
+                + ", ".join(unmanageable_roles)
+            )
+            return
+
+        # Bereme pouze cleny s FP roli
+        fp_members = [
+            member
+            for member in guild.members
+            if fp_role in member.roles
+        ]
+
+        vut_idents = load_verified_vut_idents()
+
+        assigned = {
+            role_name: []
+            for role_name in YEAR_ROLE_IDS
+        }
+
+        already_correct = []
+
+        missing_ident = []
+        unsupported = []
+        ambiguous = []
+        api_errors = []
+        role_errors = []
+
+        processed_with_api = 0
+        total_members = len(fp_members)
+
+        logger.info(
+            "FP year role REAL RUN started. fp_members=%s",
+            total_members,
+        )
+
+        for index, member in enumerate(
+            fp_members,
+            start=1,
+        ):
+            # Prubeh v konzoli
+            if (
+                index == 1
+                or index % 25 == 0
+                or index == total_members
+            ):
+                progress = (
+                    (index / total_members) * 100
+                    if total_members
+                    else 100
+                )
+
+                logger.info(
+                    "FP year role REAL RUN progress: "
+                    "%s/%s users processed (%.1f%%)",
+                    index,
+                    total_members,
+                    progress,
+                )
+
+            vut_ident = vut_idents.get(member.id)
+
+            if not vut_ident:
+                missing_ident.append(
+                    f"{member} | Discord ID: {member.id}"
+                )
+                continue
+
+            processed_with_api += 1
+
+            try:
+                details = await get_user_details_with_retry(
+                    self.bot.vut_api,
+                    vut_ident,
+                )
+
+            except VutApiError as error:
+                api_errors.append(
+                    f"{member} | Discord ID: {member.id} | "
+                    f"VUT: {vut_ident} | {error}"
+                )
+
+                logger.warning(
+                    "FP year role REAL RUN API error. "
+                    "discord_id=%s, vut_ident=%s, error=%s",
+                    member.id,
+                    vut_ident,
+                    error,
+                )
+
+                continue
+
+            except Exception as error:
+                logger.exception(
+                    "Unexpected API error during FP year role REAL RUN. "
+                    "discord_id=%s, vut_ident=%s",
+                    member.id,
+                    vut_ident,
+                )
+
+                api_errors.append(
+                    f"{member} | Discord ID: {member.id} | "
+                    f"VUT: {vut_ident} | "
+                    f"{type(error).__name__}: {error}"
+                )
+
+                continue
+
+            finally:
+                # Kratka pauza po kazdem uzivateli
+                await asyncio.sleep(API_REQUEST_DELAY)
+
+                # Delsi pauza po kazde davce
+                if (
+                    processed_with_api > 0
+                    and processed_with_api % API_BATCH_SIZE == 0
+                ):
+                    logger.info(
+                        "FP year role REAL RUN batch cooldown. "
+                        "api_requests=%s, wait_seconds=%s",
+                        processed_with_api,
+                        API_BATCH_DELAY,
+                    )
+
+                    await asyncio.sleep(API_BATCH_DELAY)
+
+            if details is None:
+                unsupported.append(
+                    f"{member} | Discord ID: {member.id} | "
+                    f"VUT: {vut_ident} | API vratilo 404"
+                )
+                continue
+
+            if not isinstance(details, dict):
+                api_errors.append(
+                    f"{member} | Discord ID: {member.id} | "
+                    f"VUT: {vut_ident} | "
+                    "API vratilo neocekavany format"
+                )
+                continue
+
+            target_role_name, status = get_fp_year_target(
+                details
+            )
+
+            if status == "AMBIGUOUS":
+                ambiguous.append(
+                    f"{member} | Discord ID: {member.id} | "
+                    f"VUT: {vut_ident} | "
+                    f"{relation_summary(details)}"
+                )
+                continue
+
+            if (
+                status != "OK"
+                or target_role_name is None
+            ):
+                unsupported.append(
+                    f"{member} | Discord ID: {member.id} | "
+                    f"VUT: {vut_ident} | "
+                    f"{relation_summary(details)}"
+                )
+                continue
+
+            current_year_roles = [
+                role_name
+                for role_name, role in year_roles.items()
+                if role in member.roles
+            ]
+
+            # Uzivatel ma presne jednu spravnou roli
+            if current_year_roles == [target_role_name]:
+                already_correct.append(
+                    f"{member} | Discord ID: {member.id} | "
+                    f"VUT: {vut_ident} | {target_role_name}"
+                )
+                continue
+
+            current_text = (
+                "+".join(current_year_roles)
+                if current_year_roles
+                else "bez rocnikove role"
+            )
+
+            try:
+                await apply_year_role(
+                    member,
+                    target_role_name,
+                    year_roles,
+                )
+
+            except (
+                discord.Forbidden,
+                discord.HTTPException,
+            ) as error:
+                logger.exception(
+                    "FP year role change failed. "
+                    "discord_id=%s, vut_ident=%s, target=%s",
+                    member.id,
+                    vut_ident,
+                    target_role_name,
+                )
+
+                role_errors.append(
+                    f"{member} | Discord ID: {member.id} | "
+                    f"VUT: {vut_ident} | "
+                    f"{current_text} -> {target_role_name} | "
+                    f"{type(error).__name__}: {error}"
+                )
+
+                continue
+
+            except Exception as error:
+                logger.exception(
+                    "Unexpected FP year role change error. "
+                    "discord_id=%s, vut_ident=%s, target=%s",
+                    member.id,
+                    vut_ident,
+                    target_role_name,
+                )
+
+                role_errors.append(
+                    f"{member} | Discord ID: {member.id} | "
+                    f"VUT: {vut_ident} | "
+                    f"{current_text} -> {target_role_name} | "
+                    f"{type(error).__name__}: {error}"
+                )
+
+                continue
+
+            assigned[target_role_name].append(
+                f"{member} | Discord ID: {member.id} | "
+                f"VUT: {vut_ident} | "
+                f"{current_text} -> {target_role_name}"
+            )
+
+            logger.info(
+                "FP year role changed. "
+                "discord_id=%s, vut_ident=%s, "
+                "old=%s, new=%s",
+                member.id,
+                vut_ident,
+                current_text,
+                target_role_name,
+            )
+
+        total_assigned = sum(
+            len(lines)
+            for lines in assigned.values()
+        )
+
+        summary = (
+            "**FP YEAR ROLE SYNC - REAL RUN HOTOVO**\n\n"
+
+            f"FP uzivatelu celkem: **{total_members}**\n\n"
+
+            "**Pridelene nebo opravene role:**\n"
+            f"1BC: **{len(assigned['1BC'])}**\n"
+            f"2BC: **{len(assigned['2BC'])}**\n"
+            f"3+BC: **{len(assigned['3+BC'])}**\n"
+            f"1MGR: **{len(assigned['1MGR'])}**\n"
+            f"2+MGR: **{len(assigned['2+MGR'])}**\n"
+            f"Celkem zmen: **{total_assigned}**\n\n"
+
+            f"Jiz spravna role: **{len(already_correct)}**\n\n"
+
+            "**Manualni kontrola:**\n"
+            f"Chybi VUT ID v DB: **{len(missing_ident)}**\n"
+            f"Bez platneho FP B/N studia: **{len(unsupported)}**\n"
+            f"Vice moznych FP rocniku: **{len(ambiguous)}**\n"
+            f"API chyby: **{len(api_errors)}**\n"
+            f"Discord role chyby: **{len(role_errors)}**\n\n"
+
+            "**REAL RUN - rocnikove role byly skutecne zmeneny.**"
+        )
+
+        await dm_channel.send(summary)
+
+        for role_name in YEAR_ROLE_IDS:
+            await send_list(
+                dm_channel,
+                f"PRIDELENO {role_name}",
+                assigned[role_name],
+            )
+
+        await send_list(
+            dm_channel,
+            "MANUAL - chybi VUT ID v databazi",
+            missing_ident,
+        )
+
+        await send_list(
+            dm_channel,
+            "MANUAL - bez platneho FP B/N studia",
+            unsupported,
+        )
+
+        await send_list(
+            dm_channel,
+            "MANUAL - vice moznych FP rocniku",
+            ambiguous,
+        )
+
+        await send_list(
+            dm_channel,
+            "MANUAL - chyba VUT API",
+            api_errors,
+        )
+
+        await send_list(
+            dm_channel,
+            "MANUAL - chyba Discord role",
+            role_errors,
+        )
+
+        logger.info(
+            "FP year role REAL RUN finished. "
+            "fp_members=%s, assigned=%s, already_correct=%s, "
+            "missing_ident=%s, unsupported=%s, ambiguous=%s, "
+            "api_errors=%s, role_errors=%s",
+            total_members,
+            total_assigned,
+            len(already_correct),
+            len(missing_ident),
+            len(unsupported),
+            len(ambiguous),
+            len(api_errors),
+            len(role_errors),
         )
 
 
