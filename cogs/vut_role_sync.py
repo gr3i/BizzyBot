@@ -113,16 +113,21 @@ def classify_student(details: dict) -> str:
     Vraci:
     FP          = platny B/N student na FP
     VUT         = platny B/N student na jine fakulte VUT
-    UNSUPPORTED = stav, do ktereho automaticky nechceme zasahovat
+    EXSTUDENT   = API osobu zna, ale nema zadne vztahy
+    UNSUPPORTED = nestandardni stav pro manualni kontrolu
     """
 
     vztahy = details.get("vztahy") or []
 
+    # API osobu zna, ale nema zadny aktualni vztah
+    # Takoveho cloveka povazujeme za ExStudent
+    if not vztahy:
+        return "EXSTUDENT"
+
     valid_fp = []
     valid_other = []
 
-    # Pokud je na FP nejaky nestandardni studentsky vztah,
-    # nechceme cloveka automaticky presouvat z FP na VUT.
+    # Nestandardni FP studentsky vztah
     unsupported_fp_student = False
 
     for vztah in vztahy:
@@ -150,7 +155,7 @@ def classify_student(details: dict) -> str:
 
         rok = vztah.get("rok_studia")
 
-        # Uznava se pouze bakalarske nebo navazujici magisterske studium
+        # Platne studium je pouze bakalarske nebo navazujici magisterske
         valid_study = (
             typ in {"B", "N"}
             and isinstance(rok, int)
@@ -167,20 +172,19 @@ def classify_student(details: dict) -> str:
         elif fakulta == "FP":
             unsupported_fp_student = True
 
-    # FP ma prioritu, pokud je tam platne B/N studium
+    # Platne FP studium ma prioritu
     if valid_fp:
         return "FP"
 
-    # Pokud ma FP studentsky vztah, ale neni B/N,
-    # chceme manualni kontrolu
+    # FP student s nestandardnim typem studia
     if unsupported_fp_student:
         return "UNSUPPORTED"
 
-    # Platny B/N student na jine fakulte VUT
+    # Platny B/N student na jine fakulte
     if valid_other:
         return "VUT"
 
-    # API osobu zna, ale nemame bezpecny B/N studentsky vztah
+    # API vratilo nejaky vztah, ale neni to bezpecny B/N student
     return "UNSUPPORTED"
 
 
@@ -411,6 +415,25 @@ class VutRoleSync(commands.Cog):
                 continue
 
             target = classify_student(details)
+            
+            if target == "EXSTUDENT":
+                expected_exstudent += 1
+
+                current_roles = []
+
+                if has_vut:
+                    current_roles.append("VUT")
+
+                if has_fp:
+                    current_roles.append("FP")
+
+                to_exstudent.append(
+                    f"{member} | Discord ID: {member.id} | "
+                    f"VUT: {vut_ident} | "
+                    f"{'+'.join(current_roles)} -> ExStudent"
+                )
+
+                continue
 
             # API osobu zna, ale studium neni bezpecne B/N
             if target == "UNSUPPORTED":
