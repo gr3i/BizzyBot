@@ -251,6 +251,16 @@ class VutApiClient:
             "Author": self._client_credentials_author_id,
         }
 
+
+    '''
+        200 -> data cloveka
+        404 -> None = clovek nebyl nalezen
+        401/403 -> InvalidApiKey
+        429 -> RateLimited
+        500/502/503/... -> VutApiError
+        ostatni divne HTTP stavy -> VutApiError
+    '''
+
     async def _get_json_with_headers(
         self,
         user_id: str,
@@ -287,14 +297,46 @@ class VutApiClient:
                 )
                 raise RateLimited("Rate limit exceeded")
 
-            if response.status != 200:
+            # 404 znamena, ze osoba nebyla v API nalezena
+            if response.status == 404:
                 logger.info(
-                    "VUT API returned no usable data. user_id=%s, auth_source=%s, http_status=%s",
+                    "VUT API user not found. user_id=%s, auth_source=%s",
+                    user_id,
+                    auth_source,
+                )
+                return None
+
+            # Chyby serveru nesmime povazovat za nenalezenou osobu
+            if response.status >= 500:
+                text = await response.text()
+
+                logger.warning(
+                    "VUT API server error. user_id=%s, auth_source=%s, http_status=%s, response=%s",
                     user_id,
                     auth_source,
                     response.status,
+                    text[:500],
                 )
-                return None
+
+                raise VutApiError(
+                    f"VUT API vratilo HTTP {response.status}"
+                )
+
+            # Ostatni neocekavane HTTP stavy jsou take chyba
+            if response.status != 200:
+                text = await response.text()
+
+                logger.warning(
+                    "VUT API unexpected response. user_id=%s, auth_source=%s, http_status=%s, response=%s",
+                    user_id,
+                    auth_source,
+                    response.status,
+                    text[:500],
+                )
+
+                raise VutApiError(
+                    f"VUT API vratilo HTTP {response.status}"
+                )
 
             logger.info(
                 "VUT API request successful. user_id=%s, auth_source=%s",
