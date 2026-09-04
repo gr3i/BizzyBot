@@ -166,6 +166,7 @@ async def setup_hook():
         "cogs.verify",
         "cogs.role",
         "cogs.vut_role_sync",
+        "cogs.migrate_vut_idents",
         "cogs.reviews",
         "utils.vyber_oboru",
         "cogs.welcome_todo",
