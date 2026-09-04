@@ -350,11 +350,6 @@ class VutRoleSync(commands.Cog):
         self.bot = bot
 
     @app_commands.command(
-        name="vut_role_dry_run",
-        description="Dry run kontroly VUT, FP a ExStudent roli.",
-    )
-
-    @app_commands.command(
         name="vut_role_apply",
         description="OSTRY sync VUT, FP a ExStudent roli.",
     )
@@ -881,6 +876,10 @@ class VutRoleSync(commands.Cog):
             len(duplicate_idents),
         )
 
+    @app_commands.command(
+    name="vut_role_dry_run",
+    description="Dry run kontroly VUT, FP a ExStudent roli.",
+    )
     @app_commands.guild_only()
     async def vut_role_dry_run(
         self,
