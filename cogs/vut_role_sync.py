@@ -7,7 +7,7 @@ from discord.ext import commands
 
 from db.session import SessionLocal
 from db.models import Verification
-from services.vut_api import VutApiError
+from services.vut_api import RateLimited, VutApiError
 
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,13 @@ EXSTUDENT_ROLE_ID = 1545393809075077120
 
 # Pauza mezi jednotlivymi pozadavky na VUT API
 API_REQUEST_DELAY = 0.5
+# Po kazde davce dame API delsi pauzu
+API_BATCH_SIZE = 100
+API_BATCH_DELAY = 10
+
+# Pokud API vrati 429, pockame a stejny request zopakujeme
+RATE_LIMIT_MAX_RETRIES = 3
+RATE_LIMIT_DEFAULT_WAIT = 60
 
 
 def load_verified_vut_idents() -> dict[int, str]:
@@ -188,6 +195,35 @@ def classify_student(details: dict) -> str:
     return "UNSUPPORTED"
 
 
+async def get_user_details_with_retry(
+    vut_api,
+    vut_ident: str,
+):
+    """
+    Zavola VUT API a pri 429 stejny request zopakuje.
+    """
+
+    for attempt in range(RATE_LIMIT_MAX_RETRIES + 1):
+        try:
+            return await vut_api.get_user_details(vut_ident)
+
+        except RateLimited as error:
+            if attempt >= RATE_LIMIT_MAX_RETRIES:
+                raise
+
+            wait_seconds = error.retry_after or RATE_LIMIT_DEFAULT_WAIT
+
+            logger.warning(
+                "VUT API rate limit during role sync. "
+                "vut_ident=%s, retry=%s/%s, wait_seconds=%s",
+                vut_ident,
+                attempt + 1,
+                RATE_LIMIT_MAX_RETRIES,
+                wait_seconds,
+            )
+
+            await asyncio.sleep(wait_seconds)
+
 async def send_list(
     interaction: discord.Interaction,
     title: str,
@@ -346,6 +382,8 @@ class VutRoleSync(commands.Cog):
         expected_vut = 0
         expected_exstudent = 0
 
+        api_request_count = 0
+
         for index, member in enumerate(target_members, start=1):
             has_vut = vut_role in member.roles
             has_fp = fp_role in member.roles
@@ -359,9 +397,12 @@ class VutRoleSync(commands.Cog):
                 )
                 continue
 
+            api_request_count += 1
+
             try:
-                details = await self.bot.vut_api.get_user_details(
-                    vut_ident
+                details = await get_user_details_with_retry(
+                    self.bot.vut_api,
+                    vut_ident,
                 )
 
             except VutApiError as error:
@@ -384,8 +425,19 @@ class VutRoleSync(commands.Cog):
                 continue
 
             finally:
-                # Jednoduchy rate limit mezi uzivateli
+                # Kratka pauza po kazdem uzivateli
                 await asyncio.sleep(API_REQUEST_DELAY)
+
+                # Delsi pauza po kazde davce requestu
+                if api_request_count % API_BATCH_SIZE == 0:
+                    logger.info(
+                        "VUT role sync batch cooldown. "
+                        "api_requests=%s, wait_seconds=%s",
+                        api_request_count,
+                        API_BATCH_DELAY,
+                    )
+
+                    await asyncio.sleep(API_BATCH_DELAY)
 
             # None znamena po uprave vut_api.py skutecne HTTP 404
             if details is None:
@@ -415,7 +467,7 @@ class VutRoleSync(commands.Cog):
                 continue
 
             target = classify_student(details)
-            
+
             if target == "EXSTUDENT":
                 expected_exstudent += 1
 

@@ -21,7 +21,13 @@ class InvalidApiKey(VutApiError):
 
 
 class RateLimited(VutApiError):
-    pass
+    def __init__(
+        self,
+        message: str,
+        retry_after: int | None = None,
+    ):
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 class VutApiClient:
@@ -106,6 +112,18 @@ class VutApiClient:
         if self.session and not self.session.closed:
             await self.session.close()
 
+    @staticmethod
+    def _get_retry_after(response: aiohttp.ClientResponse) -> int | None:
+        value = response.headers.get("Retry-After")
+
+        if not value:
+            return None
+
+        try:
+            return max(1, int(float(value)))
+        except (TypeError, ValueError):
+            return None
+
     def _static_token_headers(self) -> dict[str, str]:
         return {
             "Authorization": f"Bearer {self._api_key}",
@@ -152,8 +170,17 @@ class VutApiClient:
                 raise InvalidApiKey("Neplatne VUT client_id/client_secret.")
 
             if response.status == 429:
-                logger.warning("VUT token request rate limited.")
-                raise RateLimited("Prekrocen limit generovani VUT access tokenu.")
+                retry_after = self._get_retry_after(response)
+
+                logger.warning(
+                    "VUT token request rate limited. retry_after=%s",
+                    retry_after,
+                )
+
+                raise RateLimited(
+                    "Prekrocen limit generovani VUT access tokenu.",
+                    retry_after=retry_after,
+                )
 
             if response.status != 200:
                 text = await response.text()
@@ -198,21 +225,24 @@ class VutApiClient:
                 try:
                     payload = await self._request_generated_access_token(auth_method)
                     break
+                except RateLimited:
+                    # Rate limit neni chyba credentials
+                    raise
+
                 except InvalidApiKey as error:
                     last_error = error
+
                     logger.warning(
                         "VUT access token attempt failed because credentials were rejected. auth_method=%s",
                         auth_method,
                     )
+
                     continue
-                except VutApiError as error:
-                    last_error = error
-                    logger.warning(
-                        "VUT access token attempt failed. auth_method=%s, error=%s",
-                        auth_method,
-                        error,
-                    )
-                    continue
+
+                except VutApiError:
+                    # Serverove a jine API chyby nema smysl zkouset
+                    # okamzite znovu jinym auth methodem
+                    raise
             else:
                 if last_error:
                     raise last_error
@@ -290,13 +320,20 @@ class VutApiClient:
                 raise InvalidApiKey("Invalid VUT API credentials")
 
             if response.status == 429:
+                retry_after = self._get_retry_after(response)
+
                 logger.warning(
-                    "VUT API rate limited. user_id=%s, auth_source=%s",
+                    "VUT API rate limited. user_id=%s, auth_source=%s, retry_after=%s",
                     user_id,
                     auth_source,
+                    retry_after,
                 )
-                raise RateLimited("Rate limit exceeded")
 
+                raise RateLimited(
+                    "Rate limit exceeded",
+                    retry_after=retry_after,
+                )
+            
             # 404 znamena, ze osoba nebyla v API nalezena
             if response.status == 404:
                 logger.info(
@@ -387,9 +424,14 @@ class VutApiClient:
             logger.info("Using new VUT client credentials as primary auth method.")
             return await self._get_user_details_generated_token(user_id)
 
-        except (InvalidApiKey, RateLimited, VutApiError) as primary_error:
+        except RateLimited:
+            # Rate limit neni chyba prihlaseni.
+            # Credentials nevypiname a nezkousime stary token.
+            raise
+
+        except InvalidApiKey as primary_error:
             logger.warning(
-                "Primary VUT client credentials auth failed. error=%s",
+                "Primary VUT client credentials were rejected. error=%s",
                 primary_error,
             )
 
@@ -403,6 +445,11 @@ class VutApiClient:
             )
 
             return await self._get_user_details_static_token_fallback(user_id)
+
+        except VutApiError:
+            # Serverove a jine API chyby nejsou chyba credentials.
+            # Neaktivujeme cooldown a nepouzivame static token fallback.
+            raise
         
     async def _get_user_details_static_token_fallback(self, user_id: str) -> dict | None:
         if not self._allow_static_token_fallback:
