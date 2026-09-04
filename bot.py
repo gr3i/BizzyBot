@@ -166,6 +166,7 @@ async def setup_hook():
         "cogs.verify",
         "cogs.role",
         "cogs.vut_role_sync",
+        "cogs.fp_year_roles",
         "cogs.migrate_vut_idents",
         "cogs.vut_api_test",
         "cogs.reviews",
