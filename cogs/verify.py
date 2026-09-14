@@ -320,33 +320,40 @@ class Verify(commands.Cog):
 
                     if mail_value in emails_api and vztahy:
                         typy_studia = set()
-                        fakulty = set()
+                        has_fp_student_study = False
 
                         for vztah in vztahy:
                             typ_studia_info = vztah.get("typ_studia") or {}
                             zkratka_typu = (typ_studia_info.get("zkratka") or "").strip().upper()
-                            if zkratka_typu:
-                                typy_studia.add(zkratka_typu)
 
                             fakulta_info = vztah.get("fakulta") or {}
                             fak_zkr = (fakulta_info.get("zkratka") or "").strip().upper()
-                            if fak_zkr:
-                                fakulty.add(fak_zkr)
 
-                        # Decide identity role
-                        if "D" in typy_studia:
+                            pozice = (vztah.get("pozice") or "").strip().lower()
+
+                            if zkratka_typu:
+                                typy_studia.add(zkratka_typu)
+
+                            if (
+                                fak_zkr == "FP"
+                                and pozice == "student"
+                                and zkratka_typu in {"B", "N", "C4"}
+                            ):
+                                has_fp_student_study = True
+
+                        # FP studium ma prioritu
+                        if has_fp_student_study:
+                            specific_role_id = ROLE_FP_ID
+
+                            rok, typ = extract_fp_study_info(details)
+                            if rok is not None and typ is not None:
+                                fp_year_role_id = pick_fp_year_role_id(rok, typ)
+
+                        elif "D" in typy_studia:
                             specific_role_id = ROLE_DOKTORAND_ID
 
                         elif typy_studia and typy_studia.issubset({"B", "N", "C4"}):
-                            if "FP" in fakulty:
-                                specific_role_id = ROLE_FP_ID
-
-                                rok, typ = extract_fp_study_info(details)
-                                if rok is not None and typ is not None:
-                                    fp_year_role_id = pick_fp_year_role_id(rok, typ)
-
-                            else:
-                                specific_role_id = ROLE_VUT_ID
+                            specific_role_id = ROLE_VUT_ID
 
                         else:
                             specific_role_id = ROLE_VUT_STAFF_ID
@@ -365,8 +372,8 @@ class Verify(commands.Cog):
             ROLE_MUNI_ID: 1,
             ROLE_VUT_ID: 1,
             ROLE_FP_ID: 1,
-            ROLE_VUT_STAFF_ID: 2,
-            ROLE_DOKTORAND_ID: 3,
+            ROLE_DOKTORAND_ID: 2,
+            ROLE_VUT_STAFF_ID: 3,
         }
 
         guild = interaction.guild
