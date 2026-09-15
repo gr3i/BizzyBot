@@ -1,0 +1,30 @@
+import discord
+from discord.ext import commands
+
+
+TRIGGER_PHRASES = {
+    "fp help video",
+    "help fp video",
+    "video fp help",
+}
+
+RESPONSE_TEXT = "FP Discord bez zmatků? Tady máš help video --> https://www.youtube.com/watch?v=NzCMJtmLlyU <:koteseni:1361038813719302175>"
+
+
+class FpHelpVideoResponder(commands.Cog):
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+
+        content = message.content.lower()
+
+        if any(phrase in content for phrase in TRIGGER_PHRASES):
+            await message.reply(RESPONSE_TEXT, mention_author=False)
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(FpHelpVideoResponder(bot))

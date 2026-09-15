@@ -195,6 +195,7 @@ async def setup_hook():
         "cogs.purge", 
         "cogs.prirucka_prvaka_react",
         "cogs.mapa_fektu_react",
+        "cogs.fp_help_video_react",
         "cogs.nemas_roli_oboru_react",
         "cogs.vyber_role",
         "cogs.ruleta",
