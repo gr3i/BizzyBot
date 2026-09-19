@@ -161,6 +161,7 @@ async def setup_hook():
     guild = discord.Object(id=GUILD_ID)
 
     for ext in [
+        "cogs.create_subject_channels",
         "cogs.hello",
         "cogs.botInfo",
         "cogs.verify",
