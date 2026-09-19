@@ -44,6 +44,23 @@ COMMON_ACCESS_IDS = {
 }
 
 
+PRIVATE_ACCESS_IDS = {
+    FP_ROLE_ID,
+    BIZZYBOT_ROLE_ID,
+    NURI_ROLE_ID,
+    *HELPER_ROLE_IDS,
+    *SUBMOD_ROLE_IDS,
+    *MOD_ROLE_IDS,
+    VUT_ROLE_ID,
+}
+
+
+PUBLIC_ACCESS_IDS = {
+    *PRIVATE_ACCESS_IDS,
+    TEACHER_EMPLOYEE_ROLE_ID,
+    DOKTORAND_ROLE_ID,
+}
+
 # Pouze pro public mistnosti
 PUBLIC_EXTRA_ACCESS_IDS = {
     TEACHER_EMPLOYEE_ROLE_ID,
@@ -250,6 +267,169 @@ class CreateSubjectChannels(commands.Cog):
 
             if chunk:
                 await ctx.send(chunk.rstrip(", "))
+
+    @commands.command(name="fixSubjectChannelPermissions")
+    @commands.check(can_run_script)
+    async def fix_subject_channel_permissions(
+        self,
+        ctx: commands.Context,
+    ):
+        guild = ctx.guild
+
+        if guild is None:
+            await ctx.send(
+                "Tento prikaz lze pouzit pouze na serveru"
+            )
+            return
+
+        all_access_ids = PUBLIC_ACCESS_IDS
+
+        targets = {}
+        missing_ids = []
+
+        for target_id in all_access_ids:
+            target = guild.get_role(target_id)
+
+            if target is None:
+                target = guild.get_member(target_id)
+
+            if target is None:
+                try:
+                    target = await guild.fetch_member(target_id)
+                except discord.NotFound:
+                    target = None
+                except discord.HTTPException:
+                    target = None
+
+            if target is None:
+                missing_ids.append(target_id)
+            else:
+                targets[target_id] = target
+
+        if missing_ids:
+            await ctx.send(
+                "Nektera ID nebyla nalezena\n"
+                + "\n".join(str(target_id) for target_id in missing_ids)
+                + "\n\nNic nebylo zmeneno"
+            )
+            return
+
+        checked_channels = 0
+        changed_channels = 0
+        unchanged_channels = 0
+        removed_overwrites = 0
+        added_or_fixed_overwrites = 0
+
+        changed_names = []
+
+        for channel in guild.text_channels:
+            channel_name = channel.name.lower()
+
+            if "private" in channel_name:
+                allowed_ids = PRIVATE_ACCESS_IDS
+
+            elif "public" in channel_name:
+                allowed_ids = PUBLIC_ACCESS_IDS
+
+            else:
+                continue
+
+            checked_channels += 1
+
+            current_overwrites = channel.overwrites
+
+            expected_ids = set(allowed_ids)
+            expected_ids.add(guild.default_role.id)
+
+            channel_needs_update = False
+
+            for target, overwrite in current_overwrites.items():
+                if target.id not in expected_ids:
+                    removed_overwrites += 1
+                    channel_needs_update = True
+
+            everyone_overwrite = channel.overwrites_for(
+                guild.default_role
+            )
+
+            if everyone_overwrite.view_channel is not False:
+                channel_needs_update = True
+                added_or_fixed_overwrites += 1
+
+            for target_id in allowed_ids:
+                target = targets[target_id]
+
+                overwrite = channel.overwrites_for(target)
+
+                if overwrite.view_channel is not True:
+                    channel_needs_update = True
+                    added_or_fixed_overwrites += 1
+
+            if not channel_needs_update:
+                unchanged_channels += 1
+                continue
+
+            new_overwrites = {}
+
+            everyone_overwrite = channel.overwrites_for(
+                guild.default_role
+            )
+
+            everyone_overwrite.view_channel = False
+
+            new_overwrites[guild.default_role] = everyone_overwrite
+
+            for target_id in allowed_ids:
+                target = targets[target_id]
+
+                overwrite = channel.overwrites_for(target)
+
+                overwrite.view_channel = True
+
+                new_overwrites[target] = overwrite
+
+            try:
+                await channel.edit(
+                    overwrites=new_overwrites,
+                    reason="Fix subject channel permissions",
+                )
+
+                changed_channels += 1
+                changed_names.append(channel.name)
+
+            except discord.Forbidden:
+                await ctx.send(
+                    f"Missing permissions for {channel.name}"
+                )
+
+            except discord.HTTPException as error:
+                await ctx.send(
+                    f"Failed to update {channel.name} {error}"
+                )
+
+        await ctx.send(
+            "Subject channel permissions finished\n"
+            f"Checked channels {checked_channels}\n"
+            f"Changed channels {changed_channels}\n"
+            f"Unchanged channels {unchanged_channels}\n"
+            f"Removed overwrites {removed_overwrites}\n"
+            f"Added or fixed overwrites {added_or_fixed_overwrites}"
+        )
+
+        if changed_names:
+            text = "Changed channels\n"
+
+            for channel_name in changed_names:
+                addition = f"{channel_name}\n"
+
+                if len(text) + len(addition) > 1900:
+                    await ctx.send(text)
+                    text = ""
+
+                text += addition
+
+            if text:
+                await ctx.send(text)
 
     @commands.command(name="createSubjectChannels_script")
     @commands.check(can_run_script)
