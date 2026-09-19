@@ -121,6 +121,136 @@ class CreateSubjectChannels(commands.Cog):
 
         return overwrites, missing_ids
 
+    @commands.command(name="subjectChannelsStatus")
+    @commands.check(can_run_script)
+    async def subject_channels_status(self, ctx: commands.Context):
+        """
+        Pouze diagnostika
+        Nic nevytvari ani neupravuje
+        """
+
+        guild = ctx.guild
+
+        if guild is None:
+            await ctx.send("Tento prikaz lze pouzit pouze na serveru")
+            return
+
+        new_subjects = load_subjects(NEW_SUBJECTS_FILE)
+
+        if not new_subjects:
+            await ctx.send(
+                "Soubor utils/subjects_2026.txt je prazdny nebo neexistuje"
+            )
+            return
+
+        complete = []
+        only_public = []
+        only_private = []
+        completely_missing = []
+
+        public_count = 0
+        private_count = 0
+
+        for subject in new_subjects:
+            subject_code = normalize_subject(subject)
+
+            public_name = f"{subject_code}-public"
+            private_name = f"{subject_code}-private"
+
+            public_channel = discord.utils.get(
+                guild.text_channels,
+                name=public_name,
+            )
+
+            private_channel = discord.utils.get(
+                guild.text_channels,
+                name=private_name,
+            )
+
+            has_public = public_channel is not None
+            has_private = private_channel is not None
+
+            if has_public:
+                public_count += 1
+
+            if has_private:
+                private_count += 1
+
+            if has_public and has_private:
+                complete.append(subject_code)
+
+            elif has_public:
+                only_public.append(subject_code)
+
+            elif has_private:
+                only_private.append(subject_code)
+
+            else:
+                completely_missing.append(subject_code)
+
+        missing_public = len(new_subjects) - public_count
+        missing_private = len(new_subjects) - private_count
+
+        missing_channels_total = missing_public + missing_private
+
+        await ctx.send(
+            "Subject channels status\n"
+            f"Celkem kanalu na serveru {len(guild.channels)} / 500\n"
+            f"Textovych kanalu {len(guild.text_channels)}\n"
+            f"Kategorii {len(guild.categories)}\n\n"
+            f"Predmetu v subjects_2026.txt {len(new_subjects)}\n\n"
+            f"Kompletni dvojice {len(complete)}\n"
+            f"Existujici PUBLIC {public_count}\n"
+            f"Existujici PRIVATE {private_count}\n\n"
+            f"Jen PUBLIC {len(only_public)}\n"
+            f"Jen PRIVATE {len(only_private)}\n"
+            f"Nemaji ani jednu mistnost {len(completely_missing)}\n\n"
+            f"Chybi PUBLIC mistnosti {missing_public}\n"
+            f"Chybi PRIVATE mistnosti {missing_private}\n"
+            f"Celkem jeste chybi {missing_channels_total}"
+        )
+
+        details = []
+
+        if only_public:
+            details.append(
+                "Maji pouze PUBLIC\n"
+                + ", ".join(only_public)
+            )
+
+        if only_private:
+            details.append(
+                "Maji pouze PRIVATE\n"
+                + ", ".join(only_private)
+            )
+
+        if completely_missing:
+            details.append(
+                "Nemaji zadnou mistnost\n"
+                + ", ".join(completely_missing)
+            )
+
+        for detail in details:
+            if len(detail) <= 1900:
+                await ctx.send(detail)
+                continue
+
+            lines = detail.split(", ")
+
+            chunk = ""
+
+            for line in lines:
+                addition = line + ", "
+
+                if len(chunk) + len(addition) > 1900:
+                    await ctx.send(chunk.rstrip(", "))
+                    chunk = ""
+
+                chunk += addition
+
+            if chunk:
+                await ctx.send(chunk.rstrip(", "))
+
     @commands.command(name="createSubjectChannels_script")
     @commands.check(can_run_script)
     async def create_subject_channels(self, ctx: commands.Context):
