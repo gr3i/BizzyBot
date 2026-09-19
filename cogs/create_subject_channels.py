@@ -520,6 +520,192 @@ class CreateSubjectChannels(commands.Cog):
             if text:
                 await ctx.send(text)
 
+    @commands.command(name="sortSubjectChannels")
+    @commands.check(can_run_script)
+    async def sort_subject_channels(
+        self,
+        ctx: commands.Context,
+    ):
+        guild = ctx.guild
+
+        if guild is None:
+            await ctx.send(
+                "Tento prikaz lze pouzit pouze na serveru"
+            )
+            return
+
+        pairs = []
+        missing_public = []
+
+        for private_channel in guild.text_channels:
+            channel_name = private_channel.name.lower()
+
+            if not channel_name.endswith("-private"):
+                continue
+
+            subject_name = channel_name.removesuffix("-private")
+            public_name = f"{subject_name}-public"
+
+            public_channel = discord.utils.get(
+                guild.text_channels,
+                name=public_name,
+            )
+
+            if public_channel is None:
+                missing_public.append(subject_name)
+                continue
+
+            pairs.append(
+                (
+                    subject_name,
+                    private_channel,
+                    public_channel,
+                )
+            )
+
+        if not pairs:
+            await ctx.send(
+                "Nebyly nalezeny zadne kompletni dvojice predmetu"
+            )
+            return
+
+        pairs.sort(
+            key=lambda pair: pair[0].casefold()
+        )
+
+        pairs_per_category = 25
+
+        category_count = (
+            len(pairs) + pairs_per_category - 1
+        ) // pairs_per_category
+
+        categories = []
+
+        for number in range(1, category_count + 1):
+            category_name = f"kategorie {number}"
+
+            category = discord.utils.get(
+                guild.categories,
+                name=category_name,
+            )
+
+            categories.append(
+                (
+                    category_name,
+                    category,
+                )
+            )
+
+        missing_categories = sum(
+            1
+            for _, category in categories
+            if category is None
+        )
+
+        if len(guild.channels) + missing_categories > 500:
+            await ctx.send(
+                "Neni dostatek mista pro vytvoreni kategorii\n"
+                f"Aktualni pocet kanalu {len(guild.channels)}\n"
+                f"Je potreba vytvorit kategorii {missing_categories}\n"
+                f"Po vytvoreni by bylo {len(guild.channels) + missing_categories} kanalu"
+            )
+            return
+
+        resolved_categories = []
+
+        for category_name, category in categories:
+            if category is None:
+                try:
+                    category = await guild.create_category(
+                        category_name,
+                        reason="Sort subject channels",
+                    )
+
+                except discord.Forbidden:
+                    await ctx.send(
+                        f"Missing permissions for {category_name}"
+                    )
+                    return
+
+                except discord.HTTPException as error:
+                    await ctx.send(
+                        f"Failed to create {category_name} {error}"
+                    )
+                    return
+
+            resolved_categories.append(category)
+
+        moved_pairs = 0
+        failed_pairs = []
+
+        for index, pair in enumerate(pairs):
+            subject_name, private_channel, public_channel = pair
+
+            category_index = index // pairs_per_category
+            category = resolved_categories[category_index]
+
+            try:
+                await private_channel.move(
+                    category=category,
+                    end=True,
+                    sync_permissions=False,
+                    reason="Sort subject channels",
+                )
+
+                await public_channel.move(
+                    category=category,
+                    end=True,
+                    sync_permissions=False,
+                    reason="Sort subject channels",
+                )
+
+                moved_pairs += 1
+
+            except discord.Forbidden:
+                failed_pairs.append(subject_name)
+
+            except discord.HTTPException:
+                failed_pairs.append(subject_name)
+
+        await ctx.send(
+            "Subject channel sorting finished\n"
+            f"Predmetu {len(pairs)}\n"
+            f"Kategorii {category_count}\n"
+            f"Serazenych dvojic {moved_pairs}\n"
+            f"Chybejici public mistnosti {len(missing_public)}\n"
+            f"Neuspesnych dvojic {len(failed_pairs)}"
+        )
+
+        if missing_public:
+            text = "Chybi public mistnost\n"
+
+            for subject_name in missing_public:
+                addition = f"{subject_name}\n"
+
+                if len(text) + len(addition) > 1900:
+                    await ctx.send(text)
+                    text = ""
+
+                text += addition
+
+            if text:
+                await ctx.send(text)
+
+        if failed_pairs:
+            text = "Nepodarilo se presunout\n"
+
+            for subject_name in failed_pairs:
+                addition = f"{subject_name}\n"
+
+                if len(text) + len(addition) > 1900:
+                    await ctx.send(text)
+                    text = ""
+
+                text += addition
+
+            if text:
+                await ctx.send(text)
+
     @commands.command(name="createSubjectChannels_script")
     @commands.check(can_run_script)
     async def create_subject_channels(self, ctx: commands.Context):
