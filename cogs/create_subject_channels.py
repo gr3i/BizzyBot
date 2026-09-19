@@ -431,6 +431,95 @@ class CreateSubjectChannels(commands.Cog):
             if text:
                 await ctx.send(text)
 
+    @commands.command(name="resetSubjectSendPermissions")
+    @commands.check(can_run_script)
+    async def reset_subject_send_permissions(
+        self,
+        ctx: commands.Context,
+    ):
+        guild = ctx.guild
+
+        if guild is None:
+            await ctx.send(
+                "Tento prikaz lze pouzit pouze na serveru"
+            )
+            return
+
+        checked_channels = 0
+        changed_channels = 0
+        changed_overwrites = 0
+
+        changed_names = []
+
+        for channel in guild.text_channels:
+            channel_name = channel.name.lower()
+
+            if not (
+                channel_name.endswith("-public")
+                or channel_name.endswith("-private")
+            ):
+                continue
+
+            checked_channels += 1
+            channel_changed = False
+
+            for target, overwrite in list(channel.overwrites.items()):
+
+                if not isinstance(target, discord.Role):
+                    continue
+
+                if overwrite.view_channel is not True:
+                    continue
+
+                if overwrite.send_messages is not None:
+                    overwrite.send_messages = None
+
+                    try:
+                        await channel.set_permissions(
+                            target,
+                            overwrite=overwrite,
+                            reason="Reset subject send permission",
+                        )
+
+                        changed_overwrites += 1
+                        channel_changed = True
+
+                    except discord.Forbidden:
+                        await ctx.send(
+                            f"Missing permissions for {channel.name}"
+                        )
+
+                    except discord.HTTPException as error:
+                        await ctx.send(
+                            f"Failed to update {channel.name} {error}"
+                        )
+
+            if channel_changed:
+                changed_channels += 1
+                changed_names.append(channel.name)
+
+        await ctx.send(
+            "Subject send permissions finished\n"
+            f"Checked channels {checked_channels}\n"
+            f"Changed channels {changed_channels}\n"
+            f"Changed role overwrites {changed_overwrites}"
+        )
+
+        if changed_names:
+            text = "Changed channels\n"
+
+            for channel_name in changed_names:
+                addition = f"{channel_name}\n"
+
+                if len(text) + len(addition) > 1900:
+                    await ctx.send(text)
+                    text = ""
+
+                text += addition
+
+            if text:
+                await ctx.send(text)
+
     @commands.command(name="createSubjectChannels_script")
     @commands.check(can_run_script)
     async def create_subject_channels(self, ctx: commands.Context):
