@@ -325,10 +325,10 @@ class CreateSubjectChannels(commands.Cog):
         for channel in guild.text_channels:
             channel_name = channel.name.lower()
 
-            if "private" in channel_name:
+            if channel_name.endswith("-private"):
                 allowed_ids = PRIVATE_ACCESS_IDS
 
-            elif "public" in channel_name:
+            elif channel_name.endswith("-public"):
                 allowed_ids = PUBLIC_ACCESS_IDS
 
             else:
@@ -445,11 +445,6 @@ class CreateSubjectChannels(commands.Cog):
             await ctx.send("Tento příkaz lze použít pouze na serveru.")
             return
 
-        old_subjects = {
-            normalize_subject(subject)
-            for subject in load_subjects(OLD_SUBJECTS_FILE)
-        }
-
         new_subjects = load_subjects(NEW_SUBJECTS_FILE)
 
         if not new_subjects:
@@ -481,9 +476,11 @@ class CreateSubjectChannels(commands.Cog):
 
         if missing_ids:
             await ctx.send(
-                "Některá ID rolí/uživatelů jsem na serveru nenašel:\n"
-                + "\n".join(f"`{role_id}`" for role_id in missing_ids)
+                "Nektera ID roli nebo uzivatelu nebyla nalezena\n"
+                + "\n".join(str(role_id) for role_id in missing_ids)
+                + "\nNic nebylo vytvoreno"
             )
+            return
 
         created_public = 0
         created_private = 0
@@ -491,16 +488,10 @@ class CreateSubjectChannels(commands.Cog):
         existing_public = 0
         existing_private = 0
 
-        skipped_old_subjects = 0
         skipped_legacy_channels = 0
 
         for subject in new_subjects:
             subject_code = normalize_subject(subject)
-
-            # Predmet uz existuje ve starem seznamu
-            if subject_code in old_subjects:
-                skipped_old_subjects += 1
-                continue
 
 
             # Kontrola stareho kanalu bez -public/-private
