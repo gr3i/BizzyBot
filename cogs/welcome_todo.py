@@ -38,7 +38,7 @@ FP_TODO_LINES = [
     "✅ Nastav si obor, který studuješ (napiš `/` a vyber `obor`). <-- Pro bakalářské obory.",
     "✅ Pokud studuješ navazující magisterský obor, předměty najdeš ve fórech pod kategorií `magisterské`. (https://discord.com/channels/1357455204391321712/1422505714332602459/1514786506584232028)",
     "✅ Příkaz použij klidně v místnosti #general. Zprávu uvidíš jen ty...",
-    "✅ Pokud tohle uděláš, dostaneš přístup do nových místností.",
+    "✅ Pod kategoriemi A-Z najdeš všechny bakalářské předměty.",
     "✅ Do [předmět]-public vidí i vyučující.",
     "✅ Do [předmět]-private pouze studenti, co studují bakaláře nebo magistra.",
     "✅ Přes `/role` si můžeš přidat dobrovolné role. (Některé role slouží k tagování pro zajímavé akce zdarma.)",
