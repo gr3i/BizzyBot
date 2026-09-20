@@ -35,7 +35,7 @@ class PinOnReacts(commands.Cog):
 
         # spocti 📌 reakce
         for reaction in message.reactions:
-            if str(reaction.emoji) == "📌" and reaction.count >= 5:
+            if str(reaction.emoji) == "📌" and reaction.count >= 2:
                 try:
                     await message.pin(reason="5× 📌 reakce")
                 except discord.Forbidden:
