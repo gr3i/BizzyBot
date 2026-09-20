@@ -38,6 +38,9 @@ class ChannelDescriptions(commands.Cog):
         header: str,
         lines: list[str],
     ):
+        if not lines:
+            return
+
         text = header + "\n"
 
         for line in lines:
@@ -61,7 +64,7 @@ class ChannelDescriptions(commands.Cog):
     ]:
         rules = {}
         invalid_lines = []
-        conflicting_codes = []
+        conflicting_codes = set()
 
         if not DESCRIPTIONS_FILE.exists():
             invalid_lines.append(
@@ -71,7 +74,7 @@ class ChannelDescriptions(commands.Cog):
             return (
                 rules,
                 invalid_lines,
-                conflicting_codes,
+                [],
             )
 
         raw_input = DESCRIPTIONS_FILE.read_text(
@@ -86,7 +89,7 @@ class ChannelDescriptions(commands.Cog):
             return (
                 rules,
                 invalid_lines,
-                conflicting_codes,
+                [],
             )
 
         for line_number, line in enumerate(
@@ -132,7 +135,7 @@ class ChannelDescriptions(commands.Cog):
 
             if code in rules:
                 if rules[code] != description:
-                    conflicting_codes.append(code)
+                    conflicting_codes.add(code)
                     rules.pop(code, None)
 
                 continue
@@ -142,8 +145,23 @@ class ChannelDescriptions(commands.Cog):
         return (
             rules,
             invalid_lines,
-            conflicting_codes,
+            sorted(conflicting_codes),
         )
+
+    def topic_contains_description(
+        self,
+        topic: str,
+        description: str,
+    ) -> bool:
+        if topic == description:
+            return True
+
+        if topic.endswith(
+            f", {description}"
+        ):
+            return True
+
+        return False
 
     @commands.command(name="setChannelDescriptions")
     @commands.check(can_run_script)
@@ -163,7 +181,7 @@ class ChannelDescriptions(commands.Cog):
             self.load_rules()
         )
 
-        if invalid_lines:
+        if not rules and invalid_lines:
             await self.send_lines(
                 ctx,
                 "Chyby v channel_descriptions.txt",
@@ -171,19 +189,31 @@ class ChannelDescriptions(commands.Cog):
             )
 
             await ctx.send(
-                "Nic nebylo zmeneno"
+                "Nebyla nalezena zadna platna pravidla"
             )
             return
+
+        if invalid_lines:
+            await self.send_lines(
+                ctx,
+                "Tyto radky budou preskoceny",
+                invalid_lines,
+            )
 
         if conflicting_codes:
             await self.send_lines(
                 ctx,
                 "Tyto zkratky maji vice ruznych popisku a budou preskoceny",
-                sorted(set(conflicting_codes)),
+                conflicting_codes,
             )
 
         planned_changes = []
+
         matched_codes = set()
+
+        already_assigned_channels = []
+        channels_without_rule = []
+        too_long_channels = []
 
         for channel in guild.text_channels:
             channel_name = channel.name.lower()
@@ -202,17 +232,50 @@ class ChannelDescriptions(commands.Cog):
                 continue
 
             if subject_code not in rules:
+                channels_without_rule.append(
+                    channel.name
+                )
                 continue
 
             description = rules[subject_code]
 
-            matched_codes.add(subject_code)
+            matched_codes.add(
+                subject_code
+            )
+
+            current_topic = (
+                channel.topic.strip()
+                if channel.topic
+                else ""
+            )
+
+            if self.topic_contains_description(
+                current_topic,
+                description,
+            ):
+                already_assigned_channels.append(
+                    channel.name
+                )
+                continue
+
+            if current_topic:
+                new_topic = (
+                    f"{current_topic}, {description}"
+                )
+            else:
+                new_topic = description
+
+            if len(new_topic) > 1024:
+                too_long_channels.append(
+                    f"{channel.name} {len(new_topic)} znaku"
+                )
+                continue
 
             planned_changes.append(
                 (
                     channel,
                     subject_code,
-                    description,
+                    new_topic,
                 )
             )
 
@@ -222,22 +285,7 @@ class ChannelDescriptions(commands.Cog):
             if code not in matched_codes
         )
 
-        if not planned_changes:
-            await ctx.send(
-                "Nebyla nalezena zadna odpovidajici mistnost"
-            )
-
-            if unmatched_codes:
-                await self.send_lines(
-                    ctx,
-                    "Zkratky bez nalezene mistnosti",
-                    unmatched_codes,
-                )
-
-            return
-
         changed_channels = []
-        unchanged_channels = []
 
         original_topics = {}
 
@@ -245,21 +293,17 @@ class ChannelDescriptions(commands.Cog):
             for (
                 channel,
                 subject_code,
-                description,
+                new_topic,
             ) in planned_changes:
 
-                if channel.topic == description:
-                    unchanged_channels.append(
-                        channel.name
-                    )
-                    continue
-
-                original_topics[channel.id] = channel.topic
+                original_topics[channel.id] = (
+                    channel.topic
+                )
 
                 await channel.edit(
-                    topic=description,
+                    topic=new_topic,
                     reason=(
-                        "Set subject channel description "
+                        "Append subject channel description "
                         f"for {subject_code}"
                     ),
                 )
@@ -300,7 +344,7 @@ class ChannelDescriptions(commands.Cog):
             await ctx.send(
                 "Pri uprave nastala chyba\n"
                 f"{type(error).__name__} {error}\n"
-                "Provedene zmeny byly vraceny"
+                "Pokusil jsem se vratit provedene zmeny"
             )
 
             if rollback_failed:
@@ -314,11 +358,14 @@ class ChannelDescriptions(commands.Cog):
 
         await ctx.send(
             "Channel descriptions finished\n"
-            f"Pravidel {len(rules)}\n"
-            f"Nalezenych mistnosti {len(planned_changes)}\n"
+            f"Platnych pravidel {len(rules)}\n"
+            f"Konfliktnich zkratek {len(conflicting_codes)}\n"
+            f"Chybnych radku {len(invalid_lines)}\n"
             f"Zmenenych mistnosti {len(changed_channels)}\n"
-            f"Jiz spravne {len(unchanged_channels)}\n"
-            f"Zkratek bez mistnosti {len(unmatched_codes)}"
+            f"Popisek uz byl prirazen {len(already_assigned_channels)}\n"
+            f"Zkratek bez mistnosti {len(unmatched_codes)}\n"
+            f"Mistnosti bez odpovidajici zkratky {len(channels_without_rule)}\n"
+            f"Preskoceno kvuli delce {len(too_long_channels)}"
         )
 
         if changed_channels:
@@ -331,11 +378,11 @@ class ChannelDescriptions(commands.Cog):
                 ],
             )
 
-        if unchanged_channels:
+        if already_assigned_channels:
             await self.send_lines(
                 ctx,
-                "Jiz spravne mistnosti",
-                unchanged_channels,
+                "Mistnosti kde popisek uz byl",
+                sorted(already_assigned_channels),
             )
 
         if unmatched_codes:
@@ -343,6 +390,20 @@ class ChannelDescriptions(commands.Cog):
                 ctx,
                 "Zkratky bez nalezene mistnosti",
                 unmatched_codes,
+            )
+
+        if channels_without_rule:
+            await self.send_lines(
+                ctx,
+                "Mistnosti bez odpovidajici zkratky v souboru",
+                sorted(channels_without_rule),
+            )
+
+        if too_long_channels:
+            await self.send_lines(
+                ctx,
+                "Mistnosti preskocene kvuli maximalni delce popisku",
+                too_long_channels,
             )
 
     @set_channel_descriptions.error
