@@ -21,6 +21,7 @@ HOST_TODO_LINES = [
     "✅ Dostaneš roli FP/VUT nebo Vyucujici/Zamestnanec",
     "✅ Po ověření získáš přístup do dalších kanálů.",
     "✅ Pokud máš dotaz, napiš do general/offtopic/poradna.",
+    "✅ Video, jak používat Discord VUT FP bez zmatku. (https://discord.com/channels/1357455204391321712/1422505714332602459/1549398229966135316)",
 ]
 
 
@@ -44,7 +45,7 @@ FP_TODO_LINES = [
     "✅ Přes `/role` si můžeš přidat dobrovolné role. (Některé role slouží k tagování pro zajímavé akce zdarma.)",
     "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
     "✅ Kdyby jsi chtěl*a někoho pozvat, můžeš použít příkaz `/pozvanka`, kde je QR kód.",
-    "✅ Video, jak používat Discord VUT FP bez zmatku. (https://discord.com/channels/1357455204391321712/1422505714332602459/1549398229966135316)"
+    "✅ Video, jak používat Discord VUT FP bez zmatku. (https://discord.com/channels/1357455204391321712/1422505714332602459/1549398229966135316)",
 ]
 
 TEACH_TODO_LINES = [
