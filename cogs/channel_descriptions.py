@@ -127,9 +127,13 @@ class ChannelDescriptions(commands.Cog):
                 )
                 continue
 
+            if code in conflicting_codes:
+                continue
+
             if code in rules:
                 if rules[code] != description:
                     conflicting_codes.append(code)
+                    rules.pop(code, None)
 
                 continue
 
@@ -174,14 +178,9 @@ class ChannelDescriptions(commands.Cog):
         if conflicting_codes:
             await self.send_lines(
                 ctx,
-                "Stejna zkratka ma vice ruznych popisku",
+                "Tyto zkratky maji vice ruznych popisku a budou preskoceny",
                 sorted(set(conflicting_codes)),
             )
-
-            await ctx.send(
-                "Nic nebylo zmeneno"
-            )
-            return
 
         planned_changes = []
         matched_codes = set()
