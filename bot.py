@@ -162,6 +162,7 @@ async def setup_hook():
 
     for ext in [
         "cogs.create_subject_channels",
+        "cogs.channel_descriptions",
         "cogs.hello",
         "cogs.botInfo",
         "cogs.verify",
