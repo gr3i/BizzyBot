@@ -8,7 +8,7 @@ TRIGGER_PHRASES = {
     "video fp help",
 }
 
-RESPONSE_TEXT = "FP Discord bez zmatků? Tady máš help video --> https://www.youtube.com/watch?v=NzCMJtmLlyU <:koteseni:1361038813719302175>"
+RESPONSE_TEXT = "FP Discord bez zmatků? Tady máš help video --> https://youtu.be/KXk4LHYysV0 <:koteseni:1361038813719302175>"
 
 
 class FpHelpVideoResponder(commands.Cog):
