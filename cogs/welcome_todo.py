@@ -45,6 +45,7 @@ FP_TODO_LINES = [
     "✅ Přes `/role` si můžeš přidat dobrovolné role. (Některé role slouží k tagování pro zajímavé akce zdarma.)",
     "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
     "✅ Kdyby jsi chtěl*a někoho pozvat, můžeš použít příkaz `/pozvanka`, kde je QR kód.",
+    "✅ [Přežij na FP 💀, 2. vydání](https://www.pdone.app/?share=0ebb25ea7fa6d608d630d2f55f82c56ac04c)"
     "✅ Video, jak používat Discord VUT FP bez zmatku. (https://discord.com/channels/1357455204391321712/1422505714332602459/1549398229966135316)",
 ]
 
