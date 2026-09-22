@@ -37,14 +37,13 @@ VUT_TODO_LINES = [
 
 FP_TODO_LINES = [
     "✅ Nastav si obor, který studuješ (napiš `/` a vyber `obor`). <-- Pro bakalářské obory.",
-    "✅ Pokud studuješ navazující magisterský obor, předměty najdeš ve fórech pod kategorií `magisterské`. (https://discord.com/channels/1357455204391321712/1422505714332602459/1514786506584232028)",
+    "✅ Pokud studuješ navazující magisterský obor, tak si přečti tohle. --> (https://discord.com/channels/1357455204391321712/1422505714332602459/1514786506584232028)",
     "✅ Příkaz použij klidně v místnosti #general. Zprávu uvidíš jen ty...",
     "✅ Pod kategoriemi A-Z najdeš všechny bakalářské předměty.",
     "✅ Do [předmět]-public vidí i vyučující.",
-    "✅ Do [předmět]-private pouze studenti, co studují bakaláře nebo magistra.",
-    "✅ Přes `/role` si můžeš přidat dobrovolné role. (Některé role slouží k tagování pro zajímavé akce zdarma.)",
+    "✅ Do [předmět]-private pouze studenti.",
+    "✅ Přes `/role` si můžeš přidat dobrovolné role.",
     "✅ V #bot-spam si vyzkoušej např. příkaz `/room` pro vyhledání místnosti na FP.",
-    "✅ Kdyby jsi chtěl*a někoho pozvat, můžeš použít příkaz `/pozvanka`, kde je QR kód.",
     "✅ [Přežij na FP 💀, 2. vydání](https://www.pdone.app/?share=0ebb25ea7fa6d608d630d2f55f82c56ac04c)",
     "✅ Video, jak používat Discord VUT FP bez zmatku. (https://discord.com/channels/1357455204391321712/1422505714332602459/1549398229966135316)",
 ]
