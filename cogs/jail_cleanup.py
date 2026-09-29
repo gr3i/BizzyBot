@@ -13,7 +13,9 @@ MAX_BULK_DELETE_DAYS_LIMIT = 14              # discord limit pro hromadne mazani
 
 # povoleni pro /cleanup_jail
 ALLOWED_ROLE_IDS = [
-    1358898283782602932,  
+    1358898283782602932,
+    1370841996977246218,
+    1370842977479692338,
 ]
 ALLOWED_USER_IDS = [
     685958402442133515, 
