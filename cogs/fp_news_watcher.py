@@ -1213,7 +1213,7 @@ class FpNewsWatcher(commands.Cog):
                         url=(
                             "https://www.fp.vut.cz/"
                             "cs/o-fakulte/aktuality"
-                            "?bizzybot-test=3"
+                            "?bizzybot-test=4"
                         ),
                     )
                 )
