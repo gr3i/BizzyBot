@@ -1556,7 +1556,7 @@ class FpNewsWatcher(commands.Cog):
                         url=(
                             "https://www.fp.vut.cz/"
                             "cs/o-fakulte/aktuality"
-                            "?bizzybot-test=13"
+                            "?bizzybot-test=16"
                         ),
                     )
                 )
@@ -1586,7 +1586,7 @@ class FpNewsWatcher(commands.Cog):
                         url=(
                             "https://www.fp.vut.cz/"
                             "cs/o-fakulte/aktuality"
-                            "?bizzybot-test=14"
+                            "?bizzybot-test=15"
                         ),
                     )
                 )
