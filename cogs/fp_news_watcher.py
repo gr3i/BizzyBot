@@ -442,7 +442,7 @@ class FpNewsWatcher(commands.Cog):
 
             embed.add_field(
                 name="Datum",
-                value=item.published_date,
+                value=item.published_date.replace(" ", ""),
                 inline=True,
             )
 
@@ -1556,7 +1556,7 @@ class FpNewsWatcher(commands.Cog):
                         url=(
                             "https://www.fp.vut.cz/"
                             "cs/o-fakulte/aktuality"
-                            "?bizzybot-test=12"
+                            "?bizzybot-test=13"
                         ),
                     )
                 )
@@ -1586,7 +1586,7 @@ class FpNewsWatcher(commands.Cog):
                         url=(
                             "https://www.fp.vut.cz/"
                             "cs/o-fakulte/aktuality"
-                            "?bizzybot-test=11"
+                            "?bizzybot-test=14"
                         ),
                     )
                 )
