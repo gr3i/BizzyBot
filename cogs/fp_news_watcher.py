@@ -31,14 +31,13 @@ logger = logging.getLogger(__name__)
 TARGET_CHANNEL_ID = 1407312413170335744
 
 CHECK_INTERVAL_HOURS = 1
-REMINDER_AFTER_HOURS = 0 #24
+
+# pripomenuti po 24 hodinach od prevzeti
+REMINDER_AFTER_HOURS = 24
 REMINDER_CHECK_INTERVAL_HOURS = 1
-# TEST - automaticke uvolneni po 1 minute
-AUTO_RELEASE_AFTER = timedelta(minutes=1)
 
-# PRODUKCE:
-# AUTO_RELEASE_AFTER = timedelta(hours=48)
-
+# automaticke uvolneni po 48 hodinach od prevzeti
+AUTO_RELEASE_AFTER = timedelta(hours=48)
 AUTO_RELEASE_CHECK_INTERVAL_HOURS = 1
 
 
@@ -53,8 +52,8 @@ ALLOWED_USER_IDS = [
 ]
 
 
-TEST_FP_NEWS = True 
-TEST_FP_EVENTS = True 
+TEST_FP_NEWS = False
+TEST_FP_EVENTS = False
 
 
 def user_is_allowed(interaction: discord.Interaction) -> bool:
@@ -1105,11 +1104,10 @@ class FpNewsWatcher(commands.Cog):
                         item.url
                     )
 
-    #@tasks.loop(
-    #    hours=REMINDER_CHECK_INTERVAL_HOURS
-    #)
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(
+        hours=REMINDER_CHECK_INTERVAL_HOURS
+    )
     async def check_fp_news_reminders(self):
 
         try:
@@ -1313,7 +1311,9 @@ class FpNewsWatcher(commands.Cog):
                 "Chyba pri kontrole FP reminderu"
             )
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(
+        hours=AUTO_RELEASE_CHECK_INTERVAL_HOURS
+    )
     async def check_fp_news_auto_release(self):
 
         try:
