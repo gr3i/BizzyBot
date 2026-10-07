@@ -53,8 +53,8 @@ ALLOWED_USER_IDS = [
 ]
 
 
-TEST_FP_NEWS = False
-TEST_FP_EVENTS = False
+TEST_FP_NEWS = True 
+TEST_FP_EVENTS = True 
 
 
 def user_is_allowed(interaction: discord.Interaction) -> bool:
@@ -1556,7 +1556,7 @@ class FpNewsWatcher(commands.Cog):
                         url=(
                             "https://www.fp.vut.cz/"
                             "cs/o-fakulte/aktuality"
-                            "?bizzybot-test=9"
+                            "?bizzybot-test=10"
                         ),
                     )
                 )
@@ -1585,8 +1585,8 @@ class FpNewsWatcher(commands.Cog):
                         event_date="10.10.2026",
                         url=(
                             "https://www.fp.vut.cz/"
-                            "cs/o-fakulte/kalendar-akci"
-                            "?bizzybot-event-test=2"
+                            "cs/o-fakulte/aktuality"
+                            "?bizzybot-test=10"
                         ),
                     )
                 )
