@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import aiohttp
 import discord
@@ -7,7 +7,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from sqlalchemy.exc import IntegrityError
 
-from db.models import FpNewsAssignment, FpNewsItem
+from db.models import FpNewsAssignment, FpNewsItem, FpNewsReminder
 from db.session import SessionLocal
 from services.fp_news import FP_NEWS_URL, NewsItem, parse_news
 
@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 TARGET_CHANNEL_ID = 1407312413170335744
 
 CHECK_INTERVAL_HOURS = 1
+REMINDER_AFTER_HOURS = 0 #24
+REMINDER_CHECK_INTERVAL_HOURS = 1
 
 
 ALLOWED_ROLE_IDS = [
@@ -61,6 +63,24 @@ def can_finish_assignment(
         or interaction.user.id in ALLOWED_USER_IDS
     )
 
+def format_assignment_age(claimed_at: datetime) -> str:
+    delta = datetime.now() - claimed_at
+
+    total_minutes = int(
+        delta.total_seconds() // 60
+    )
+
+    days = total_minutes // 1440
+    hours = (total_minutes % 1440) // 60
+    minutes = total_minutes % 60
+
+    if days > 0:
+        return f"{days} d {hours} h"
+
+    if hours > 0:
+        return f"{hours} h {minutes} min"
+
+    return f"{minutes} min"
 
 class FpNewsActionView(discord.ui.View):
     def __init__(
@@ -175,10 +195,12 @@ class FpNewsWatcher(commands.Cog):
         self._register_persistent_views()
 
         self.check_fp_news.start()
+        self.check_fp_news_reminders.start()
 
 
     def cog_unload(self):
         self.check_fp_news.cancel()
+        self.check_fp_news_reminders.cancel()
 
 
     def _register_persistent_views(self):
@@ -781,6 +803,19 @@ class FpNewsWatcher(commands.Cog):
 
                 return
 
+            reminder = (
+                session.query(FpNewsReminder)
+                .filter(
+                    FpNewsReminder.assignment_id
+                    == assignment.id
+                )
+                .first()
+            )
+
+            if reminder is not None:
+                session.delete(
+                    reminder
+                )
 
             session.delete(
                 assignment
@@ -940,6 +975,218 @@ class FpNewsWatcher(commands.Cog):
                         item.url
                     )
 
+    #@tasks.loop(
+    #    hours=REMINDER_CHECK_INTERVAL_HOURS
+    #)
+
+    @tasks.loop(seconds=30)
+    async def check_fp_news_reminders(self):
+
+        try:
+
+            threshold = datetime.now() - timedelta(
+                hours=REMINDER_AFTER_HOURS
+            )
+
+            with SessionLocal() as session:
+
+                assignments = (
+                    session.query(FpNewsAssignment)
+                    .filter(
+                        FpNewsAssignment.status == "claimed",
+                        FpNewsAssignment.claimed_at <= threshold,
+                    )
+                    .all()
+                )
+
+                pending_reminders = []
+
+                for assignment in assignments:
+
+                    reminder = (
+                        session.query(FpNewsReminder)
+                        .filter(
+                            FpNewsReminder.assignment_id
+                            == assignment.id
+                        )
+                        .first()
+                    )
+
+                    if reminder is not None:
+                        continue
+
+                    item = session.get(
+                        FpNewsItem,
+                        assignment.news_item_id
+                    )
+
+                    if item is None:
+                        continue
+
+                    pending_reminders.append(
+                        {
+                            "assignment_id": assignment.id,
+                            "user_id": assignment.assigned_user_id,
+                            "title": item.title,
+                            "message_id": item.discord_message_id,
+                        }
+                    )
+
+
+            if not pending_reminders:
+                return
+
+
+            channel = self.bot.get_channel(
+                TARGET_CHANNEL_ID
+            )
+
+            if channel is None:
+
+                channel = await self.bot.fetch_channel(
+                    TARGET_CHANNEL_ID
+                )
+
+
+            if not isinstance(
+                channel,
+                discord.abc.Messageable
+            ):
+
+                raise RuntimeError(
+                    f"Kanal {TARGET_CHANNEL_ID} "
+                    "nepodporuje zpravy"
+                )
+
+
+            for reminder_data in pending_reminders:
+
+                # pred odeslanim jeste jednou overime,
+                # ze je aktualita porad prevzata
+                with SessionLocal() as session:
+
+                    assignment = session.get(
+                        FpNewsAssignment,
+                        reminder_data["assignment_id"]
+                    )
+
+                    if (
+                        assignment is None
+                        or assignment.status != "claimed"
+                    ):
+                        continue
+
+
+                    existing_reminder = (
+                        session.query(FpNewsReminder)
+                        .filter(
+                            FpNewsReminder.assignment_id
+                            == assignment.id
+                        )
+                        .first()
+                    )
+
+                    if existing_reminder is not None:
+                        continue
+
+
+                original_message = ""
+
+                guild = getattr(
+                    channel,
+                    "guild",
+                    None
+                )
+
+                if (
+                    guild is not None
+                    and reminder_data["message_id"]
+                ):
+
+                    jump_url = (
+                        f"https://discord.com/channels/"
+                        f"{guild.id}/"
+                        f"{TARGET_CHANNEL_ID}/"
+                        f"{reminder_data['message_id']}"
+                    )
+
+                    original_message = (
+                        f"\n[Přejít na původní upozornění]"
+                        f"({jump_url})"
+                    )
+
+
+                embed = discord.Embed(
+                    title="FP aktualita stale ceka na zpracovani",
+                    description=(
+                        f"**{reminder_data['title']}**\n\n"
+                        f"Tato aktualita je prevzata uz "
+                        f"vice nez {REMINDER_AFTER_HOURS} hodin."
+                        f"{original_message}"
+                    ),
+                    color=discord.Color.orange(),
+                )
+
+
+                await channel.send(
+                    content=(
+                        f"<@{reminder_data['user_id']}> "
+                        "pripominka k prevzate FP aktualite:"
+                    ),
+                    embed=embed,
+                    allowed_mentions=discord.AllowedMentions(
+                        users=True,
+                        roles=False,
+                        everyone=False,
+                    ),
+                )
+
+
+                # ulozime az po uspesnem odeslani
+                with SessionLocal() as session:
+
+                    assignment = session.get(
+                        FpNewsAssignment,
+                        reminder_data["assignment_id"]
+                    )
+
+                    if (
+                        assignment is None
+                        or assignment.status != "claimed"
+                    ):
+                        continue
+
+
+                    existing_reminder = (
+                        session.query(FpNewsReminder)
+                        .filter(
+                            FpNewsReminder.assignment_id
+                            == assignment.id
+                        )
+                        .first()
+                    )
+
+                    if existing_reminder is None:
+
+                        session.add(
+                            FpNewsReminder(
+                                assignment_id=assignment.id
+                            )
+                        )
+
+                        session.commit()
+
+
+        except Exception:
+
+            logger.exception(
+                "Chyba pri kontrole FP reminderu"
+            )
+
+    @check_fp_news_reminders.before_loop
+    async def before_check_fp_news_reminders(self):
+
+        await self.bot.wait_until_ready()
 
     @tasks.loop(
         hours=CHECK_INTERVAL_HOURS
@@ -989,6 +1236,257 @@ class FpNewsWatcher(commands.Cog):
 
         await self.bot.wait_until_ready()
 
+
+    @app_commands.command(
+        name="fppending",
+        description="Ukaze FP aktuality, ktere cekaji na zpracovani."
+    )
+    @app_commands.checks.check(
+        user_is_allowed
+    )
+    @app_commands.guild_only()
+    async def fppending(
+        self,
+        interaction: discord.Interaction
+    ):
+
+        with SessionLocal() as session:
+
+            items = (
+                session.query(FpNewsItem)
+                .filter(
+                    FpNewsItem.discord_message_id.isnot(None)
+                )
+                .order_by(
+                    FpNewsItem.id.desc()
+                )
+                .all()
+            )
+
+
+            unassigned = []
+            claimed = []
+
+
+            for item in items:
+
+                assignment = (
+                    session.query(FpNewsAssignment)
+                    .filter(
+                        FpNewsAssignment.news_item_id
+                        == item.id
+                    )
+                    .first()
+                )
+
+
+                # zadne prirazeni = ceka na nekoho
+                if assignment is None:
+
+                    unassigned.append(
+                        {
+                            "title": item.title,
+                            "message_id": item.discord_message_id,
+                        }
+                    )
+
+
+                elif assignment.status == "claimed":
+
+                    claimed.append(
+                        {
+                            "title": item.title,
+                            "message_id": item.discord_message_id,
+                            "user_id": assignment.assigned_user_id,
+                            "claimed_at": assignment.claimed_at,
+                        }
+                    )
+
+
+        embed = discord.Embed(
+            title="FP Pending",
+            description=(
+                f"🆕 Nezpracovane: **{len(unassigned)}**\n"
+                f"🟡 Prevzate: **{len(claimed)}**"
+            ),
+            color=discord.Color.blue(),
+        )
+
+
+        guild_id = interaction.guild_id
+
+
+        if unassigned:
+
+            lines = []
+
+            for item in unassigned[:8]:
+
+                if (
+                    guild_id is not None
+                    and item["message_id"]
+                ):
+
+                    url = (
+                        f"https://discord.com/channels/"
+                        f"{guild_id}/"
+                        f"{TARGET_CHANNEL_ID}/"
+                        f"{item['message_id']}"
+                    )
+
+                    line = (
+                        f"• [{item['title'][:70]}]"
+                        f"({url})"
+                    )
+
+                else:
+
+                    line = (
+                        f"• {item['title'][:70]}"
+                    )
+
+                lines.append(
+                    line
+                )
+
+
+            if len(unassigned) > 8:
+
+                lines.append(
+                    f"*... a dalsich "
+                    f"{len(unassigned) - 8}*"
+                )
+
+
+            embed.add_field(
+                name="🆕 Ceka na prevzeti",
+                value="\n".join(lines),
+                inline=False,
+            )
+
+
+        if claimed:
+
+            lines = []
+
+            for item in claimed[:8]:
+
+                age = format_assignment_age(
+                    item["claimed_at"]
+                )
+
+
+                if (
+                    guild_id is not None
+                    and item["message_id"]
+                ):
+
+                    url = (
+                        f"https://discord.com/channels/"
+                        f"{guild_id}/"
+                        f"{TARGET_CHANNEL_ID}/"
+                        f"{item['message_id']}"
+                    )
+
+                    title = (
+                        f"[{item['title'][:60]}]"
+                        f"({url})"
+                    )
+
+                else:
+
+                    title = item["title"][:60]
+
+
+                lines.append(
+                    (
+                        f"• {title}\n"
+                        f"  ↳ <@{item['user_id']}> "
+                        f"— {age}"
+                    )
+                )
+
+
+            if len(claimed) > 8:
+
+                lines.append(
+                    f"*... a dalsich "
+                    f"{len(claimed) - 8}*"
+                )
+
+
+            embed.add_field(
+                name="🟡 Prevzate",
+                value="\n".join(lines),
+                inline=False,
+            )
+
+
+        if not unassigned and not claimed:
+
+            embed.description = (
+                "✅ Zadna FP aktualita momentalne "
+                "neceka na zpracovani."
+            )
+
+
+        await interaction.response.send_message(
+            embed=embed,
+            ephemeral=True,
+        )
+
+    @fppending.error
+    async def fppending_error(
+        self,
+        interaction: discord.Interaction,
+        error: app_commands.AppCommandError,
+    ):
+
+        if isinstance(
+            error,
+            app_commands.CheckFailure
+        ):
+
+            message = (
+                "Na tento prikaz nemas opravneni."
+            )
+
+            if interaction.response.is_done():
+
+                await interaction.followup.send(
+                    message,
+                    ephemeral=True,
+                )
+
+            else:
+
+                await interaction.response.send_message(
+                    message,
+                    ephemeral=True,
+                )
+
+            return
+
+
+        logger.exception(
+            "Chyba v /fppending",
+            exc_info=error
+        )
+
+
+        if interaction.response.is_done():
+
+            await interaction.followup.send(
+                "Pri nacitani FP aktualit nastala chyba.",
+                ephemeral=True,
+            )
+
+        else:
+
+            await interaction.response.send_message(
+                "Pri nacitani FP aktualit nastala chyba.",
+                ephemeral=True,
+            )
 
     @app_commands.command(
         name="fpnewscheck",

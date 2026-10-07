@@ -163,3 +163,26 @@ class FpNewsAssignment(Base):
         nullable=True
     )
 
+class FpNewsReminder(Base):
+    __tablename__ = "fp_news_reminders"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    assignment_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("fp_news_assignments.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    reminded_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        nullable=False
+    )
+
