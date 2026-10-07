@@ -1524,9 +1524,6 @@ class FpNewsWatcher(commands.Cog):
 
         await self.bot.wait_until_ready()
 
-    @tasks.loop(
-        hours=CHECK_INTERVAL_HOURS
-    )
 
     @tasks.loop(
         hours=CHECK_INTERVAL_HOURS
