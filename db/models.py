@@ -126,3 +126,40 @@ class FpNewsItem(Base):
         nullable=True
     )
 
+class FpNewsAssignment(Base):
+    __tablename__ = "fp_news_assignments"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    news_item_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("fp_news_items.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False
+    )
+
+    assigned_user_id: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False
+    )
+
+    claimed_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False
+    )
+
+    finished_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True
+    )
+
