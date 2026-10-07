@@ -202,6 +202,7 @@ async def setup_hook():
         "cogs.vyber_role",
         "cogs.ruleta",
         "cogs.fp_news_watcher",
+        "cogs.reminders",
     ]:
         try:
             await bot.load_extension(ext)

@@ -186,3 +186,53 @@ class FpNewsReminder(Base):
         nullable=False
     )
 
+class ScheduledReminder(Base):
+    __tablename__ = "scheduled_reminders"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    channel_id: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False
+    )
+
+    title: Mapped[str] = mapped_column(
+        String(256),
+        nullable=False
+    )
+
+    description: Mapped[str] = mapped_column(
+        String(4000),
+        nullable=False
+    )
+
+    scheduled_for: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        index=True
+    )
+
+    created_by_user_id: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        nullable=False
+    )
+
+    sent_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True
+    )
+
+    discord_message_id: Mapped[Optional[str]] = mapped_column(
+        String(32),
+        nullable=True
+    )
