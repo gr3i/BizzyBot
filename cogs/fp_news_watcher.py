@@ -53,8 +53,8 @@ ALLOWED_USER_IDS = [
 ]
 
 
-TEST_FP_NEWS = True
-TEST_FP_EVENTS = TRUE
+TEST_FP_NEWS = False
+TEST_FP_EVENTS = False
 
 
 def user_is_allowed(interaction: discord.Interaction) -> bool:
@@ -467,41 +467,6 @@ class FpNewsWatcher(commands.Cog):
         embed.set_footer(
             text=footer_text
         )
-
-
-        if item.published_date:
-
-            embed.add_field(
-                name="Datum",
-                value=item.published_date,
-                inline=True,
-            )
-
-
-        embed.add_field(
-            name="Stav",
-            value=status_text,
-            inline=True,
-        )
-
-
-        embed.add_field(
-            name="Odkaz",
-            value=(
-                f"[Otevrit aktualitu]"
-                f"({item.url})"
-            ),
-            inline=False,
-        )
-
-
-        embed.set_footer(
-            text=(
-                "Pokud je aktualita relevantni pro server, "
-                "prevezmi ji a zpracuj do skolniho infa."
-            )
-        )
-
 
         return embed
 
@@ -1671,7 +1636,7 @@ class FpNewsWatcher(commands.Cog):
 
     @app_commands.command(
         name="fpstats",
-        description="Ukaze statistiku dokoncenych FP aktualit."
+        description="Ukaze statistiku dokoncenych FP aktualit a akci."
     )
     @app_commands.checks.check(
         user_is_allowed
@@ -1730,7 +1695,7 @@ class FpNewsWatcher(commands.Cog):
         if not counts:
 
             embed = discord.Embed(
-                title="FP News statistiky",
+                title="FP statistiky",
                 description=(
                     "Zatim nebyla dokoncena "
                     "zadna FP aktualita."
@@ -1785,7 +1750,7 @@ class FpNewsWatcher(commands.Cog):
 
 
         embed = discord.Embed(
-            title="FP News statistiky",
+            title="FP statistiky",
             description="\n".join(lines),
             color=discord.Color.blue(),
         )
@@ -1793,7 +1758,7 @@ class FpNewsWatcher(commands.Cog):
 
         embed.set_footer(
             text=(
-                f"Celkem dokoncenych aktualit: "
+                f"Celkem dokoncenych polozek: {len(completed)}"
                 f"{len(completed)}"
             )
         )
@@ -2045,7 +2010,7 @@ class FpNewsWatcher(commands.Cog):
         if not unassigned and not claimed:
 
             embed.description = (
-                "✅ Zadna FP aktualita momentalne "
+                "✅ Zadna FP aktualita ani akce momentalne "
                 "neceka na zpracovani."
             )
 
