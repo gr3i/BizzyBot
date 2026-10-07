@@ -1788,7 +1788,6 @@ class FpNewsWatcher(commands.Cog):
         embed.set_footer(
             text=(
                 f"Celkem dokoncenych polozek: {len(completed)}"
-                f"{len(completed)}"
             )
         )
 
