@@ -201,6 +201,7 @@ async def setup_hook():
         "cogs.nemas_roli_oboru_react",
         "cogs.vyber_role",
         "cogs.ruleta",
+        "cogs.fp_news_watcher",
     ]:
         try:
             await bot.load_extension(ext)

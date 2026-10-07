@@ -78,3 +78,51 @@ class Reaction(Base):
         Index("ix_reakce_user", "user_id"),
     )
 
+class FpNewsItem(Base):
+    __tablename__ = "fp_news_items"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    url: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    title: Mapped[str] = mapped_column(
+        String,
+        nullable=False
+    )
+
+    published_date: Mapped[Optional[str]] = mapped_column(
+        String,
+        nullable=True
+    )
+
+    notified: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    discord_message_id: Mapped[Optional[str]] = mapped_column(
+        String,
+        nullable=True
+    )
+
+    discovered_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        nullable=False
+    )
+
+    notified_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True
+    )
+
