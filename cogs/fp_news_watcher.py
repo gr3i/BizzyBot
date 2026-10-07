@@ -1527,6 +1527,10 @@ class FpNewsWatcher(commands.Cog):
     @tasks.loop(
         hours=CHECK_INTERVAL_HOURS
     )
+
+    @tasks.loop(
+        hours=CHECK_INTERVAL_HOURS
+    )
     async def check_fp_news(self):
 
         try:
@@ -1555,16 +1559,10 @@ class FpNewsWatcher(commands.Cog):
                         url=(
                             "https://www.fp.vut.cz/"
                             "cs/o-fakulte/aktuality"
-                            "?bizzybot-test=8"
+                            "?bizzybot-test=9"
                         ),
                     )
                 )
-
-
-            await self._process_news(
-                news_items,
-                source="news",
-            )
 
 
             # -------------------
@@ -1591,11 +1589,45 @@ class FpNewsWatcher(commands.Cog):
                         url=(
                             "https://www.fp.vut.cz/"
                             "cs/o-fakulte/kalendar-akci"
-                            "?bizzybot-event-test=1"
+                            "?bizzybot-event-test=2"
                         ),
                     )
                 )
 
+
+            # -------------------
+            # ODSTRANENI DUPLICIT
+            # -------------------
+
+            # pokud je stejna polozka zaroven
+            # v aktualitach i kalendari,
+            # bereme ji pouze jako akci
+            event_urls = {
+                event.url
+                for event in events
+            }
+
+
+            news_items = [
+                item
+                for item in news_items
+                if item.url not in event_urls
+            ]
+
+
+            # -------------------
+            # ZPRACOVANI AKTUALIT
+            # -------------------
+
+            await self._process_news(
+                news_items,
+                source="news",
+            )
+
+
+            # -------------------
+            # ZPRACOVANI AKCI
+            # -------------------
 
             event_items = [
                 NewsItem(
