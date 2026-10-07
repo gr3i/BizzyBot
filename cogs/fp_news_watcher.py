@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 from datetime import datetime, timedelta
 
 import aiohttp
@@ -20,6 +21,13 @@ TARGET_CHANNEL_ID = 1407312413170335744
 CHECK_INTERVAL_HOURS = 1
 REMINDER_AFTER_HOURS = 0 #24
 REMINDER_CHECK_INTERVAL_HOURS = 1
+# TEST - automaticke uvolneni po 1 minute
+AUTO_RELEASE_AFTER = timedelta(minutes=1)
+
+# PRODUKCE:
+# AUTO_RELEASE_AFTER = timedelta(hours=48)
+
+AUTO_RELEASE_CHECK_INTERVAL_HOURS = 1
 
 
 ALLOWED_ROLE_IDS = [
@@ -196,11 +204,13 @@ class FpNewsWatcher(commands.Cog):
 
         self.check_fp_news.start()
         self.check_fp_news_reminders.start()
+        self.check_fp_news_auto_release.start()
 
 
     def cog_unload(self):
         self.check_fp_news.cancel()
         self.check_fp_news_reminders.cancel()
+        self.check_fp_news_auto_release.cancel()
 
 
     def _register_persistent_views(self):
@@ -715,6 +725,12 @@ class FpNewsWatcher(commands.Cog):
 
             assignment.status = "done"
 
+            # u hotove aktuality si nechame ID cloveka,
+            # ktery ji skutecne dokoncil
+            assignment.assigned_user_id = str(
+                interaction.user.id
+            )
+
             assignment.finished_at = datetime.now()
 
             session.commit()
@@ -1183,6 +1199,212 @@ class FpNewsWatcher(commands.Cog):
                 "Chyba pri kontrole FP reminderu"
             )
 
+    @tasks.loop(seconds=30)
+    async def check_fp_news_auto_release(self):
+
+        try:
+
+            threshold = datetime.now() - AUTO_RELEASE_AFTER
+
+
+            with SessionLocal() as session:
+
+                assignments = (
+                    session.query(FpNewsAssignment)
+                    .filter(
+                        FpNewsAssignment.status == "claimed",
+                        FpNewsAssignment.claimed_at <= threshold,
+                    )
+                    .all()
+                )
+
+
+                assignment_ids = [
+                    assignment.id
+                    for assignment in assignments
+                ]
+
+
+            if not assignment_ids:
+                return
+
+
+            channel = self.bot.get_channel(
+                TARGET_CHANNEL_ID
+            )
+
+
+            if channel is None:
+
+                channel = await self.bot.fetch_channel(
+                    TARGET_CHANNEL_ID
+                )
+
+
+            if not isinstance(
+                channel,
+                (discord.TextChannel, discord.Thread)
+            ):
+
+                raise RuntimeError(
+                    f"Kanal {TARGET_CHANNEL_ID} "
+                    "nepodporuje nacitani zprav"
+                )
+
+
+            for assignment_id in assignment_ids:
+
+                with SessionLocal() as session:
+
+                    assignment = session.get(
+                        FpNewsAssignment,
+                        assignment_id
+                    )
+
+
+                    # mezitim mohl nekdo dat Hotovo nebo Uvolnit
+                    if (
+                        assignment is None
+                        or assignment.status != "claimed"
+                        or assignment.claimed_at > threshold
+                    ):
+                        continue
+
+
+                    item = session.get(
+                        FpNewsItem,
+                        assignment.news_item_id
+                    )
+
+
+                    if item is None:
+                        continue
+
+
+                    news_item_id = item.id
+
+                    old_user_id = (
+                        assignment.assigned_user_id
+                    )
+
+                    message_id = (
+                        item.discord_message_id
+                    )
+
+
+                    # embed uz vratime do puvodniho stavu
+                    embed = self._build_embed(
+                        item
+                    )
+
+
+                    # reminder uz pro stare prevzeti nepotrebujeme
+                    reminder = (
+                        session.query(FpNewsReminder)
+                        .filter(
+                            FpNewsReminder.assignment_id
+                            == assignment.id
+                        )
+                        .first()
+                    )
+
+
+                    if reminder is not None:
+
+                        session.delete(
+                            reminder
+                        )
+
+
+                    # smazeme samotne prevzeti
+                    session.delete(
+                        assignment
+                    )
+
+                    session.commit()
+
+
+                # vratime tlacitka na puvodni zpravu
+                if message_id:
+
+                    try:
+
+                        message = await channel.fetch_message(
+                            int(message_id)
+                        )
+
+
+                        await message.edit(
+                            embed=embed,
+                            view=FpNewsActionView(
+                                self,
+                                news_item_id,
+                                status="new",
+                            ),
+                        )
+
+
+                    except discord.NotFound:
+
+                        logger.warning(
+                            (
+                                "Puvodni FP zprava %s "
+                                "uz neexistuje"
+                            ),
+                            message_id
+                        )
+
+
+                    except discord.HTTPException:
+
+                        logger.exception(
+                            (
+                                "Nepodarilo se upravit "
+                                "FP zpravu %s"
+                            ),
+                            message_id
+                        )
+
+
+                # informace modum
+                await channel.send(
+                    content=(
+                        f"<@{old_user_id}> "
+                        "prevzata FP aktualita byla "
+                        "automaticky uvolnena pro ostatni, "
+                        "protoze zustala prilis dlouho "
+                        "nezpracovana."
+                    ),
+                    allowed_mentions=discord.AllowedMentions(
+                        users=True,
+                        roles=False,
+                        everyone=False,
+                    ),
+                )
+
+
+                logger.info(
+                    (
+                        "FP aktualita %s byla "
+                        "automaticky uvolnena"
+                    ),
+                    news_item_id
+                )
+
+
+        except Exception:
+
+            logger.exception(
+                "Chyba pri automatickem uvolnovani FP aktualit"
+            )
+
+
+    @check_fp_news_auto_release.before_loop
+    async def before_check_fp_news_auto_release(self):
+
+        await self.bot.wait_until_ready()
+
+
     @check_fp_news_reminders.before_loop
     async def before_check_fp_news_reminders(self):
 
@@ -1236,6 +1458,164 @@ class FpNewsWatcher(commands.Cog):
 
         await self.bot.wait_until_ready()
 
+
+    @app_commands.command(
+        name="fpstats",
+        description="Ukaze statistiku dokoncenych FP aktualit."
+    )
+    @app_commands.checks.check(
+        user_is_allowed
+    )
+    @app_commands.guild_only()
+    async def fpstats(
+        self,
+        interaction: discord.Interaction
+    ):
+
+        with SessionLocal() as session:
+
+            completed = (
+                session.query(FpNewsAssignment)
+                .filter(
+                    FpNewsAssignment.status == "done"
+                )
+                .all()
+            )
+
+
+            counts = Counter(
+                assignment.assigned_user_id
+                for assignment in completed
+            )
+
+
+        if not counts:
+
+            embed = discord.Embed(
+                title="FP News statistiky",
+                description=(
+                    "Zatim nebyla dokoncena "
+                    "zadna FP aktualita."
+                ),
+                color=discord.Color.blue(),
+            )
+
+            await interaction.response.send_message(
+                embed=embed
+            )
+
+            return
+
+
+        sorted_users = sorted(
+            counts.items(),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+
+
+        lines = []
+
+
+        for position, (user_id, count) in enumerate(
+            sorted_users,
+            start=1
+        ):
+
+            if position == 1:
+                position_text = "🥇"
+
+            elif position == 2:
+                position_text = "🥈"
+
+            elif position == 3:
+                position_text = "🥉"
+
+            else:
+                position_text = f"**{position}.**"
+
+
+            lines.append(
+                (
+                    f"{position_text} "
+                    f"<@{user_id}> — "
+                    f"**{count}**"
+                )
+            )
+
+
+        embed = discord.Embed(
+            title="FP News statistiky",
+            description="\n".join(lines),
+            color=discord.Color.blue(),
+        )
+
+
+        embed.set_footer(
+            text=(
+                f"Celkem dokoncenych aktualit: "
+                f"{len(completed)}"
+            )
+        )
+
+
+        await interaction.response.send_message(
+            embed=embed
+        )
+
+    @fpstats.error
+    async def fpstats_error(
+        self,
+        interaction: discord.Interaction,
+        error: app_commands.AppCommandError,
+    ):
+
+        if isinstance(
+            error,
+            app_commands.CheckFailure
+        ):
+
+            message = (
+                "Na tento prikaz nemas opravneni."
+            )
+
+
+            if interaction.response.is_done():
+
+                await interaction.followup.send(
+                    message,
+                    ephemeral=True,
+                )
+
+            else:
+
+                await interaction.response.send_message(
+                    message,
+                    ephemeral=True,
+                )
+
+            return
+
+
+        logger.exception(
+            "Chyba v /fpstats",
+            exc_info=error
+        )
+
+
+        if interaction.response.is_done():
+
+            await interaction.followup.send(
+                "Pri nacitani FP statistik nastala chyba.",
+                ephemeral=True,
+            )
+
+        else:
+
+            await interaction.response.send_message(
+                "Pri nacitani FP statistik nastala chyba.",
+                ephemeral=True,
+            )
 
     @app_commands.command(
         name="fppending",
