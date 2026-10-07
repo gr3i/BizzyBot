@@ -962,11 +962,11 @@ class FpNewsWatcher(commands.Cog):
                         title=(
                             "TEST - BizzyBot FP watcher"
                         ),
-                        published_date="7. 10. 2026",
+                        published_date="10. 10. 2026",
                         url=(
                             "https://www.fp.vut.cz/"
                             "cs/o-fakulte/aktuality"
-                            "?bizzybot-test=2"
+                            "?bizzybot-test=3"
                         ),
                     )
                 )
