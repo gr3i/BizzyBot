@@ -236,3 +236,17 @@ class ScheduledReminder(Base):
         String(32),
         nullable=True
     )
+
+class FpWatcherState(Base):
+    __tablename__ = "fp_watcher_states"
+
+    source: Mapped[str] = mapped_column(
+        String(32),
+        primary_key=True
+    )
+
+    initialized_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        nullable=False
+    )

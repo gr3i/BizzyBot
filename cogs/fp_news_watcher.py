@@ -8,9 +8,21 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from sqlalchemy.exc import IntegrityError
 
-from db.models import FpNewsAssignment, FpNewsItem, FpNewsReminder
+from db.models import (
+    FpNewsAssignment,
+    FpNewsItem,
+    FpNewsReminder,
+    FpWatcherState,
+)
+
 from db.session import SessionLocal
 from services.fp_news import FP_NEWS_URL, NewsItem, parse_news
+
+from services.fp_events import (
+    FP_EVENTS_URL,
+    CalendarEvent,
+    parse_events,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -42,6 +54,7 @@ ALLOWED_USER_IDS = [
 
 
 TEST_FP_NEWS = True
+TEST_FP_EVENTS = TRUE
 
 
 def user_is_allowed(interaction: discord.Interaction) -> bool:
@@ -267,7 +280,10 @@ class FpNewsWatcher(commands.Cog):
                 )
 
 
-    async def _download_news_page(self) -> str:
+    async def _download_page(
+        self,
+        url: str
+    ) -> str:
 
         timeout = aiohttp.ClientTimeout(
             total=20
@@ -276,7 +292,7 @@ class FpNewsWatcher(commands.Cog):
         headers = {
             "User-Agent": (
                 "BizzyBot/1.0 "
-                "(FP Discord news watcher)"
+                "(FP Discord watcher)"
             ),
         }
 
@@ -287,12 +303,30 @@ class FpNewsWatcher(commands.Cog):
         ) as session:
 
             async with session.get(
-                FP_NEWS_URL
+                url
             ) as response:
 
                 response.raise_for_status()
 
                 return await response.text()
+
+
+    async def _download_news_page(
+        self
+    ) -> str:
+
+        return await self._download_page(
+            FP_NEWS_URL
+        )
+
+
+    async def _download_events_page(
+        self
+    ) -> str:
+
+        return await self._download_page(
+            FP_EVENTS_URL
+        )
 
 
     def _build_embed(
@@ -350,6 +384,88 @@ class FpNewsWatcher(commands.Cog):
             title="Nova aktualita na webu FP",
             description=f"**{item.title}**",
             color=color,
+        )
+
+        is_event = item.title.startswith(
+            "📅 AKCE:"
+        )
+
+
+        if is_event:
+
+            display_title = (
+                item.title
+                .removeprefix("📅 AKCE:")
+                .strip()
+            )
+
+            embed_title = (
+                "Nova akce v kalendari FP"
+            )
+
+            link_text = (
+                "Otevrit akci"
+            )
+
+            footer_text = (
+                "Pokud je akce relevantni pro server, "
+                "prevezmi ji a zpracuj do skolniho infa."
+            )
+
+
+        else:
+
+            display_title = item.title
+
+            embed_title = (
+                "Nova aktualita na webu FP"
+            )
+
+            link_text = (
+                "Otevrit aktualitu"
+            )
+
+            footer_text = (
+                "Pokud je aktualita relevantni pro server, "
+                "prevezmi ji a zpracuj do skolniho infa."
+            )
+
+
+        embed = discord.Embed(
+            title=embed_title,
+            description=f"**{display_title}**",
+            color=color,
+        )
+
+
+        if item.published_date:
+
+            embed.add_field(
+                name="Datum",
+                value=item.published_date,
+                inline=True,
+            )
+
+
+        embed.add_field(
+            name="Stav",
+            value=status_text,
+            inline=True,
+        )
+
+
+        embed.add_field(
+            name="Odkaz",
+            value=(
+                f"[{link_text}]"
+                f"({item.url})"
+            ),
+            inline=False,
+        )
+
+
+        embed.set_footer(
+            text=footer_text
         )
 
 
@@ -857,7 +973,8 @@ class FpNewsWatcher(commands.Cog):
 
     async def _process_news(
         self,
-        items: list[NewsItem]
+        items: list[NewsItem],
+        source: str = "news",
     ):
 
         if not items:
@@ -874,9 +991,40 @@ class FpNewsWatcher(commands.Cog):
 
         with SessionLocal() as session:
 
-            first_run = (
-                session.query(FpNewsItem).count() == 0
+            state = session.get(
+                FpWatcherState,
+                source
             )
+
+
+            if state is None:
+
+                # aktuality uz historicky v DB mame,
+                # tak je znovu nebaselineujeme
+                if (
+                    source == "news"
+                    and session.query(
+                        FpNewsItem
+                    ).count() > 0
+                ):
+
+                    first_run = False
+
+                else:
+
+                    first_run = True
+
+
+                session.add(
+                    FpWatcherState(
+                        source=source
+                    )
+                )
+
+
+            else:
+
+                first_run = False
 
 
             for item in items:
@@ -923,9 +1071,10 @@ class FpNewsWatcher(commands.Cog):
 
                 logger.info(
                     (
-                        "FP watcher ulozil vychozi stav: "
-                        "%s aktualit"
+                        "FP watcher ulozil vychozi stav "
+                        "pro %s: %s polozek"
                     ),
+                    source,
                     len(items)
                 )
 
@@ -1417,16 +1566,22 @@ class FpNewsWatcher(commands.Cog):
 
         try:
 
-            html = await self._download_news_page()
+            # -------------------
+            # AKTUALITY
+            # -------------------
 
-            items = parse_news(
-                html
+            news_html = (
+                await self._download_news_page()
+            )
+
+            news_items = parse_news(
+                news_html
             )
 
 
             if TEST_FP_NEWS:
 
-                items.append(
+                news_items.append(
                     NewsItem(
                         title=(
                             "TEST - BizzyBot FP watcher"
@@ -1435,21 +1590,76 @@ class FpNewsWatcher(commands.Cog):
                         url=(
                             "https://www.fp.vut.cz/"
                             "cs/o-fakulte/aktuality"
-                            "?bizzybot-test=6"
+                            "?bizzybot-test=8"
                         ),
                     )
                 )
 
 
             await self._process_news(
-                items
+                news_items,
+                source="news",
+            )
+
+
+            # -------------------
+            # KALENDAR AKCI
+            # -------------------
+
+            events_html = (
+                await self._download_events_page()
+            )
+
+            events = parse_events(
+                events_html
+            )
+
+
+            if TEST_FP_EVENTS:
+
+                events.append(
+                    CalendarEvent(
+                        title=(
+                            "TEST - BizzyBot FP kalendar"
+                        ),
+                        event_date="10.10.2026",
+                        url=(
+                            "https://www.fp.vut.cz/"
+                            "cs/o-fakulte/kalendar-akci"
+                            "?bizzybot-event-test=1"
+                        ),
+                    )
+                )
+
+
+            event_items = [
+                NewsItem(
+                    title=(
+                        f"📅 AKCE: "
+                        f"{event.title}"
+                    ),
+                    published_date=(
+                        event.event_date
+                    ),
+                    url=event.url,
+                )
+                for event in events
+            ]
+
+
+            await self._process_news(
+                event_items,
+                source="events",
             )
 
 
         except Exception:
 
             logger.exception(
-                "Chyba pri kontrole FP aktualit"
+                (
+                    "Chyba pri kontrole "
+                    "FP aktualit nebo akci"
+                )
             )
 
 
@@ -1483,10 +1693,38 @@ class FpNewsWatcher(commands.Cog):
             )
 
 
-            counts = Counter(
-                assignment.assigned_user_id
-                for assignment in completed
-            )
+            counts = Counter()
+            news_counts = Counter()
+            event_counts = Counter()
+
+
+            for assignment in completed:
+
+                user_id = (
+                    assignment.assigned_user_id
+                )
+
+                counts[user_id] += 1
+
+
+                item = session.get(
+                    FpNewsItem,
+                    assignment.news_item_id
+                )
+
+
+                if (
+                    item is not None
+                    and item.title.startswith(
+                        "📅 AKCE:"
+                    )
+                ):
+
+                    event_counts[user_id] += 1
+
+                else:
+
+                    news_counts[user_id] += 1
 
 
         if not counts:
@@ -1539,7 +1777,9 @@ class FpNewsWatcher(commands.Cog):
                 (
                     f"{position_text} "
                     f"<@{user_id}> — "
-                    f"**{count}**"
+                    f"**{count}** "
+                    f"(aktuality: {news_counts[user_id]}, "
+                    f"akce: {event_counts[user_id]})"
                 )
             )
 
@@ -1865,6 +2105,143 @@ class FpNewsWatcher(commands.Cog):
 
             await interaction.response.send_message(
                 "Pri nacitani FP aktualit nastala chyba.",
+                ephemeral=True,
+            )
+
+    @app_commands.command(
+        name="fpeventcheck",
+        description=(
+            "Zkontroluje akce, ktere "
+            "BizzyBot vidi v kalendari FP."
+        )
+    )
+    @app_commands.checks.check(
+        user_is_allowed
+    )
+    @app_commands.guild_only()
+    async def fpeventcheck(
+        self,
+        interaction: discord.Interaction
+    ):
+
+        try:
+
+            html = (
+                await self._download_events_page()
+            )
+
+            events = parse_events(
+                html
+            )
+
+
+        except Exception as error:
+
+            await interaction.response.send_message(
+                (
+                    "FP kalendar se nepodarilo nacist.\n"
+                    f"Chyba: `{type(error).__name__}`"
+                ),
+                ephemeral=True,
+            )
+
+            return
+
+
+        if not events:
+
+            await interaction.response.send_message(
+                (
+                    "Stranka se nacetla, ale bot "
+                    "na ni nenasel zadnou akci."
+                ),
+                ephemeral=True,
+            )
+
+            return
+
+
+        preview = "\n".join(
+            (
+                f"• **{event.event_date}** — "
+                f"[{event.title}]({event.url})"
+            )
+            for event in events[:5]
+        )
+
+
+        embed = discord.Embed(
+            title="FP Event Check",
+            description=(
+                f"Bot aktualne vidi "
+                f"**{len(events)} akci**.\n\n"
+                f"{preview}"
+            ),
+            color=discord.Color.blue(),
+        )
+
+
+        await interaction.response.send_message(
+            embed=embed,
+            ephemeral=True,
+        )
+
+    @fpeventcheck.error
+    async def fpeventcheck_error(
+        self,
+        interaction: discord.Interaction,
+        error: app_commands.AppCommandError,
+    ):
+
+        if isinstance(
+            error,
+            app_commands.CheckFailure
+        ):
+
+            message = (
+                "Na tento prikaz nemas opravneni."
+            )
+
+            if interaction.response.is_done():
+
+                await interaction.followup.send(
+                    message,
+                    ephemeral=True,
+                )
+
+            else:
+
+                await interaction.response.send_message(
+                    message,
+                    ephemeral=True,
+                )
+
+            return
+
+
+        logger.exception(
+            "Chyba v /fpeventcheck",
+            exc_info=error
+        )
+
+
+        if interaction.response.is_done():
+
+            await interaction.followup.send(
+                (
+                    "Pri kontrole FP kalendare "
+                    "nastala chyba."
+                ),
+                ephemeral=True,
+            )
+
+        else:
+
+            await interaction.response.send_message(
+                (
+                    "Pri kontrole FP kalendare "
+                    "nastala chyba."
+                ),
                 ephemeral=True,
             )
 
