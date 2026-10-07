@@ -29,6 +29,7 @@ ALLOWED_USER_IDS = [
     685958402442133515,
 ]
 
+TEST_FP_NEWS = True
 
 def user_is_allowed(interaction: discord.Interaction) -> bool:
     # konkretni povoleni uzivatele
@@ -220,6 +221,15 @@ class FpNewsWatcher(commands.Cog):
             html = await self._download_news_page()
 
             items = parse_news(html)
+
+            if TEST_FP_NEWS:
+                items.append(
+                    NewsItem(
+                        title="TEST - BizzyBot FP watcher",
+                        published_date="7. 10. 2026",
+                        url="https://www.fp.vut.cz/cs/o-fakulte/aktuality?bizzybot-test=1",
+                    )
+                )
 
             await self._process_news(items)
 
