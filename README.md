@@ -23,15 +23,12 @@ Users must verify their identity using a university email. Only one user per ema
 Upon successful verification, users are granted:
 
 * A general `Verified` role
-* A specific role based on their email domain (`VUT` for university emails, `Host` for others)
-
-### Subject and Faculty Role Selection
-
-Users can select their subjects and faculty affiliation using reaction-based messages and slash commands.
+* A specific role based on their email domain (`VUT`/`FP`/`Doktorand`/`Vyucujici/Zamestnanec` for university emails, `Host` for others)
+* When a user receives the `FP` role, they will also get their corresponding year role.
 
 ### TODO Onboarding
 
-After verification and gaining the VUT role, the bot sends a TODO checklist via DM to help students navigate the server.
+After verification and receiving their role, the bot sends users a TODO checklist via DM to help them navigate the server.
 
 ### Owner-Only Commands
 
@@ -53,12 +50,10 @@ BizzyBot/
 │   ├── models.py
 │   └── session.py
 ├── utils/
-│   ├── subject_management.py # /predmet group
-│   ├── vyber_oboru.py        # faculty role selection
-│   ├── nastav_prava.py       # role/permissions script
-│   └── reaction_ids.json     # tracked reaction messages
+│   ├── mailer.py             # sends verification code on mail
+│   └──  vyber_oboru.py       # faculty role selection
 ├── bot.py                    # Run a bot (main)
-└── longmessage_for_bot.txt   # Optional file used for long-form bot messages
+└── ...
 ```
 
 ---
@@ -112,18 +107,16 @@ docker compose up --build -d
 | `/verify vut`         | Start verification as VUT user      |
 | `/verify host`        | Start verification as host          |
 | `/verify code <code>` | Finish verification                 |
+| `/room`               | Find a room at the faculty          |
 | `/obor`               | Set your major                      |
-| `/predmet ...`        | Manage your subjects                |
 | `/hodnoceni ...`      | Manage reviews                      |
 | `/bot info`           | Show bot stats (latency, RAM, etc.) |
-| `/todo_reset` (owner) | Reset TODO DM cache                 |
+| `/pozvanka`           | QR code with invite link            |
 
 ### Prefix Commands (Owner-only + MODs)
 
 | Command                   | Description                                |
 | ------------------------- | ------------------------------------------ |
-| `!writeasbot <text>`      | Bot sends message as itself                |
-| `!writeasbot_longmessage` | Send contents of `longmessage_for_bot.txt` |
 | `!whois <user_id>`        | Show user’s verification status and email  |
 | `!strip <user_id>`        | Remove verification and all roles          |
 
