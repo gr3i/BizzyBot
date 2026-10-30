@@ -15,8 +15,8 @@ HEART_CHANNEL_IDS = {
 
 HEART_EMOJI = "❤️"
 
-# cas do odebrani reakce v sekundach (60 minut)
-HEART_REMOVE_DELAY = 15 #3600
+# cas do odebrani reakce v sekundach
+HEART_REMOVE_DELAY = 3600
 
 
 class HeartReactions(commands.Cog):
