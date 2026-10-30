@@ -203,6 +203,7 @@ async def setup_hook():
         "cogs.ruleta",
         "cogs.fp_news_watcher",
         "cogs.reminders",
+        "cogs.heart_reactions",
     ]:
         try:
             await bot.load_extension(ext)
